@@ -2,11 +2,11 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-left = pd.read_csv('glottal_area/VF_Right_data.csv')
-right = pd.read_csv('glottal_area/VF_Left_data.csv')
+left = pd.read_csv('glottal_area/VF_Left_data.csv')
+right = pd.read_csv('glottal_area/VF_Right_data.csv')
 
-init_left = left['Points:0'] # left fold init pos
-init_right = right['Points:0'] # right fold init pos
+init_left = left.groupby('TimeStep')['Points:0'].first() # left fold init pos
+init_right = right.groupby('TimeStep')['Points:0'].first() # right fold init pos
 time = left.groupby('TimeStep')['Time'].first()
 
 deltax_left = left.groupby('TimeStep')['displacements:0'].mean() # displacement column for left fold
