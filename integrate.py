@@ -27,8 +27,8 @@ area_filtered = glottal_area[boolmask]
 area_trapz = np.trapezoid(area_filtered, time_filtered)
 
 plt.plot(time_filtered, area_filtered, 'b-', linewidth=2, label='Glottal Area')
-plt.xlabel('Time')
-plt.ylabel('Glottal Area')
+plt.xlabel('Time (sec)')
+plt.ylabel('Glottal Area (mm)')
 plt.title('Glottal Area vs Time')
 plt.grid(True, alpha=0.3)
 plt.legend()
