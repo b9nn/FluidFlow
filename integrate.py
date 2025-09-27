@@ -12,13 +12,13 @@ time = left.groupby('TimeStep')['Time'].first()
 deltax_left = left.groupby('TimeStep')['displacements:0'].mean() # displacement column for left fold
 deltax_right = right.groupby('TimeStep')['displacements:0'].mean() # displacement column for right fold
 
-pos_left = -(init_left + deltax_left) # consult nicholas about that logic here
+pos_left = (init_left + deltax_left) # consult nicholas about that logic here
 pos_right = init_right + deltax_right
 
-glottal_area = np.abs(pos_right - pos_left) # for a given timestep
+glottal_area = np.abs(deltax_left - deltax_right) * 10 # for a given timestep
 
 lowerbound = 0 
-upperbound = 50
+upperbound = 1
 
 boolmask = ((time >= lowerbound) & (time <= upperbound)) # filter as per timesteps
 time_filtered = time[boolmask] # apply mask
