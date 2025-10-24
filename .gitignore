@@ -1,0 +1,11 @@
+# --- DATA FILES ---
+*.csv
+*.parquet
+*.mat
+
+# --- NOTEBOOKS ---
+*.ipynb
+
+# --- BACKUP AND OUTPUTS ---
+backup/
+reading/
