@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import time
+import os
 
 import tensorflow as tf
 from keras.models import Sequential
@@ -17,6 +19,10 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, f
 
 # october 24th, 2025
 # - not creating an insane model yet just laying the groundwork 
+
+# to save script output
+os.makedirs("figs", exist_ok=True)
+os.makedirs("models", exist_ok=True)
 
 # build nueral network
 def build(layers, idim, odim = 1, act = 'relu', oact = 'linear', opt = 'adam', loss = 'mse'):
@@ -50,11 +56,23 @@ def build(layers, idim, odim = 1, act = 'relu', oact = 'linear', opt = 'adam', l
 
     return model 
 
+# custom class to plug into callbacks to print metrics every epoch
+class PrintEpochProgress(tf.keras.callbacks.Callback):
+    def on_epoch_end(self, epoch, logs=None):
+        logs = logs
+        print(
+            f"Epoch {epoch} | "
+            f"Loss: {logs.get('loss'):.5f} | "
+            f"Val Loss: {logs.get('val_loss'):.5f} | "
+            f"MAE: {logs.get('mae'):.5f} | "
+            f"Val MAE: {logs.get('val_mae'):.5f}"
+        )
+
 # full dataset
-df = pd.read_csv('../DataTBCM_GVV_Feature_new(in).csv')
+df = pd.read_csv('C:/Users/bglad/OneDrive/Desktop/Job/Fluid Flow/ml/BCM Model/master.csv')
 
 # downsample for faster experimentation ~ 90000 rows
-df = df.sample(frac=0.25, random_state=42)
+#df = df.sample(frac=0.25, random_state=42) use full dataset for now
 df.to_parquet("./data_binary.parquet", compression="snappy") # convert to binary
 df = pd.read_parquet("./data_binary.parquet")
 
@@ -87,33 +105,29 @@ early_stopping = EarlyStopping(
     mode='min',
     patience=10, # epochs to wait wo improvment to be increased when looking at the full dataset
     restore_best_weights=True,
-    verbose=1
+    verbose=1,
 )
 
-layers = [128, 128, 128]       # three hidden layers with progressively fewer neurons
+layers = [128, 64, 32]       # three hidden layers with progressively fewer neurons
 idim = x_train.shape[1]       # number of input features
 odim = y_train.shape[1]       # usually 1 for regression
 
 modelNN = build(layers, idim, odim, act='relu', oact='linear', opt='adam', loss='mse')
 
+print("training...")
 history = modelNN.fit(
     x_train_scaled, y_train_scaled,
     validation_data=(x_test_scaled, y_test_scaled), # takes care of split
     epochs=75, # go up to 100 eventually
-    batch_size=64, # for 90000 samples --> to be moved up
-    callbacks=[early_stopping],
+    batch_size=256, 
+    callbacks=[early_stopping, PrintEpochProgress()],
     verbose=1
 )
 
-
+print("predicting...")
 # predict
 y_pred_scaled = modelNN.predict(x_test_scaled)
 y_pred = y_scaler.inverse_transform(y_pred_scaled)  # convert back to original scale
-
-results = {'F0': [], 'SPL': []}
-for i in range(len(list(results.keys()))):
-  results[list(results.keys())[i]] = [mean_absolute_error(y_true=np.array(y_test)[:,(i)],y_pred=y_pred[:,(i)]), mean_squared_error(y_true=np.array(y_test)[:,i],y_pred=y_pred[:,i]), mean_squared_error(y_true=np.array(y_test)[:,i],y_pred=y_pred[:,i],squared=False), r2_score(np.array(y_test)[:,i], y_pred[:,i])]
-pd.DataFrame.from_dict(results, orient='index', columns=['MAE','MSE', 'RMSE', 'R2'])
 
 # simple visual as per paper
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
@@ -130,6 +144,7 @@ ax2.plot(lin,lin)
 ax2.set_ylabel('Predicted (Pa)')
 ax2.set_xlabel('Real (Pa)')
 ax2.set_title('SPL')
+plt.savefig("figs/predictions.png", dpi=300, bbox_inches='tight') # save fig
 plt.show()
 
 plt.figure(figsize=(12, 4))
@@ -149,6 +164,7 @@ plt.ylabel('MAE')
 plt.legend()
 plt.title('Model MAE')
 plt.tight_layout()
+plt.savefig("figs/training_curves.png", dpi=300, bbox_inches='tight')   # save training curves fig
 plt.show()
 
 # save model + scalers
