@@ -2,6 +2,8 @@
 *.csv
 *.parquet
 *.mat
+*.pkl
+*.txt
 
 # --- NOTEBOOKS ---
 *.ipynb
@@ -9,3 +11,4 @@
 # --- BACKUP AND OUTPUTS ---
 backup/
 reading/
+models/
