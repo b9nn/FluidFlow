@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import os
+import joblib
 
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, PolynomialFeatures
 from sklearn.model_selection import train_test_split, cross_validate, GridSearchCV, RandomizedSearchCV, LeaveOneOut, cross_val_score
@@ -92,3 +93,7 @@ axes[1].grid(alpha=0.3)
 
 plt.savefig("./figs/residual_analysis.png", dpi=300, bbox_inches='tight')
 plt.show()
+
+joblib.dump(x_scaler, './models/x_scaler_BCM.pkl')
+joblib.dump(y_scaler, './models/y_scaler_BCM.pkl')  
+joblib.dump(modelPR, './models/firstPR')
