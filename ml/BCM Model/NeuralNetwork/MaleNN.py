@@ -21,8 +21,8 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, f
 # - not creating an insane model yet just laying the groundwork 
 
 # to save script output
-os.makedirs("figs", exist_ok=True)
-os.makedirs("models", exist_ok=True)
+os.makedirs("./figs", exist_ok=True)
+os.makedirs("./models", exist_ok=True)
 
 # build nueral network
 def build(layers, idim, odim = 1, act = 'relu', oact = 'linear', opt = 'adam', loss = 'mse'):
@@ -69,7 +69,7 @@ class PrintEpochProgress(tf.keras.callbacks.Callback):
         )
 
 # full dataset
-df = pd.read_csv('C:/Users/bglad/OneDrive/Desktop/Job/Fluid Flow/ml/BCM Model/master.csv')
+df = pd.read_csv('C:/Users/bglad/OneDrive/Desktop/Job/Fluid Flow/ml/BCM Model/MaleBCM.csv')
 
 # downsample for faster experimentation ~ 90000 rows
 #df = df.sample(frac=0.25, random_state=42) use full dataset for now
@@ -144,7 +144,7 @@ ax2.plot(lin,lin)
 ax2.set_ylabel('Predicted (Pa)')
 ax2.set_xlabel('Real (Pa)')
 ax2.set_title('SPL')
-plt.savefig("figs/predictions.png", dpi=300, bbox_inches='tight') # save fig
+plt.savefig("./figs/predictions.png", dpi=300, bbox_inches='tight') # save fig
 plt.show()
 
 plt.figure(figsize=(12, 4))
@@ -164,10 +164,10 @@ plt.ylabel('MAE')
 plt.legend()
 plt.title('Model MAE')
 plt.tight_layout()
-plt.savefig("figs/training_curves.png", dpi=300, bbox_inches='tight')   # save training curves fig
+plt.savefig("./figs/training_curves.png", dpi=300, bbox_inches='tight')   # save training curves fig
 plt.show()
 
 # save model + scalers
-joblib.dump(x_scaler, 'models/x_scaler_BCM.pkl')
-joblib.dump(y_scaler, 'models/y_scaler_BCM.pkl')  
-modelNN.save('models/NN_BCM.h5')
+joblib.dump(x_scaler, './models/x_scaler_BCM.pkl')
+joblib.dump(y_scaler, './models/y_scaler_BCM.pkl')  
+modelNN.save('./models/NN_BCM.h5')

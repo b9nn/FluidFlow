@@ -15,7 +15,7 @@ os.makedirs("./figs", exist_ok=True)
 os.makedirs("./models", exist_ok=True)
 
 # full dataset
-df = pd.read_csv('C:/Users/bglad/OneDrive/Desktop/Job/Fluid Flow/ml/BCM Model/master.csv')
+df = pd.read_csv('C:/Users/bglad/OneDrive/Desktop/Job/Fluid Flow/ml/BCM Model/MaleBCM.csv')
 
 # downsample for faster experimentation ~ 90000 rows
 #df = df.sample(frac=0.25, random_state=42) use full dataset for now

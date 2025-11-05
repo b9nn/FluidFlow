@@ -13,6 +13,8 @@ import joblib
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
+from scipy.io import loadmat
+
 # create dirs to store figs and models
 os.makedirs("./figs", exist_ok=True)
 os.makedirs("./models", exist_ok=True)
