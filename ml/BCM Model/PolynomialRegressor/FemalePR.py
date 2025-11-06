@@ -52,13 +52,10 @@ Y_subject = subject_df[['F0', 'SPL']]
 X_subject_scaled = x_scaler.transform(X_subject)
 Y_subject_scaled = y_scaler.transform(Y_subject)
 
-# Polynomial features
+# polynomial features
 X_subject_poly = poly.fit_transform(X_subject_scaled)  # we can use fit_transform since poly is stateless
 
-# --------------------------
-# Transfer Learning: Lasso fine-tuning
-# --------------------------
-# Use Lasso with small alpha to slightly adjust base model coefficients
+# use Lasso with small alpha to slightly adjust base model coefficients
 lasso_model = MultiOutputRegressor(Lasso(alpha=0.001, max_iter=10000))
 
 # Optional: warm-start using base model coefficients (if desired)
@@ -70,4 +67,3 @@ y_pred = y_scaler.inverse_transform(y_pred_scaled)
 
 joblib.dump(lasso_model, "C:/Users/bglad/OneDrive/Desktop/Job/Fluid Flow/ml/BCM Model/PolynomialRegressor/models/subjectPR_model.pkl")
 print("Transfer learning completed and model saved!")
-
