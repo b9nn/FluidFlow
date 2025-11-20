@@ -10,7 +10,7 @@ from sklearn.preprocessing import StandardScaler
 import joblib
 
 # full dataset
-df = pd.read_csv('C:/Users/bglad/OneDrive/Desktop/Job/Fluid Flow/ml/BCM Model/MaleBCM.csv')
+df = pd.read_csv('../MaleBCM.csv')
 
 # downsample for faster experimentation ~ 25000 rows
 df = df.sample(frac=0.07, random_state=42)

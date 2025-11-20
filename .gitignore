@@ -12,5 +12,6 @@
 backup/
 reading/
 models/
+.claude/
 
 test.py
