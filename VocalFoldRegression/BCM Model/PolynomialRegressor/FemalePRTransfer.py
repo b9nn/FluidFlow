@@ -24,10 +24,14 @@ os.makedirs("./transfer-models", exist_ok=True)
 
 # load baseline male polynomial regression models
 print("loading baseline male polynomial regression models...")
-male_model = joblib.load('./models/firstPR')
+male_model = joblib.load('./models/firstPR')  # MultiOutputRegressor directly
 male_x_scaler = joblib.load('./models/x_scaler_BCM.pkl')
 male_f0_scaler = joblib.load('./models/f0_scaler_BCM.pkl')
 male_spl_scaler = joblib.load('./models/spl_scaler_BCM.pkl')
+
+# male model uses degree 12 polynomial (from MalePR.py)
+from sklearn.preprocessing import PolynomialFeatures
+male_poly = PolynomialFeatures(degree=12, include_bias=False)
 
 # load pre-trained female polynomial regression models
 print("loading pre-trained female polynomial regression models...")
@@ -41,8 +45,9 @@ female_poly_spl = joblib.load('./FemaleModels/poly_spl_features_PR.pkl')
 
 # load female dataset
 df = pd.read_parquet("./FemaleNN_binary.parquet")
+# only drop NaN in columns we actually use
+df = df[['a_CT', 'a_TA', 'PS', 'F0', 'SPL', 'ACFL']].dropna()
 df = df[df['ACFL'] > 30]
-df = df.dropna()
 
 # define features and targets
 X = df[['a_CT', 'a_TA', 'PS']]
@@ -52,47 +57,40 @@ Y = df[['F0', 'SPL']]
 x_train_full, x_test, y_train_full, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
 x_train, x_val, y_train, y_val = train_test_split(x_train_full, y_train_full, test_size=0.1, random_state=42)
 
-# scale data using female scalers
-x_test_scaled = female_x_scaler.transform(x_test)
+# scale test data for female model
+x_test_scaled_female = female_x_scaler.transform(x_test)
+x_test_poly_f0_female = female_poly_f0.transform(x_test_scaled_female)
+x_test_poly_spl_female = female_poly_spl.transform(x_test_scaled_female)
 
-# scale y data for evaluation
-f0_test_scaled = female_f0_scaler.transform(y_test[['F0']])
-spl_test_scaled = female_spl_scaler.transform(y_test[['SPL']])
-y_test_scaled = np.hstack([f0_test_scaled, spl_test_scaled])
-
-# transform to polynomial features using female poly transformers
-x_test_poly_f0 = female_poly_f0.transform(x_test_scaled)
-x_test_poly_spl = female_poly_spl.transform(x_test_scaled)
-
-# transform to polynomial features using male poly transformers for baseline predictions
-x_test_poly_f0_male = male_poly_f0.transform(x_test_scaled)
-x_test_poly_spl_male = male_poly_spl.transform(x_test_scaled)
+# scale test data for male model
+x_test_scaled_male = male_x_scaler.transform(x_test)
+x_test_poly_male = male_poly.fit_transform(x_test_scaled_male)  # male uses single poly transformer
 
 print("\nevaluating models on test set...")
 
-# 1. male baseline model predictions
-f0_pred_male_scaled = male_f0_model.predict(x_test_poly_f0_male)
-spl_pred_male_scaled = male_spl_model.predict(x_test_poly_spl_male)
+# 1. male baseline model predictions (use male scalers throughout)
+# male model outputs both F0 and SPL together (MultiOutputRegressor)
+y_pred_male_scaled = male_model.predict(x_test_poly_male)
 
-# inverse transform male predictions using female scalers (since test data is female)
-f0_pred_male = female_f0_scaler.inverse_transform(f0_pred_male_scaled.reshape(-1, 1))
-spl_pred_male = female_spl_scaler.inverse_transform(spl_pred_male_scaled.reshape(-1, 1))
+# inverse transform male predictions using male scalers
+f0_pred_male = male_f0_scaler.inverse_transform(y_pred_male_scaled[:, 0].reshape(-1, 1))
+spl_pred_male = male_spl_scaler.inverse_transform(y_pred_male_scaled[:, 1].reshape(-1, 1))
 y_pred_male = np.hstack([f0_pred_male, spl_pred_male])
 
-# 2. female model predictions
-f0_pred_female_scaled = female_f0_model.predict(x_test_poly_f0)
-spl_pred_female_scaled = female_spl_model.predict(x_test_poly_spl)
+# 2. female model predictions (use female scalers throughout)
+f0_pred_female_scaled = female_f0_model.predict(x_test_poly_f0_female)
+spl_pred_female_scaled = female_spl_model.predict(x_test_poly_spl_female)
 
 # inverse transform
 f0_pred_female = female_f0_scaler.inverse_transform(f0_pred_female_scaled.reshape(-1, 1))
 spl_pred_female = female_spl_scaler.inverse_transform(spl_pred_female_scaled.reshape(-1, 1))
 y_pred_female = np.hstack([f0_pred_female, spl_pred_female])
 
-# 3. transfer learning: weighted ensemble strategy
-# weight for baseline male model - lower since it's trained on different domain
-w_male = 0.2
-# weight for female model - higher since it's trained on target domain
-w_female = 0.8
+# transfer learning: weighted ensemble strategy
+# weight for baseline male model - very low since it performs poorly on female domain
+w_male = 0.05
+# weight for female model - very high since it's trained on target domain
+w_female = 0.95
 
 print(f"\nusing ensemble weights: male={w_male}, female={w_female}")
 
@@ -169,18 +167,19 @@ plt.show()
 # save transfer learning model
 print("\nsaving transfer learning models...")
 transfer_config = {
-    'male_f0_model': male_f0_model,
-    'male_spl_model': male_spl_model,
+    'male_model': male_model,  # MultiOutputRegressor for both F0 and SPL
     'female_f0_model': female_f0_model,
     'female_spl_model': female_spl_model,
     'weights': (w_male, w_female),
+    'male_x_scaler': male_x_scaler,
+    'male_f0_scaler': male_f0_scaler,
+    'male_spl_scaler': male_spl_scaler,
     'female_x_scaler': female_x_scaler,
     'female_f0_scaler': female_f0_scaler,
     'female_spl_scaler': female_spl_scaler,
     'female_poly_f0': female_poly_f0,
     'female_poly_spl': female_poly_spl,
-    'male_poly_f0': male_poly_f0,
-    'male_poly_spl': male_poly_spl
+    'male_poly': male_poly  # single poly transformer for male model
 }
 joblib.dump(transfer_config, './transfer-models/PR_transfer_ensemble.pkl')
 print(f"transfer learning model saved to ./transfer-models/PR_transfer_ensemble.pkl")

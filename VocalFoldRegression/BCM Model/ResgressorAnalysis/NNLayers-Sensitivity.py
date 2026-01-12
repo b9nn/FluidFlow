@@ -17,16 +17,16 @@ from sklearn.model_selection import train_test_split
 import joblib
 
 from sklearn.metrics import mean_absolute_error, r2_score
-
-# setup paths to data and models
+# create dirs to store transfer learning figs and models
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-TRANSFER_MODELS_DIR = os.path.join(SCRIPT_DIR, "transfer-models")
 TRANSFER_FIGS_DIR = os.path.join(SCRIPT_DIR, "transfer-figs")
-BASE_DIR = r'C:\Users\bglad\OneDrive\Desktop\Job\Fluid Flow\ml\BCM Model'
-DATA_PATH = os.path.join(BASE_DIR, 'FemaleBCM.csv')
+# models are in the NeuralNetwork folder, not ResgressorAnalysis
+NN_DIR = os.path.join(os.path.dirname(SCRIPT_DIR), "NeuralNetwork")
+TRANSFER_MODELS_DIR = os.path.join(NN_DIR, "transfer-models")
 
-# load female dataset
-df = pd.read_csv(DATA_PATH, on_bad_lines="skip")
+df = pd.read_parquet('C:/Users/bglad/OneDrive/Desktop/Job/Fluid Flow/VocalFoldRegression/BCM Model/NeuralNetwork/FemaleNN_binary.parquet')
+df = df.dropna()
+
 df = df.dropna()
 df = df[df['ACFL'] > 30]  # apply quality filter
 
@@ -46,7 +46,6 @@ for fro in fro_config:
 # load the original scalers used during training (critical for consistent scaling)
 x_scaler_orig = joblib.load(os.path.join(TRANSFER_MODELS_DIR, 'x_scaler_female.pkl'))
 y_scaler_orig = joblib.load(os.path.join(TRANSFER_MODELS_DIR, 'y_scaler_female.pkl'))
-print("✓ loaded original scalers")
 
 # storage for results
 results_list = []

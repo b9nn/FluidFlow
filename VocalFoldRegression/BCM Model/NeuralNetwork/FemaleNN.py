@@ -78,7 +78,8 @@ df.to_parquet("./FemaleNN_binary.parquet", compression="snappy") # convert to bi
 df = pd.read_parquet("./FemaleNN_binary.parquet")
 
 # clean (not much needed)
-df = df.dropna()
+# only drop NaN in columns we actually use
+df = df[['a_CT', 'a_TA', 'PS', 'F0', 'SPL', 'ACFL']].dropna()
 df = df[df['ACFL'] > 30] # new df that only has ACFL values > 30
 
 # define axis

@@ -70,15 +70,9 @@ x_scalar_female = StandardScaler()
 y_scalar_female = StandardScaler()
 
 # load dataset
-BASE_DIR = r'C:\Users\bglad\OneDrive\Desktop\Job\Fluid Flow\ml\BCM Model'
-DATA_PATH = os.path.join(BASE_DIR, 'FemaleBCM.csv')
-PARQUET_PATH = os.path.join(SCRIPT_DIR, 'FemaleNN_binary.parquet')
-
-df = pd.read_csv(DATA_PATH, on_bad_lines="skip")
-df.to_parquet(PARQUET_PATH, compression="snappy") # convert to binary
-df = pd.read_parquet(PARQUET_PATH)
-
-df = df.dropna()
+df = pd.read_parquet('C:/Users/bglad/OneDrive/Desktop/Job/Fluid Flow/VocalFoldRegression/BCM Model/NeuralNetwork/FemaleNN_binary.parquet')
+# only drop NaN in columns we actually use
+df = df[['a_CT', 'a_TA', 'PS', 'F0', 'SPL', 'ACFL']].dropna()
 
 # Apply ACFL > 30 filter to match baseline female model (critical for data quality)
 print(f"Dataset size before ACFL filter: {len(df)}")
