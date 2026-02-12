@@ -11,8 +11,8 @@ import joblib
 import os
 import h5py
 import mat73
-
-df = pd.read_parquet("C:/Users/bglad/OneDrive/Desktop/Job\Fluid Flow/FemaleNN_binary.parquet")
+#Before: df = pd.read_parquet("C:/Users/bglad/OneDrive/Desktop/Job\Fluid Flow/FemaleNN_binary.parquet")
+df = pd.read_parquet("Female_binary.parquet")
 
 # only drop NaN in columns we actually use
 df = df[['a_CT', 'a_TA', 'PS', 'F0', 'SPL', 'ACFL']].dropna()

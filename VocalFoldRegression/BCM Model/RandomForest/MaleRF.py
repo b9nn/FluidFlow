@@ -10,10 +10,11 @@ from sklearn.preprocessing import StandardScaler
 import joblib
 
 # full dataset
-df = pd.read_csv('C:/Users/bglad/OneDrive/Desktop/Job/Fluid Flow/VocalFoldRegression/BCM Model/MaleBCM.csv')
+# BEFORE: df = pd.read_csv('C:/Users/bglad/OneDrive/Desktop/Job/Fluid Flow/VocalFoldRegression/BCM Model/MaleBCM.csv')
+df = pd.read_csv('MaleBCM.csv')
 
 # downsample for faster experimentation ~ 25000 rows
-df = df.sample(frac=0.07, random_state=42)
+df = df.sample(frac=1, random_state=42)
 df.to_parquet("./data_binary.parquet", compression="snappy") # convert to binary
 df = pd.read_parquet("./data_binary.parquet")
 
