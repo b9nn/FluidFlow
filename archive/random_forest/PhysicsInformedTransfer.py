@@ -471,18 +471,36 @@ def main():
     # --- Load models and data ---
     print("\nLoading pre-trained male model...")
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    rf_male = joblib.load(os.path.join(script_dir, 'models', 'RF_BCM.pkl'))
-    scaler_X_male = joblib.load(os.path.join(script_dir, 'models', 'x_scaler_BCM.pkl'))
+    project_root = os.path.abspath(
+        os.path.join(script_dir, "..", "..", "..")
+    )
+
+    rf_male = joblib.load(
+        os.path.join(project_root, "models", "RF_BCM.pkl")
+    )
+
+    scaler_X_male = joblib.load(
+        os.path.join(project_root, "models", "x_scaler_BCM.pkl")
+    )
+
     print("Done.")
 
-    print("\nLoading female dataset...")
-    df_full = pd.read_parquet(os.path.join(script_dir, 'Female_binary.parquet'))
-    df_full = df_full[['a_CT', 'a_TA', 'PS', 'F0', 'SPL', 'ACFL']].dropna()
-    df_full = df_full[df_full['ACFL'] > 30]
-    print(f"Total female samples: {len(df_full)}")
+    print("\nLoading female dataset (5000-sample simulation)...")
+    female_csv_path = os.path.join(script_dir, 'Female_5000.csv')
+    df_full = pd.read_csv(female_csv_path, sep=r'\s+')
+
+    # Rename columns to match internal conventions
+    df_full = df_full.rename(columns={
+        'Ps (Pa)': 'PS',
+        'F0 (Hz)': 'F0',
+        'SPL (dB)': 'SPL',
+    })
+
+    df_full = df_full[['a_CT', 'a_TA', 'PS', 'F0', 'SPL']].dropna()
+    print(f"Total female samples (after dropping NaN): {len(df_full)}")
 
     # --- Run experiments ---
-    SAMPLE_SIZES = [10, 25, 50, 100, 250, 500, 1000]
+    SAMPLE_SIZES = [10, 25, 50, 100, 250, 500, 1000, 2000, 4000]
     N_RUNS = 5
 
     all_results = []
