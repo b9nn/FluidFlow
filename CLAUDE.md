@@ -32,6 +32,10 @@ Active branch: `feature/fem`. **Do not pull from `origin/main`** — it is stale
 4. **Don't blob-commit binaries.** `.pkl`, `.keras`, `.parquet` are committed selectively. Check the surrounding folder before adding new ones.
 5. **Append a line to `docs/DECISIONS.md`** whenever you make a non-obvious judgment call (hyperparam choice, weighting, transfer strategy variant).
 
+## Interaction conventions
+
+- When you need to ask Brian multiple-choice or preference questions, use the `AskUserQuestion` tool ("planning format" — rendered as chips). Don't ask A/B/C/D in plain text. Inline prose questions are fine only for genuinely open-ended prompts.
+
 ## Where to look
 
 - System design + regressor matrix → [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
