@@ -8,6 +8,10 @@
 # --- NOTEBOOKS ---
 *.ipynb
 
+# --- PYTHON CACHE ---
+__pycache__/
+*.pyc
+
 # --- BACKUP AND OUTPUTS ---
 backup/
 reading/
