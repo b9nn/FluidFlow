@@ -19,27 +19,27 @@ Format:
 **Context:** Reproducibility across regressor scripts.
 **Decision:** Every script uses `train_test_split(test_size=0.2, random_state=42)`.
 **Why:** Same hold-out across RF, NN, PR makes cross-regressor comparison meaningful.
-**Where it shows up:** every `*.py` under `BCM Model/` and `Beam+Membrane Model/`.
+**Where it shows up:** every `*.py` under `VocalFoldRegression/`, `Beam_Membrane/`, `TBCM/`.
 
 ## 2025-10 — Per-domain StandardScalers (never share across domains)
 
 **Context:** Initial female-BCM transfer learning produced near-zero R² when the male input scaler was reused on female data.
-**Decision:** Each domain (male, female, B+M) fits and saves its own input scaler and its own per-output scalers (one for F0, one for SPL).
-**Why:** Different domains have different feature distributions; reusing a male scaler shifts and scales female data into the wrong subspace before the model sees it.
+**Decision:** Each domain (male BCM, female BCM, BM, TBCM) fits and saves its own input scaler and its own per-output scalers.
+**Why:** Different domains have different feature distributions; reusing a male scaler shifts and scales target data into the wrong subspace before the model sees it.
 **Where it shows up:** `BCM Model/NeuralNetwork/interpret.txt` (incident notes); every transfer script.
 
 ## 2025-10 — Polynomial Regression degree 12 for male BCM
 
-**Context:** Male BCM has ~90k samples and a smooth nonlinear input/output map.
+**Context:** Male BCM has ~54k samples and a smooth nonlinear input/output map.
 **Decision:** Use `PolynomialFeatures(degree=12)` + plain `LinearRegression` for the male PR baseline.
-**Why:** Sample count tolerates the high-degree feature blow-up without overfitting; gives PR a fair chance against RF/NN.
+**Why:** Sample count tolerates the high-degree feature blow-up without overfitting.
 **Where it shows up:** `BCM Model/PolynomialRegressor/MalePR.py`.
 
 ## 2025-11 — RF female transfer weights: 0.3 male + 0.7 female
 
 **Context:** Tuning the weighted ensemble for RF on ~1.3k female samples.
 **Decision:** `α = 0.3` source, `1-α = 0.7` target.
-**Why:** Empirically best on the female test set; target dominates but source still adds signal.
+**Why:** Empirically best on the female test set.
 **Where it shows up:** `BCM Model/RandomForest/FemaleRFTransfer.py`.
 
 ## 2025-11 — PR female transfer weights: 0.05 male + 0.95 female
@@ -49,30 +49,83 @@ Format:
 **Why:** Polynomial regression generalizes poorly across domains — degree-12 male features extrapolate badly onto female inputs. Trust target almost entirely.
 **Where it shows up:** `BCM Model/PolynomialRegressor/FemalePRTransfer.py`.
 
-## 2025-11 — TransRF sweet spot: 200–500 target samples
+## 2025-11 — TransRF data efficiency sweet spot: 200–500 target samples
 
-**Context:** Data efficiency experiment for the advanced RF transfer method.
+**Context:** Brian's earlier data efficiency experiment for the advanced RF transfer method on female BCM.
 **Decision:** Best transfer benefit observed at 200–500 target samples.
-**Why:** Below 200, target-only is too noisy to constrain the residual sub-model; above 500, target-only alone is already strong and source contribution stops mattering.
+**Why:** Below 200, target-only is too noisy; above 500, target-only alone is already strong.
 **Where it shows up:** `BCM Model/RandomForest/DataEfficiencyExperiment.py`.
 
 ## 2026-02 — PR for small target domains: degree 4–5 + Ridge
 
-**Context:** Planning the B+M transfer for PR (~500 samples).
+**Context:** Plan for B+M PR transfer (~500 samples).
 **Decision:** Drop polynomial degree from 12 to 4–5 and use `Ridge` instead of plain `LinearRegression`.
-**Why:** Degree 12 with 500 samples will overfit catastrophically. Lower degree + L2 penalty matches the data scale.
-**Where it shows up:** `Beam+Membrane Model/PolynomialRegressor/BeamMembranePRTransfer.py` (planned).
+**Why:** Degree 12 with 500 samples will overfit catastrophically.
+**Where it shows up:** Planned for `BeamMembranePRTransfer.py` (Brian's local stub, not yet committed; superseded by the RF/AE-only direction Callum took).
 
-## 2026-02 — Active branch: `feature/fem`; `main` is stale
+## 2026-05-02 — Adaptive RF complexity, replacing fixed `n_estimators=300`
 
-**Context:** Local development outpaced `origin/main`; pulling from main would clobber active work.
-**Decision:** Treat `feature/fem` as the source of truth. Do not rebase onto or merge from main without intent.
-**Why:** Avoids accidental loss of in-progress B+M scaffolding.
-**Where it shows up:** repo state.
+**Context:** Callum's BM/TBCM transfer scripts work across small (10) to large (40k+) target sample counts. A single hyperparam config either underfits the large case or overfits the small case.
+**Decision:** Use `get_model_params(n_samples)` to scale `n_estimators` (20→300) and `max_depth` (3→None) with sample count.
+**Why:** Prevents overfitting at small sizes and underfitting at large sizes without hyperparameter search per run.
+**Where it shows up:** `Beam_Membrane/BM_TransferRF.py:51`, `Beam_Membrane/BM_SmallData.py:47`, `TBCM/TBCM_TransferRF.py`, `TBCM/TBCM_SmallData.py`.
 
-## 2026-05 — Documentation lives at repo root, not under `VocalFoldRegression/`
+## 2026-05-02 — Drop `a_LCA` (BM-only feature)
+
+**Context:** BM data includes an extra `a_LCA` activation `∈ [0.5, 1.0]` not in BCM.
+**Decision:** Don't use `a_LCA` as a feature. Train BM RF on `[a_CT, a_TA, PS]` only.
+**Why:** Empirically `a_LCA` has near-zero correlation with `F0` and `SPL` in the BM data; including it as a feature doesn't improve transfer and creates a feature-mismatch with BCM.
+**Where it shows up:** `Beam_Membrane/BM_TransferRF.py`, `Beam_Membrane/BM_TransferAE.py`. Files like `bm_pred_vs_actual_aLCA.png` document the comparison run with the feature included.
+
+## 2026-05-02 — Best small-data BM method depends on sample size
+
+**Context:** Cross-method comparison at 10–500 BM samples (10 runs each).
+**Decision:** No single best method. Use **Feature Augmentation** at 20–75 samples, **TransRF** at 100+ samples. Avoid **Residual Correction** at any small size.
+**Why:** Feature Aug doesn't force trust in BCM's absolute predictions, which is critical when the BCM-BM scale mismatch is large. TransRF needs enough data to estimate sub-model weights reliably. Residual Correction trusts raw BCM predictions, which are way off in scale at all sizes.
+**Where it shows up:** `Beam_Membrane/BM_SmallData.py`; figure `bm_small_data_all.png`.
+
+## 2026-05-02 — Autoencoders underperform RF on BM (use them for TBCM only)
+
+**Context:** AE methods (Vanilla, MMD, DAAE) tested on both BM and TBCM transfer.
+**Decision:** AE is competitive on TBCM (same physics family) but loses to RF on BM. Default to RF methods for BM; keep AE for TBCM as a comparison point.
+**Why:** AE-based domain adaptation requires the source and target distributions to be related by a smooth manifold mapping. BM's different physics + scale mismatch breaks that assumption.
+**Where it shows up:** `Beam_Membrane/figs/bm_rf_vs_ae.png`, `Beam_Membrane/BM_TransferAE.py`.
+
+## 2026-05-02 — Use Spearman rank correlation alongside R² for transfer evaluation
+
+**Context:** BCM source-only predictions on BM have R² ≈ −2.0 (terrible absolute accuracy) but Spearman 0.81/0.74 (good rank ordering).
+**Decision:** Report Spearman alongside R² when evaluating cross-domain transfer.
+**Why:** Spearman captures whether the source model has learned the right *shape* of the relationship even when the *scale* is wrong — and the right shape is exactly what residual / feature-aug / TransRF methods can exploit.
+**Where it shows up:** `Beam_Membrane/BM_Summary.py`, `TBCM/TBCM_Summary.py`.
+
+## 2026-05-02 — Data loading convention: `index_col=0` + `Ps → PS`
+
+**Context:** All datasets are CSVs with an unnamed index column and use `Ps` for subglottal pressure.
+**Decision:** Standardize to:
+```python
+df = pd.read_csv('dataset_*.csv', index_col=0)
+df.rename(columns={'Ps': 'PS'}, inplace=True)
+```
+**Why:** Consistent column names across BCM / TBCM / BM let the same model code work on all three.
+**Where it shows up:** every `*.py` in `Beam_Membrane/` and `TBCM/`.
+
+## 2026-02 — Active branch: `feature/fem`
+
+**Context:** Brian and Callum worked on parallel branches (`feature/fem` and `cc-dev`) from common ancestor `fc24567`.
+**Decision:** Continue work on `feature/fem`.
+**Why:** Brian's docs commits live there; `cc-dev` was Callum's PR feeder branch and is merged to `main`.
+**Where it shows up:** repo state. Note: as of 2026-05-03, `main` is no longer stale — Callum's PR landed and `feature/fem` has been merged with `origin/main`.
+
+## 2026-05-02 — Documentation lives at repo root, not under `VocalFoldRegression/`
 
 **Context:** Replacing ad-hoc `VocalFoldRegression/PROJECT_CONTEXT.md` and `PLAN_OF_ACTION.md` with a coherent doc tree.
 **Decision:** `CLAUDE.md` and `README.md` at repo root; reference docs under `/docs/`.
-**Why:** Both audiences (Claude auto-loads `CLAUDE.md` from root; humans expect `README.md` at root) find the docs without nesting. Single source of truth avoids drift between two paths.
+**Why:** Both audiences (Claude auto-loads `CLAUDE.md` from root; humans expect `README.md` at root) find the docs without nesting.
 **Where it shows up:** `/CLAUDE.md`, `/README.md`, `/docs/*.md`.
+
+## 2026-05-03 — Keep Callum's `PROJECT_GUIDE.md` alongside `/docs/`
+
+**Context:** Merging Callum's main into `feature/fem` brings `PROJECT_GUIDE.md`, which overlaps with `README.md` + `docs/ARCHITECTURE.md`.
+**Decision:** Keep both. `PROJECT_GUIDE.md` is preserved as Callum's hands-on guide for `Beam_Membrane/` and `TBCM/`. `README.md` and `docs/` are the canonical entry points.
+**Why:** The two docs serve subtly different purposes (Callum's is method-focused with empirical tables; ours is repo-wide with conventions). Folding them risks losing his framing. Better to cross-link.
+**Where it shows up:** `README.md` nav table, `CLAUDE.md` repo map.

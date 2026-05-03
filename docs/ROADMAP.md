@@ -2,51 +2,55 @@
 
 No hard deadlines — phases are ordered, not dated. Each phase ends with a measurable artifact written to disk.
 
-## Now — Phase 2: Beam+Membrane data exploration & validation
+> **State as of 2026-05-03:** Callum's PR #1 already shipped working BCM→BM and BCM→TBCM transfer pipelines with measured results. The "build the transfer pipelines" phase is done. Remaining work is analysis, NN/PR coverage, and write-up.
 
-**Goal:** confirm the generated B+M data is usable before training anything.
+## Now — Phase A: Digest Callum's results, decide next direction
 
-- Run `VocalFoldRegression/Beam+Membrane Model/load_bm_data.py` to parse the `.txt`.
-- Report NaN attrition rate. If valid samples < 300, regenerate with larger `N_s`.
-- Distribution plots for `a_CT, a_TA, PS, F0, SPL`. Look for dead zones (regions where everything is NaN).
-- Scatter plots: `F0 vs a_CT`, `F0 vs a_TA`, `F0 vs PS` (and same for SPL).
-- Side-by-side comparison: B+M vs male BCM distributions for the shared columns.
+**Goal:** Brian (returning from hiatus) reviews Callum's empirical results and picks the next research thread.
 
-**Done when:** a short exploration notebook (or script + figures) is committed under `Beam+Membrane Model/`.
+- Read `PROJECT_GUIDE.md` end-to-end.
+- Run one or more of Callum's scripts locally to verify reproducibility (`BM_Summary.py` is a fast sanity check).
+- Open `Beam_Membrane/results/rf_transfer_results.json` and `TBCM/results/rf_transfer_results.json` to inspect raw R² numbers.
+- Decide: which of Phases B–D below to prioritize.
 
-## Next — Phase 3: B+M baselines (no transfer)
+**Done when:** decision recorded in `DECISIONS.md`.
 
-**Goal:** establish floor metrics that transfer learning has to beat.
+## Next options (any order)
 
-- **RF baseline:** small-data hyperparams (lower `n_estimators`, `min_samples_leaf ≥ 2`). Record R² and MAE for F0 and SPL.
-- **NN baseline:** smaller architecture, train from scratch. Heavy regularization expected.
-- **PR baseline:** `degree=4–5` + `Ridge(alpha)`. Sweep `alpha`.
-- Hold out a fixed B+M test set with `random_state=42` so all later experiments compare apples-to-apples.
+### Phase B — Extend NN/PR transfer to BM and TBCM
 
-**Done when:** a baseline metrics CSV is committed.
+The new BM/TBCM work is RF + autoencoder only. Brian's NN (partial freezing) and PR (weighted ensemble) strategies haven't been tested on these domains.
 
-## Then — Phase 4: Male BCM → B+M transfer learning
+- Apply NN partial-freezing to BCM→TBCM (likely easy win — same physics family).
+- Apply NN partial-freezing to BCM→BM (likely hard — scale mismatch).
+- Apply PR ensemble (degree 4–5 + Ridge) to both. Expect PR to struggle on BM specifically.
+- Add results to `BM_Summary.py` / `TBCM_Summary.py` as additional rows.
 
-Apply the three strategies validated on female BCM, adapted for very small target data.
+**Done when:** updated cross-regressor comparison includes NN and PR.
 
-- **RF transfer (`BeamMembraneRFTransfer.py`):** TransRF with target-only + residual correction + feature augmentation; weights via K-fold CV. Compare vs source-only, target-only, simple ensemble.
-- **NN transfer (`BeamMembraneNNTransfer.py`):** partial freezing from `standard_model.keras`; sweep `N ∈ {2, 4, 5, 6}`; pick best by mean R².
-- **PR transfer (`BeamMembranePRTransfer.py`):** B+M-specific PR (degree 4–5 + Ridge) ensembled with male PR. Grid search `(degree, alpha, α_ensemble)`.
-- **Cross-regressor comparison (`BMTransferComparison.py`):** side-by-side on the same B+M test set with bootstrap sampling.
+### Phase C — Push the small-data regime further
 
-**Done when:** transfer metrics CSV + comparison figure committed.
+Callum's small-data sweep covers 10–500 BM samples. The interesting question is what happens below 10 (3, 5, 8 samples) — physically motivated priors might dominate at that scale.
 
-## Then — Phase 5: analysis & write-up
+- Re-run `BM_SmallData.py` with `n ∈ {3, 5, 8}` and many more bootstrap runs.
+- Try a physics-informed prior on the residual model.
+- Document where target-only collapses to near-zero R².
 
-- Quantify the BCM↔B+M domain gap. Where does the male model fail on B+M? (residual maps, scatter against truth.)
-- Physical interpretation: what does the B+M model capture that BCM doesn't, and where does that show up in the errors?
-- Update [`MILESTONES.md`](MILESTONES.md) with results and figures.
+**Done when:** updated small-data figure committed.
 
-**Done when:** results section drafted; figures saved under `figs/`.
+### Phase D — Write-up / paper draft
+
+- Quantify the BCM↔BM and BCM↔TBCM domain gaps with measured numbers.
+- Physical interpretation: what does BM capture that BCM doesn't, and where does that show up in the errors?
+- Generate paper-ready figures from `Beam_Membrane/figs/` and `TBCM/figs/`.
+- Prose narrative around "transfer for expensive simulators" pitch.
+
+**Done when:** results section drafted; figures finalized.
 
 ## Maybe-later
 
+- Female BM / female TBCM transfer (if those datasets exist).
 - Glottal-area integration as an additional input/output feature.
-- OpenIFEM coupling for full FSI training data (replaces reduced-order B+M).
-- Hyperparameter sweep tracker (e.g. local MLflow or a CSV log).
-- Female B+M transfer (once a female-tuned B+M dataset exists).
+- OpenIFEM coupling for full FSI training data (replaces reduced-order BM).
+- Hyperparameter sweep tracker (e.g., a small CSV log or a tracker like MLflow).
+- Reconcile or delete Brian's local-only `VocalFoldRegression/Beam+Membrane Model/` (pre-Callum scaffolding) and `Beam+Membrane_ForSean/` (Sean's MATLAB).

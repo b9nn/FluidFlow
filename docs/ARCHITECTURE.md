@@ -7,74 +7,117 @@
                                                               (per-output, per-domain)
 ```
 
-Inputs and outputs are scaled separately per domain. **Three scalers per domain:** one for inputs, one for `F0`, one for `SPL`.
+Inputs and outputs are scaled separately per domain. **Three scalers per domain:** one for inputs, one for `F0`, one for `SPL`. Never reuse scalers across domains.
 
 ## Domains
 
-| Domain | Source file | Size | Notes |
+| Domain | File | Size | Range notes |
 |---|---|---|---|
-| Male BCM | `MaleBCM.csv` | ~90,000 | Source of truth for pretraining |
-| Female BCM | `FemaleBCM.csv` | ~1,331 | Filtered to `ACFL > 30` |
-| Beam+Membrane (B+M) | `Data_Membrane_Beam_Model.txt` | ~500 valid | After NaN drop; physically more accurate FE model |
+| Male BCM | `VocalFoldRegression/BCM Model/MaleBCM.csv` | ~54k | Source. `F0 ∈ [55, 862]`, `SPL ∈ [−4, 91]`, `Ps ∈ [10, 2010]` |
+| Female BCM | `VocalFoldRegression/BCM Model/FemaleBCM.csv` | ~1.3k | Filtered `ACFL > 30` |
+| TBCM (Triangular BCM) | `TBCM/dataset_TBCM.csv` | ~43k | Same physics family as BCM. `F0 ∈ [80, 384]`, `SPL ∈ [56, 109]`. Has extra `PL` column we drop |
+| BM (Beam-Membrane FEM) | `Beam_Membrane/dataset_BM.csv` | ~5,000 | Different physics. `F0 ∈ [116, 426]`, `SPL ∈ [−54, 129]`, `Ps ∈ [600, 1000]`. Has extra `a_LCA` column we drop |
 
-## Regressor matrix
+## Top-level layout
 
-| Regressor | Source script | Source artifact | Target script (BCM→F) | Transfer strategy |
+```
+/
+├── VocalFoldRegression/   ← Brian's male/female BCM work (RF, NN, PR)
+├── Beam_Membrane/         ← Callum: BCM→BM transfer (RF + AE)
+├── TBCM/                  ← Callum: BCM→TBCM transfer (RF + AE + waveform)
+├── archive/               ← Old experiments parked here in PR #1
+└── docs/, CLAUDE.md, README.md, PROJECT_GUIDE.md
+```
+
+## Regressors and methods, by era
+
+### Era 1 — Brian's `VocalFoldRegression/` (male → female BCM)
+
+| Regressor | Source script | Source artifact | Target script | Transfer |
 |---|---|---|---|---|
-| Random Forest | `BCM Model/RandomForest/MaleRF.py` | `RF_BCM.pkl` | `FemaleRFTransfer.py` | Weighted ensemble (`0.3·source + 0.7·target`); advanced TransRF in `DataEfficiencyExperiment.py` |
-| Neural Network | `BCM Model/NeuralNetwork/MaleNN.py` | `standard_model.keras` | `FemaleNNTransfer.py` | Partial layer freezing — clone source, freeze first N layers, fine-tune remainder |
-| Polynomial Regression | `BCM Model/PolynomialRegressor/MalePR.py` | `firstPR` | `FemalePRTransfer.py` | Weighted ensemble (`0.05·source + 0.95·target`) |
+| Random Forest | `BCM Model/RandomForest/MaleRF.py` | `RF_BCM.pkl` | `FemaleRFTransfer.py` | Weighted ensemble `0.3·src + 0.7·tgt` |
+| Neural Network | `BCM Model/NeuralNetwork/MaleNN.py` | `standard_model.keras` | `FemaleNNTransfer.py` | Partial layer freezing, sweep `N ∈ {2,4,5,6}` |
+| Polynomial | `BCM Model/PolynomialRegressor/MalePR.py` | `firstPR` | `FemalePRTransfer.py` | Weighted ensemble `0.05·src + 0.95·tgt` |
 
-**RF architecture:** `MultiOutputRegressor(RandomForestRegressor(n_estimators=300, ...))`, hyperparams via `GridSearchCV`.
-**NN architecture:** `Sequential([Dense(512), Dense(256), Dense(128), Dense(64), Dense(2)])` with L2 regularization and `Dropout(0.1)`.
-**PR architecture:** `MultiOutputRegressor(LinearRegression())` over `PolynomialFeatures(degree=12)` for male BCM. Smaller domains use `degree=4–5` + `Ridge`.
+**Cross-regressor analysis:** `BCM Model/ResgressorAnalysis/AllRegressorsTransferComparison.py` runs all three on the female test set with bootstrap sampling.
 
-## Transfer strategies
+### Era 2 — Callum's `Beam_Membrane/` and `TBCM/` (BCM → BM, BCM → TBCM)
 
-### Weighted ensemble (RF, PR)
+Six labeled RF methods + three autoencoder methods. Same input schema `[a_CT, a_TA, PS]`, BCM as source, target chosen per directory.
 
-```
-y_pred = α · model_source.predict(x) + (1-α) · model_target.predict(x)
-```
+#### RF transfer methods (in `*_TransferRF.py`)
 
-- RF: `α = 0.3` (target dominates; source still adds signal)
-- PR: `α = 0.05` (PR generalizes poorly across domains; trust target almost entirely)
+| # | Method | Description |
+|---|---|---|
+| 1 | **Source Only** | Apply BCM RF directly (zero-shot) |
+| 2 | **Target Only** | Train RF on target alone (no transfer baseline) |
+| 3 | **Residual Correction** | RF predicts `y_target − BCM_pred(x)` |
+| 4 | **Feature Augmentation** | Input is `[x; BCM_pred(x)]` |
+| 5 | **Simple Ensemble** | Fixed `0.3·src + 0.7·tgt` |
+| 6 | **TransRF Ensemble** | Learned per-output weights over methods 2/3/4 via `LinearRegression(positive=True)` on a held-out validation slice |
 
-### Partial layer freezing (NN)
+**Adaptive RF complexity** (`get_model_params(n_samples)` in `BM_TransferRF.py:51`):
+- `< 100` samples: `n_estimators=20, max_depth=3`
+- `100–250`: `n_estimators=30, max_depth=5`
+- scales up to `n_estimators=300, max_depth=None` for the largest sets.
 
-1. Clone the source `keras` model.
-2. Freeze the first N layers (`layer.trainable = False`).
-3. Fit on target data with a low learning rate.
-4. Sweep `N ∈ {2, 4, 5, 6}`; pick by mean R² across F0 and SPL.
+#### Autoencoder transfer methods (in `*_Autoencoder.py`)
 
-### TransRF (advanced RF)
+Architecture: Encoder `3 → 64 → 32 → 16` → Decoder `16 → 32 → 64 → 3` + Predictor `16 → 32 → 16 → 2` + Discriminator `16 → 16 → 8 → 1`. Implemented in PyTorch.
 
-Three sub-models fit on target data:
+| # | Method | Description |
+|---|---|---|
+| A | **Vanilla AE** | Train encoder + decoder + predictor on BCM, fine-tune predictor on target |
+| B | **MMD AE** | Shared encoder with Maximum Mean Discrepancy penalty aligning latent distributions |
+| C | **DAAE** | Domain-Adversarial AE — encoder fools a domain discriminator via gradient reversal |
 
-1. **Target-only** RF.
-2. **Residual correction** RF — predicts `y_target - source_pred(x)`.
-3. **Feature-augmentation** RF — input is `[x; source_pred(x)]`.
+#### TBCM-only — Waveform features
 
-Final prediction is a learned convex combination of the three; weights estimated via K-fold CV. See `BCM Model/RandomForest/DataEfficiencyExperiment.py` — finds **200–500 target samples** is the sweet spot.
+`TBCM_WaveformFeatures.py` extracts per-cycle waveform features from `.mat` files; `TBCM_WaveformTransfer.py` evaluates whether richer features close the BCM→TBCM gap. Result enriched dataset: `TBCM/dataset_TBCM_enriched.csv`.
 
-## Cross-regressor analysis
+## Key empirical results (from Callum's PR #1)
 
-`BCM Model/ResgressorAnalysis/AllRegressorsTransferComparison.py` runs all three transfer models against a held-out target test set, with bootstrap sampling across varying training-sample counts. Outputs comparison CSV + figures. The B+M analog lives at `Beam+Membrane Model/RegressorAnalysis/BMTransferComparison.py`.
+### BCM → TBCM (same physics family)
 
-## Data layer
+| Fraction | Target-Only R² | TransRF R² | Gain |
+|---|---|---|---|
+| 5% (1,379) | 0.956 | 0.962 | +0.006 |
+| 10% | 0.978 | 0.981 | +0.003 |
+| 25% | 0.987 | 0.990 | +0.003 |
+| 100% | 0.992 | 0.993 | +0.001 |
 
-- **Schema:** input columns `a_CT, a_TA, PS`; output columns `F0, SPL`. The B+M `.txt` adds three additional activations (`a_LCA, a_IA, a_PCA`) — only `a_CT, a_TA, PS` are used as features for parity with BCM.
-- **NaN handling (B+M):** drop rows where any of `F0, SPL` is NaN — these are physically invalid configurations (beam in compression, negative mucosa stress).
-- **Scalers:** see [`DECISIONS.md`](DECISIONS.md) entry on per-domain scalers. Per-domain, always.
-- **Splits:** `train_test_split(test_size=0.2, random_state=42)` everywhere.
+Spearman: F0 = 0.88, SPL = 0.75. RF methods dominate AE. Transfer gain is small because target-only is already excellent (same physics family).
 
-## Beam+Membrane model (target domain)
+### BCM → BM (different physics)
 
-Sean's MATLAB FE model in `VocalFoldRegression/Beam+Membrane_ForSean/`:
+| Fraction | Target-Only R² | TransRF R² | Gain |
+|---|---|---|---|
+| 5% (160) | 0.493 | 0.516 | +0.023 |
+| 25% (800) | 0.777 | 0.800 | +0.023 |
+| 50% (1,600) | 0.866 | 0.872 | +0.006 |
 
-- 3 tissue layers (TA muscle + ligament + mucosa) vs BCM's 2-layer lumped model
-- Distributed beam with flexural rigidity + 2D membrane wave equation
-- Posturing simulated via `MuscleControlModel` (larynx kinematics)
-- WRA acoustic solver for SPL
+Spearman: F0 = 0.81, SPL = 0.74. Source-only R² ≈ −2.0 (scale mismatch). AE underperforms RF on BM.
 
-Same free inputs as BCM: `a_CT ∈ [0,1]`, `a_TA ∈ [0,1]`, `PS ∈ [300, 1000] Pa`. Same outputs `F0, SPL`. Generation script: `Randomly_Generating_Data_Membrane_Beam_Model.m`. Set `N_s ≈ 700` to overshoot the ~500-valid target.
+### BCM → BM small-data regime
+
+At 10–500 BM samples (10 runs each):
+
+- **20–75 samples:** Feature Augmentation wins
+- **100+ samples:** TransRF wins
+- **200 samples:** sweet spot (+0.09 R² over target-only)
+- **Residual Correction** hurts at all small sizes (trusts raw BCM predictions despite scale mismatch)
+
+## Data conventions
+
+- **CSV loading:** `pd.read_csv(..., index_col=0)`, then `df.rename(columns={'Ps': 'PS'}, inplace=True)`.
+- **Schema:** input columns `a_CT, a_TA, PS`; output columns `F0, SPL`. Drop extra columns (`PL` for TBCM, `a_LCA` for BM — has near-zero correlation with outputs).
+- **NaN handling (BM):** drop rows where `F0` or `SPL` is NaN (physically invalid configs).
+- **Scalers:** per-domain, always.
+- **Splits:** `train_test_split(test_size=0.2, random_state=42)`.
+
+## Beam-Membrane source (MATLAB)
+
+Two MATLAB pipelines coexist:
+
+- **Callum's `Beam_Membrane/Generate_BM_Dataset.m`** — current. 5,000 samples saved incrementally. Uses FEM solver `Membrane_Beam_Solver_MyImplementation2`; requires `PhonationModelsCode2/` on the MATLAB path.
+- **Sean's `Beam+Membrane_ForSean/Randomly_Generating_Data_Membrane_Beam_Model.m`** — older, untracked locally on `feature/fem`. Has `Membrane_Beam_Solver.m`, `WRA_Solver.m`, `MuscleControlModel`-flavored posturing scripts. Not currently used.

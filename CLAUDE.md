@@ -4,33 +4,45 @@
 
 ## Project mission
 
-Map vocal-fold motor inputs (`a_CT`, `a_TA`, `PS`) to acoustic outputs (`F0` Hz, `SPL` dB) using ML regressors. Goal: replace slow physics-based lookup tables with fast, trainable models, and transfer-learn across domains (male BCM → female BCM → Beam+Membrane).
+Map vocal-fold motor inputs (`a_CT`, `a_TA`, `PS`) to acoustic outputs (`F0` Hz, `SPL` dB) using ML regressors. Train on a cheap source model (BCM) and **transfer-learn** to expensive targets (TBCM, Beam-Membrane FEM) so we need fewer expensive simulations. Currently three target domains: female BCM, TBCM, BM.
 
-Active branch: `feature/fem`. **Do not pull from `origin/main`** — it is stale.
+Active branch: `feature/fem`. As of 2026-05-02 it is **merged with `origin/main`** (Callum's PR #1). Push when ready.
 
 ## Repo map
 
 | Path | Status | What it is |
 |---|---|---|
-| `VocalFoldRegression/` | **primary** | All ML work (BCM + B+M, three regressors, transfer learning) |
-| `VocalFoldRegression/Beam+Membrane_ForSean/` | aux | Sean's MATLAB FE model — generates B+M training data |
-| `glottal_area/` | aux | Vocal-fold area extraction scripts (separate scope) |
-| `OpenIFEM/` | aux | External FE/FSI solver, vendored — not actively used |
-| `figs/` | aux | Top-level scratch figures |
+| `Beam_Membrane/` | **primary (Callum)** | BCM → BM transfer experiments. RF + autoencoder methods, MATLAB data gen, results JSON, figures |
+| `TBCM/` | **primary (Callum)** | BCM → TBCM transfer experiments. RF + autoencoder + waveform features |
+| `VocalFoldRegression/` | **primary (Brian)** | Original male/female BCM transfer (RF, NN, polynomial regressor) |
+| `archive/` | reference | Old experimental scripts and figures Callum moved aside in PR #1 |
 | `docs/` | docs | Architecture, milestones, roadmap, glossary, decisions |
+| `PROJECT_GUIDE.md` | docs (Callum) | Callum's standalone onboarding doc — kept alongside `/docs/`, focused on his transfer-learning methods |
+| `glottal_area/` | aux | Vocal-fold area extraction scripts (`integrate.py` archived) |
+| `OpenIFEM/` | aux | External FE/FSI solver, vendored — not actively used |
+
+> Local-only (untracked, your call): `VocalFoldRegression/Beam+Membrane Model/` (Brian's pre-Callum B+M scaffolding) and `VocalFoldRegression/Beam+Membrane_ForSean/` (Sean's MATLAB).
 
 ## Stack
 
-- **Python**: `scikit-learn`, `tensorflow` / `keras`, `pandas`, `numpy`, `matplotlib`, `joblib`, `scipy`
-- **MATLAB**: B+M data generation (`Beam+Membrane_ForSean/Randomly_Generating_Data_Membrane_Beam_Model.m`)
+- **Python**: `scikit-learn`, `torch` (autoencoders), `tensorflow` / `keras` (legacy NN), `pandas`, `numpy`, `matplotlib`, `joblib`, `scipy`
+- **MATLAB**: BM data generation. Two scripts coexist:
+  - Callum's `Beam_Membrane/Generate_BM_Dataset.m` (current — 5,000 samples, FEM solver `Membrane_Beam_Solver_MyImplementation2`)
+  - Sean's `VocalFoldRegression/Beam+Membrane_ForSean/Randomly_Generating_Data_Membrane_Beam_Model.m` (older, untracked locally)
 
 ## Hard conventions — obey these
 
-1. **Per-domain StandardScalers.** Each domain (male, female, B+M) fits its own input scaler and its own per-output scalers (one for `F0`, one for `SPL`). Never use a male scaler on female or B+M data — it has destroyed past experiments (see `VocalFoldRegression/BCM Model/NeuralNetwork/interpret.txt`).
-2. **Schema is fixed.** Inputs always `[a_CT, a_TA, PS]`. Outputs always `[F0, SPL]`. Don't reorder.
+1. **Per-domain StandardScalers.** Each domain (male, female, BM, TBCM) fits its own input scaler and its own per-output scalers (one for `F0`, one for `SPL`). Never reuse a scaler across domains — it destroyed early female-BCM transfer results (`VocalFoldRegression/BCM Model/NeuralNetwork/interpret.txt`).
+2. **Schema is fixed.** Inputs always `[a_CT, a_TA, PS]`. Outputs always `[F0, SPL]`. Don't reorder. (BM has an extra `a_LCA` column we **drop** — see DECISIONS.)
 3. **Reproducibility.** `random_state=42`, `test_size=0.2` train/test split — match every existing script.
-4. **Don't blob-commit binaries.** `.pkl`, `.keras`, `.parquet` are committed selectively. Check the surrounding folder before adding new ones.
-5. **Append a line to `docs/DECISIONS.md`** whenever you make a non-obvious judgment call (hyperparam choice, weighting, transfer strategy variant).
+4. **Adaptive RF complexity.** For new RF transfer scripts, scale `n_estimators` and `max_depth` by sample count using a `get_model_params(n_samples)` function (pattern in `Beam_Membrane/BM_TransferRF.py:51`). Don't hardcode `n_estimators=300` for small-data targets.
+5. **Data loading convention** (Callum's pattern, used across `Beam_Membrane/` and `TBCM/`):
+   ```python
+   df = pd.read_csv('dataset_*.csv', index_col=0)
+   df.rename(columns={'Ps': 'PS'}, inplace=True)
+   ```
+6. **Don't blob-commit binaries.** `.pkl`, `.keras`, `.parquet` are committed selectively. `.csv`, `*.txt`, `*.mat`, `*.ipynb` are gitignored — use `git add -f` only when needed and you'll see why in `.gitignore`.
+7. **Append a line to `docs/DECISIONS.md`** whenever you make a non-obvious judgment call (hyperparam choice, weighting, transfer strategy variant, scope change).
 
 ## Interaction conventions
 
@@ -38,13 +50,14 @@ Active branch: `feature/fem`. **Do not pull from `origin/main`** — it is stale
 
 ## Where to look
 
-- System design + regressor matrix → [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- System design, regressor matrix, transfer methods → [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 - What's been done (dated) → [`docs/MILESTONES.md`](docs/MILESTONES.md)
 - What's next → [`docs/ROADMAP.md`](docs/ROADMAP.md)
 - Term lookup → [`docs/GLOSSARY.md`](docs/GLOSSARY.md)
 - Why we chose X → [`docs/DECISIONS.md`](docs/DECISIONS.md)
+- Callum's hands-on guide for `Beam_Membrane/` and `TBCM/` → [`PROJECT_GUIDE.md`](PROJECT_GUIDE.md)
 
 ## Contributors
 
-- Brian Gladney — lead
-- Callum — transfer learning collaborator
+- **Brian Gladney** — lead. Owns `VocalFoldRegression/` (male/female BCM, RF/NN/PR baselines and transfer).
+- **Callum Camazzola** — collaborator (joined 2026-01). Owns `Beam_Membrane/` and `TBCM/` (BCM → BM and BCM → TBCM transfer; RF and autoencoder methods).
