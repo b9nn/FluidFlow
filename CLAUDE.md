@@ -21,7 +21,7 @@ Active branch: `feature/fem`. As of 2026-05-02 it is **merged with `origin/main`
 | `glottal_area/` | aux | Vocal-fold area extraction scripts (`integrate.py` archived) |
 | `OpenIFEM/` | aux | External FE/FSI solver, vendored — not actively used |
 
-> Local-only (untracked, your call): `VocalFoldRegression/Beam+Membrane Model/` (Brian's pre-Callum B+M scaffolding) and `VocalFoldRegression/Beam+Membrane_ForSean/` (Sean's MATLAB).
+> Local-only (untracked, third-party): `VocalFoldRegression/Beam+Membrane_ForSean/` (Sean's upstream MATLAB FE solver — kept on your machine, not vendored into the repo without consent).
 
 ## Stack
 
