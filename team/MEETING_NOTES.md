@@ -1,0 +1,36 @@
+# 1 o'clock Meeting Notes
+
+Append-only. Newest at the top. Cadence: a few times a week.
+
+Format per entry:
+```
+## YYYY-MM-DD
+**Attendees:** brian, callum
+**Decisions:**
+- ...
+**Action items:** (with owner)
+- [task] — owner
+**Blockers:** (or "none")
+- ...
+```
+
+---
+
+## 2026-05-04 — Brian solo (post-hiatus catch-up)
+**Attendees:** brian
+**Decisions:**
+- Adopt `/team/` folder as shared agile coordination layer. Both Claude workflows (Brian's and Callum's) will read it via root `CLAUDE.md`.
+- Cadence: a few times a week, no fixed schedule.
+- Track ownership per-task (`brian`, `callum`, `shared`, `tbd`) rather than by domain.
+- Brian's main thread coming off hiatus: explore alternate methods to BM that don't go through the BCM→BM transfer first (TODO #1).
+- TBCM→BM two-stage transfer is on the radar as a separate experiment (TODO #2). Owner to be picked at next 1pm.
+- Keep Callum's `PROJECT_GUIDE.md` as his hands-on guide for `Beam_Membrane/` and `TBCM/`. Don't fold into `/docs/` — separate purpose.
+
+**Action items:**
+- Verify reproducibility of Callum's BM/TBCM results locally before extending — `brian` (TODO #5)
+- Pick up TODO #1 (alternate methods) — `brian`
+- Discuss TBCM→BM ownership and scope at next 1pm — `shared`
+
+**Blockers:** none.
+
+**Notes for Callum's next session:** Brian merged `origin/main` into `feature/fem` and force-fast-forwarded `main` to include doc reconcile commits. No code touched. New `/team/` folder added — please check it in your next Claude session, the root `CLAUDE.md` now points there.
