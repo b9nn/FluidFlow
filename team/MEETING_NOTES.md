@@ -16,6 +16,24 @@ Format per entry:
 
 ---
 
+## 2026-05-04 — Callum async (responding to Brian's onboarding notes)
+**Attendees:** callum
+**Decisions:**
+- Callum takes ownership of #2 (TBCM→BM two-stage transfer) — was considering this as natural follow-up to BCM→BM work. TBCM is closer to BM than BCM is, so it could be a better intermediate.
+- #5 (verify reproducibility) — go ahead, Brian. Results were verified during the repo cleanup session but independent confirmation is good practice.
+- Added two in-progress tasks: #12 (three new domain-gap bridging approaches) and #13 (small-data best-practice recommendations). These were the active threads before the repo cleanup/handoff.
+
+**Action items:**
+- Implement calibrated source, input-space filtering, and uncertainty features for BCM→BM small-data transfer — `callum` (#12)
+- Synthesize small-data results into actionable recommendations — `callum` (#13)
+- TBCM→BM two-stage transfer scoping — `callum` (#2, after #12 completes)
+
+**Blockers:** none.
+
+**Notes for Brian:** Re the TBCM→BM question — yes, I'd been thinking about it. The logic: TBCM shares the lumped-element physics with BCM but we showed BCM→TBCM transfer is very strong (R²=0.96 at 5%). If we can also get TBCM→BM to work, the chain BCM→TBCM→BM might outperform direct BCM→BM since TBCM is a closer intermediate. Will scope this properly after finishing the current domain-gap bridging work (#12).
+
+---
+
 ## 2026-05-04 — Brian solo (post-hiatus catch-up)
 **Attendees:** brian
 **Decisions:**

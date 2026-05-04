@@ -8,7 +8,7 @@ Format per row: `#N — Task — owner — Pn`. Click through to TODO for full n
 
 ## Backlog
 
-- **#2** — TBCM→BM two-stage transfer experiment — `tbd` — `P1`
+- **#2** — TBCM→BM two-stage transfer experiment — `callum` — `P1`
 - **#3** — Extend NN partial-freezing transfer to BM and TBCM — `brian` — `P2`
 - **#4** — Extend PR (degree 4–5 + Ridge) transfer to BM and TBCM — `brian` — `P2`
 - **#5** — Verify reproducibility of Callum's BM/TBCM results — `brian` — `P1`
@@ -22,6 +22,8 @@ Format per row: `#N — Task — owner — Pn`. Click through to TODO for full n
 ## In Progress
 
 - **#1** — Explore non-transfer alternate methods for BM (BCM→BM without first stage) — `brian` — `P1`
+- **#12** — BCM→BM domain-gap bridging: calibrated source, input-space filtering, uncertainty features — `callum` — `P1`
+- **#13** — BCM→BM small-data regime analysis and best-practice recommendations — `callum` — `P1`
 
 ## In Review
 
