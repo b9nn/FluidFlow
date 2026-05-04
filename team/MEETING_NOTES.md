@@ -16,6 +16,21 @@ Format per entry:
 
 ---
 
+## 2026-05-04 (later) — Brian solo (planning + phase 1 of #1)
+**Attendees:** brian
+**Decisions:**
+- Locked in scope of TODO #1 ("alternate methods"): three methods — GP, physics-informed MLP, TabPFN — at N ∈ [5, 10, 20, 30, 50, 75, 100], head-to-head with Callum's TransRF / Feature Aug on the same test split.
+- Output lands as new rows in `BM_Summary.py`'s comparison.
+- Spec written: `docs/superpowers/specs/2026-05-04-bm-alternates-design.md`.
+
+**Action items:**
+- Phase 1 (GP scaffold) — done — `brian`
+- Phase 2 (PINN with monotonicity priors) — next — `brian`
+- Run BM_Alternates.py against real `dataset_BM.csv` to land Phase 1 actual R² numbers — `brian` (blocked on having data on this machine)
+
+**Blockers:**
+- BM dataset not on this clone. Phase 1 was smoke-tested on synthetic data; real numbers pending data load.
+
 ## 2026-05-04 — Brian solo (post-hiatus catch-up)
 **Attendees:** brian
 **Decisions:**

@@ -22,6 +22,8 @@ Format per row: `#N — Task — owner — Pn`. Click through to TODO for full n
 ## In Progress
 
 - **#1** — Explore non-transfer alternate methods for BM (BCM→BM without first stage) — `brian` — `P1`
+  - Phase 1/5 done: `Beam_Membrane/BM_Alternates.py` scaffolded with GP method (Matern 2.5 + WhiteKernel). Smoke-tested on synthetic data; needs real BM data to land actual results
+  - Next: Phase 2 (PINN with monotonicity priors on `∂F0/∂a_CT` and `∂SPL/∂PS`)
 
 ## In Review
 
