@@ -33,4 +33,4 @@ Format per entry:
 
 **Blockers:** none.
 
-**Notes for Callum's next session:** Brian merged `origin/main` into `feature/fem` and force-fast-forwarded `main` to include doc reconcile commits. No code touched. New `/team/` folder added — please check it in your next Claude session, the root `CLAUDE.md` now points there.
+**Notes for Callum's next session:** Brian merged `origin/main` into `feature/fem` (clean fast-forward, no force) and pushed `main` up with the doc reconcile commits. No code touched — only `/docs/`, `/CLAUDE.md`, and the new `/team/` folder. Please skim `/team/` in your next Claude session; the root `CLAUDE.md` now points there as the shared coordination layer.

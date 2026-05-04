@@ -53,4 +53,4 @@ Callum's small-data sweep covers 10–500 BM samples. The interesting question i
 - Glottal-area integration as an additional input/output feature.
 - OpenIFEM coupling for full FSI training data (replaces reduced-order BM).
 - Hyperparameter sweep tracker (e.g., a small CSV log or a tracker like MLflow).
-- Reconcile or delete Brian's local-only `VocalFoldRegression/Beam+Membrane Model/` (pre-Callum scaffolding) and `Beam+Membrane_ForSean/` (Sean's MATLAB).
+- Decide fate of `VocalFoldRegression/Beam+Membrane_ForSean/` — Sean's upstream MATLAB FE solver (currently untracked locally; needs his consent before vendoring or a `data/README.md` documenting it as an external dependency). Tracked as `team/TODO.md` #7.

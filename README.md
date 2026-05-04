@@ -36,21 +36,34 @@ CSVs are gitignored; rebuild from MATLAB or pull from your local data location.
 
 ## Documentation
 
-| Doc | Audience | Purpose |
-|---|---|---|
-| [`CLAUDE.md`](CLAUDE.md) | Claude | Conventions, repo map, entry point |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | both | System design, regressor matrix, transfer strategies (incl. autoencoder methods) |
-| [`docs/MILESTONES.md`](docs/MILESTONES.md) | both | Dated history of what's shipped |
-| [`docs/ROADMAP.md`](docs/ROADMAP.md) | both | Phased plan for what's next |
-| [`docs/GLOSSARY.md`](docs/GLOSSARY.md) | both | Domain terms, methods, file references |
-| [`docs/DECISIONS.md`](docs/DECISIONS.md) | both | Append-only judgment log |
-| [`PROJECT_GUIDE.md`](PROJECT_GUIDE.md) | both | Callum's hands-on guide for `Beam_Membrane/` and `TBCM/` (kept as his standalone notes) |
+### Operational (what we're doing right now — Brian + Callum + both Claudes)
+
+| Doc | Purpose |
+|---|---|
+| [`team/TODO.md`](team/TODO.md) | Master task list with owner + status. Single source of truth for "what is there to do" |
+| [`team/BOARD.md`](team/BOARD.md) | Kanban view (Backlog / In Progress / Review / Recently Done) |
+| [`team/MEETING_NOTES.md`](team/MEETING_NOTES.md) | Append-only log of ~1pm syncs |
+| [`team/README.md`](team/README.md) | Folder conventions, owner / status / priority values, cadence |
+
+### Reference (what the project is)
+
+| Doc | Purpose |
+|---|---|
+| [`CLAUDE.md`](CLAUDE.md) | Entry point, conventions, repo map (auto-loaded by Claude) |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | System design, regressor matrix, transfer strategies (incl. autoencoder methods) |
+| [`docs/MILESTONES.md`](docs/MILESTONES.md) | Dated history of what's shipped |
+| [`docs/ROADMAP.md`](docs/ROADMAP.md) | Strategic research phases (multi-month) |
+| [`docs/GLOSSARY.md`](docs/GLOSSARY.md) | Domain terms, methods, file references |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md) | Append-only judgment log |
+| [`PROJECT_GUIDE.md`](PROJECT_GUIDE.md) | Callum's hands-on guide for `Beam_Membrane/` and `TBCM/` (his standalone notes) |
 
 ## Branches
 
-Work happens on `feature/fem`. `main` was caught up via Callum's PR #1 on 2026-05-02 and merged into `feature/fem` the same day.
+`main` and `feature/fem` are aligned. Work continues on `feature/fem` and is fast-forwarded to `main` after sync points.
 
 ## Contributors
 
-- Brian Gladney — `VocalFoldRegression/` (male/female BCM)
-- Callum Camazzola — `Beam_Membrane/`, `TBCM/`
+Equal collaborators; per-task ownership tracked in [`team/TODO.md`](team/TODO.md). Original authorship of code areas:
+
+- **Brian Gladney** — `VocalFoldRegression/` (male/female BCM, RF/NN/PR baselines and transfer)
+- **Callum Camazzola** — `Beam_Membrane/`, `TBCM/` (BCM → BM and BCM → TBCM transfer; RF and autoencoder methods)
