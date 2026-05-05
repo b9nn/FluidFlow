@@ -1,13 +1,13 @@
 """
-BCM -> Beam-Membrane: Non-Transfer Alternate Methods (PHASE 1+2: GP, PINN)
+BCM -> Beam-Membrane: Non-Transfer Alternate Methods (PHASES 1-3)
 
 Tracks team/TODO.md #1 — exploring whether non-transfer methods can match
 or beat transfer at very small N (5-100 BM samples).
 
-Methods (added incrementally across phases):
+Methods:
   - GP:      Gaussian Process with Matern(2.5) kernel  [PHASE 1]
-  - PINN:    Physics-informed MLP                       [PHASE 2, this file]
-  - TabPFN:  Pretrained tabular foundation model        [PHASE 3, pending]
+  - PINN:    Physics-informed MLP                       [PHASE 2]
+  - TabPFN:  Pretrained tabular foundation model        [PHASE 3, this file]
 
 Mirrors BM_SmallData.py harness:
   - Same sample sizes: N in [5, 10, 20, 30, 50, 75, 100]
@@ -36,6 +36,13 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+# TabPFN is optional — fall back gracefully if not installed
+try:
+    from tabpfn import TabPFNRegressor
+    _TABPFN_AVAILABLE = True
+except ImportError:
+    _TABPFN_AVAILABLE = False
+
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -63,6 +70,9 @@ PINN_NUDGE = 0.1  # in standardized input space
 #   d SPL / d PS   >= 0  (more pressure -> louder)
 #   d F0  / d PS   >= 0  (chest-voice physiology — modest but real)
 PINN_PRIORS = [(0, 0), (2, 1), (2, 0)]
+
+# TabPFN config
+TABPFN_MAX_TRAIN = 1000  # TabPFN's effective training cap; matches our regime
 
 
 # ==================== METHODS ====================
@@ -216,6 +226,44 @@ def fit_predict_pinn(X_train_sc, Y_train_sc, X_test_sc, scaler_Y_per_output,
     return preds
 
 
+def fit_predict_tabpfn(X_train_sc, Y_train_sc, X_test_sc, scaler_Y_per_output,
+                        random_state=42):
+    """Predict with TabPFN — pretrained tabular foundation model.
+
+    TabPFN is single-output, so we fit one regressor per target. It does its
+    own scaling internally but we pass the standardized inputs/outputs anyway
+    for consistency with the other methods.
+
+    Cap at TABPFN_MAX_TRAIN samples; truncate larger sets.
+
+    SETUP (one-time):
+      TabPFN >= 7.x requires a license acceptance and an API token before it
+      will download model weights:
+        1. Visit https://ux.priorlabs.ai and accept the license
+        2. Copy the API key from https://ux.priorlabs.ai/account
+        3. Set TABPFN_TOKEN env var (or pre-set os.environ['TABPFN_TOKEN']
+           before importing this module)
+    """
+    if not _TABPFN_AVAILABLE:
+        raise RuntimeError("tabpfn not installed — pip install tabpfn")
+
+    # Truncate if above cap
+    if X_train_sc.shape[0] > TABPFN_MAX_TRAIN:
+        X_train_sc = X_train_sc[:TABPFN_MAX_TRAIN]
+        Y_train_sc = Y_train_sc[:TABPFN_MAX_TRAIN]
+
+    out_dim = Y_train_sc.shape[1]
+    preds = np.zeros((X_test_sc.shape[0], out_dim))
+    for i in range(out_dim):
+        reg = TabPFNRegressor(random_state=random_state, ignore_pretraining_limits=True)
+        reg.fit(X_train_sc, Y_train_sc[:, i])
+        pred_sc = reg.predict(X_test_sc)
+        preds[:, i] = scaler_Y_per_output[i].inverse_transform(
+            pred_sc.reshape(-1, 1)
+        ).ravel()
+    return preds
+
+
 # ==================== EXPERIMENT HARNESS ====================
 def run_single(method_name, n_target, df_bm, random_state):
     """Run one method at one sample count with one seed. Returns
@@ -258,6 +306,9 @@ def run_single(method_name, n_target, df_bm, random_state):
     elif method_name == 'PINN':
         preds = fit_predict_pinn(X_train_sc, Y_train_sc, X_test_sc,
                                   scalers_Y, random_state=random_state)
+    elif method_name == 'TabPFN':
+        preds = fit_predict_tabpfn(X_train_sc, Y_train_sc, X_test_sc,
+                                    scalers_Y, random_state=random_state)
     else:
         raise ValueError(f"Unknown method: {method_name}")
 
@@ -364,8 +415,22 @@ def main():
     pinn_results = run_method('PINN', df_bm)
     merge_into_existing_results(pinn_results, 'PINN')
 
+    if _TABPFN_AVAILABLE:
+        print("\n" + "-" * 70)
+        print("Method: TabPFN (pretrained tabular foundation model)")
+        print("-" * 70)
+        try:
+            tabpfn_results = run_method('TabPFN', df_bm)
+            merge_into_existing_results(tabpfn_results, 'TabPFN')
+        except Exception as e:
+            # TabPFNLicenseError, network errors, etc. — skip and continue
+            print(f"  SKIPPED: TabPFN run failed: {type(e).__name__}: {e}")
+            print(f"  See fit_predict_tabpfn docstring for setup instructions.")
+    else:
+        print("\nSKIPPED: TabPFN — install with `pip install tabpfn` to enable")
+
     print(f"\nResults written to: {out_path}")
-    print("\nPhase 2 done. Next phase: TabPFN (#3), then BM_Summary (#4).")
+    print("\nAll method runs complete. Next phase: BM_Summary integration (#4).")
 
 
 if __name__ == '__main__':

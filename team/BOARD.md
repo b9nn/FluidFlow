@@ -23,9 +23,10 @@ Format per row: `#N — Task — owner — Pn`. Click through to TODO for full n
 
 - **#1** — Explore non-transfer alternate methods for BM (BCM→BM without first stage) — `brian` — `P1`
   - Phase 1/5 done: GP method (Matern 2.5 + WhiteKernel)
-  - Phase 2/5 done: PINN — MLP `[3→32→32→2]` + monotonicity penalty with **3** priors (`∂F0/∂a_CT ≥ 0`, `∂SPL/∂PS ≥ 0`, `∂F0/∂PS ≥ 0`), λ=0.1, early stopping
-  - Both smoke-tested on synthetic data; needs real BM data to land actual results
-  - Next: Phase 3 (TabPFN), Phase 4 (BM_Summary integration), Phase 5 (wrap-up)
+  - Phase 2/5 done: PINN — MLP `[3→32→32→2]` + monotonicity penalty with **3** priors (`∂F0/∂a_CT ≥ 0`, `∂SPL/∂PS ≥ 0`, `∂F0/∂PS ≥ 0`), λ=0.1
+  - Phase 3/5 done: TabPFN integrated. Couldn't smoke-test locally — TabPFN ≥7.x requires license acceptance + `TABPFN_TOKEN` env var. Code path is correct; graceful skip on license errors
+  - GP and PINN smoke-tested on synthetic data; all three need real BM data (and `TABPFN_TOKEN`) to land actual results
+  - Next: Phase 4 (BM_Summary integration), Phase 5 (wrap-up: DECISIONS, MILESTONES, close #1)
 
 ## In Review
 
