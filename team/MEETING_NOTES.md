@@ -25,11 +25,14 @@ Format per entry:
 
 **Action items:**
 - Phase 1 (GP scaffold) — done — `brian`
-- Phase 2 (PINN with monotonicity priors) — next — `brian`
-- Run BM_Alternates.py against real `dataset_BM.csv` to land Phase 1 actual R² numbers — `brian` (blocked on having data on this machine)
+- Phase 2 (PINN with 3 monotonicity priors: `∂F0/∂a_CT`, `∂SPL/∂PS`, `∂F0/∂PS`) — done — `brian`
+- Phase 3 (TabPFN) — next — `brian`
+- Phase 4 (BM_Summary integration) — pending — `brian`
+- Phase 5 (DECISIONS + MILESTONES + close TODO #1) — pending — `brian`
+- Run BM_Alternates.py against real `dataset_BM.csv` to land actual R² numbers — `brian` (blocked on having data on this machine)
 
 **Blockers:**
-- BM dataset not on this clone. Phase 1 was smoke-tested on synthetic data; real numbers pending data load.
+- BM dataset not on this clone. Phases 1+2 smoke-tested on synthetic data only; real numbers pending data load.
 
 ## 2026-05-04 — Brian solo (post-hiatus catch-up)
 **Attendees:** brian

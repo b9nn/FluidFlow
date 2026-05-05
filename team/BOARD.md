@@ -22,8 +22,10 @@ Format per row: `#N — Task — owner — Pn`. Click through to TODO for full n
 ## In Progress
 
 - **#1** — Explore non-transfer alternate methods for BM (BCM→BM without first stage) — `brian` — `P1`
-  - Phase 1/5 done: `Beam_Membrane/BM_Alternates.py` scaffolded with GP method (Matern 2.5 + WhiteKernel). Smoke-tested on synthetic data; needs real BM data to land actual results
-  - Next: Phase 2 (PINN with monotonicity priors on `∂F0/∂a_CT` and `∂SPL/∂PS`)
+  - Phase 1/5 done: GP method (Matern 2.5 + WhiteKernel)
+  - Phase 2/5 done: PINN — MLP `[3→32→32→2]` + monotonicity penalty with **3** priors (`∂F0/∂a_CT ≥ 0`, `∂SPL/∂PS ≥ 0`, `∂F0/∂PS ≥ 0`), λ=0.1, early stopping
+  - Both smoke-tested on synthetic data; needs real BM data to land actual results
+  - Next: Phase 3 (TabPFN), Phase 4 (BM_Summary integration), Phase 5 (wrap-up)
 
 ## In Review
 
