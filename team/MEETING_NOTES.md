@@ -16,6 +16,22 @@ Format per entry:
 
 ---
 
+## 2026-05-05 (later) — Brian solo (TabPFN backend swap, BM data inbound)
+**Attendees:** brian
+**Decisions:**
+- TabPFN backend swap from `tabpfn` (local, license-gated) to `tabpfn-client` (cloud, account-gated). Code now imports `tabpfn-client` first and falls back to `tabpfn` if only that is installed. Logged to DECISIONS.
+- Auth helper added: reads `TABPFN_TOKEN` env var if set, else relies on cached interactive login from `tabpfn_client.init()`.
+- Add `.env*` to `.gitignore` for safety even though no `.env` is currently in the project.
+- TODO #12 status moves from `backlog` → `in-progress` since BM data is being copied locally.
+
+**Action items:**
+- Run `python -c "from tabpfn_client import init; init()"` once to do browser login — `brian`
+- Drop `dataset_BM.csv` into `Beam_Membrane/` and run `python Beam_Membrane/BM_Alternates.py` — `brian`
+- Then run `python Beam_Membrane/BM_Summary.py` to regenerate `bm_alternates.png` with real numbers — `brian`
+- After numbers land: migrate TODO #1 + #12 to MILESTONES — `brian`
+
+**Blockers:** none — data inbound, code unblocked.
+
 ## 2026-05-05 — Brian solo (phases 2–5 of #1, code complete)
 **Attendees:** brian
 **Decisions:**

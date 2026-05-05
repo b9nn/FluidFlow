@@ -141,12 +141,12 @@ df.rename(columns={'Ps': 'PS'}, inplace=True)
 **Why:** These three priors are well-established in vocal-fold physiology and unlikely to fight the data. `∂F0/∂a_TA` is intentionally not constrained — it's non-monotonic in BM (TA tightening can lower F0 in some regimes). λ=0.1 keeps the prior secondary to the data fit while still nudging predictions toward physically plausible behavior at small N. λ to be re-tuned if real-data results show the prior is fighting the data.
 **Where it shows up:** `Beam_Membrane/BM_Alternates.py:PINN_PRIORS`, `monotonicity_penalty`.
 
-## 2026-05-05 — TabPFN as a third alternate, with license caveat
+## 2026-05-05 — TabPFN as a third alternate (cloud client preferred)
 
-**Context:** Phase 3 of TODO #1. Adding a pretrained tabular foundation model.
-**Decision:** Use TabPFN ≥ 7.x (`pip install tabpfn`) with one regressor per output. Train cap of 1000 samples (TabPFN's effective limit). Document the one-time license + `TABPFN_TOKEN` setup as a setup task in `team/TODO.md`. Wrap the run loop in try/except so license/network errors skip TabPFN gracefully without breaking GP and PINN.
-**Why:** TabPFN delivers strong small-N tabular regression with no hyperparameter tuning. The 1000-sample cap is fine — our regime is N ≤ 100. The license requirement was unexpected but is a one-time setup; graceful skip means TabPFN being unavailable doesn't block the GP/PINN comparison.
-**Where it shows up:** `Beam_Membrane/BM_Alternates.py:fit_predict_tabpfn`, `_TABPFN_AVAILABLE` guard in `main()`.
+**Context:** Phase 3 of TODO #1. Adding a pretrained tabular foundation model. Initial install of the local `tabpfn` package hit a license-acceptance gate that required interactive browser login + `TABPFN_TOKEN` to download model weights, which broke headless smoke testing.
+**Decision:** Switch to `tabpfn-client` (cloud-API; no local model-weight download, no license dance — just an account login). The code prefers `tabpfn-client` and falls back to local `tabpfn` if only that is installed. One regressor per target. Train cap of 1000 samples (matches our N ≤ 100 regime anyway). Auth either via interactive `tabpfn_client.init()` (browser, one-time, cached) or via `TABPFN_TOKEN` env var. Wrap the run loop in try/except so auth/network errors skip TabPFN without breaking GP and PINN.
+**Why:** Cloud client removes a friction step (license + token download) and keeps TabPFN reachable from headless or fresh-clone environments. The dual-import dance (`tabpfn-client` first, `tabpfn` fallback) means whichever Brian or Callum has installed will work.
+**Where it shows up:** `Beam_Membrane/BM_Alternates.py:fit_predict_tabpfn`, `_TABPFN_BACKEND` selection at import time, `_ensure_tabpfn_auth` helper.
 
 ## 2026-05-04 — Shared agile workspace at `/team/`, per-task ownership
 

@@ -19,4 +19,9 @@ models/
 .claude/
 figs/
 
+# --- SECRETS / LOCAL ENV ---
+.env
+.env.*
+!.env.example
+
 test.py

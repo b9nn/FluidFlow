@@ -9,7 +9,7 @@ When a row reaches `done` and survives a sync cycle, migrate it to `../docs/MILE
 | # | Task | Owner | Status | Priority | Notes |
 |---|---|---|---|---|---|
 | 1 | Explore non-transfer alternate methods for BM (BCM→BM without first stage) | brian | review | P1 | Code complete (5 phases) — `Beam_Membrane/BM_Alternates.py` with GP+PINN+TabPFN, `BM_Summary.py` extended. Real-data run pending in #12 |
-| 12 | Run `BM_Alternates.py` on real `dataset_BM.csv` and land actual R² results | brian | backlog | P1 | Blocker: need BM data on local machine + `TABPFN_TOKEN` for TabPFN. Once run, regenerate `bm_alternates.png` and migrate #1 + #12 to MILESTONES |
+| 12 | Run `BM_Alternates.py` on real `dataset_BM.csv` and land actual R² results | brian | in-progress | P1 | BM data being copied over locally now. TabPFN auth via cloud client: `python -c "from tabpfn_client import init; init()"` (one-time browser login) OR `$env:TABPFN_TOKEN = "..."`. Once run, regenerate `bm_alternates.png` and migrate #1 + #12 to MILESTONES |
 | 2 | TBCM→BM two-stage transfer experiment | tbd | backlog | P1 | Use TBCM as cheap-but-closer-to-BM intermediate. Compare against BCM→BM direct. Decide owner at next 1pm |
 | 3 | Extend NN partial-freezing transfer to BM and TBCM | brian | backlog | P2 | Brian's NN strategy from VocalFoldRegression has only been used on female BCM. Add as additional method in `BM_Summary.py` / `TBCM_Summary.py` |
 | 4 | Extend PR (degree 4–5 + Ridge) transfer to BM and TBCM | brian | backlog | P2 | Same — bring PR into the new domains |

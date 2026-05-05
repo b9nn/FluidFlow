@@ -36,12 +36,24 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-# TabPFN is optional — fall back gracefully if not installed
+# TabPFN is optional — falls back gracefully if not installed.
+# We prefer tabpfn-client (cloud-API; no model-weight download / license dance)
+# and fall back to the local tabpfn package if the user installed that instead.
+_TABPFN_AVAILABLE = False
+_TABPFN_BACKEND = None  # 'tabpfn-client' or 'tabpfn'
 try:
-    from tabpfn import TabPFNRegressor
+    from tabpfn_client import TabPFNRegressor as _TabPFNRegressor
+    from tabpfn_client import set_access_token as _set_tabpfn_token
     _TABPFN_AVAILABLE = True
+    _TABPFN_BACKEND = 'tabpfn-client'
 except ImportError:
-    _TABPFN_AVAILABLE = False
+    try:
+        from tabpfn import TabPFNRegressor as _TabPFNRegressor
+        _set_tabpfn_token = None
+        _TABPFN_AVAILABLE = True
+        _TABPFN_BACKEND = 'tabpfn'
+    except ImportError:
+        pass
 
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -226,26 +238,44 @@ def fit_predict_pinn(X_train_sc, Y_train_sc, X_test_sc, scaler_Y_per_output,
     return preds
 
 
+def _ensure_tabpfn_auth():
+    """If using tabpfn-client and TABPFN_TOKEN is in the environment, set it.
+    Otherwise rely on a previously cached interactive login. No-op for the
+    local 'tabpfn' backend (which uses a different license/token system).
+    """
+    if _TABPFN_BACKEND == 'tabpfn-client':
+        token = os.environ.get('TABPFN_TOKEN')
+        if token and _set_tabpfn_token is not None:
+            _set_tabpfn_token(token)
+
+
 def fit_predict_tabpfn(X_train_sc, Y_train_sc, X_test_sc, scaler_Y_per_output,
                         random_state=42):
     """Predict with TabPFN — pretrained tabular foundation model.
 
-    TabPFN is single-output, so we fit one regressor per target. It does its
-    own scaling internally but we pass the standardized inputs/outputs anyway
-    for consistency with the other methods.
+    Single-output -> two regressors (one per target). Truncates train to
+    TABPFN_MAX_TRAIN samples.
 
-    Cap at TABPFN_MAX_TRAIN samples; truncate larger sets.
+    AUTH (one-time):
+      Two install options exist and both work here:
 
-    SETUP (one-time):
-      TabPFN >= 7.x requires a license acceptance and an API token before it
-      will download model weights:
-        1. Visit https://ux.priorlabs.ai and accept the license
-        2. Copy the API key from https://ux.priorlabs.ai/account
-        3. Set TABPFN_TOKEN env var (or pre-set os.environ['TABPFN_TOKEN']
-           before importing this module)
+      A) Cloud client (recommended — no local model-weight download):
+         pip install tabpfn-client
+         python -c "from tabpfn_client import init; init()"   # interactive login
+         OR set $env:TABPFN_TOKEN = "<token>" in your shell
+
+      B) Local install:
+         pip install tabpfn
+         (TabPFN >= 7.x requires license acceptance at https://ux.priorlabs.ai
+          and TABPFN_TOKEN; the wrapping `tabpfn` package handles its own auth)
     """
     if not _TABPFN_AVAILABLE:
-        raise RuntimeError("tabpfn not installed — pip install tabpfn")
+        raise RuntimeError(
+            "Neither tabpfn-client nor tabpfn installed. "
+            "Recommended: pip install tabpfn-client"
+        )
+
+    _ensure_tabpfn_auth()
 
     # Truncate if above cap
     if X_train_sc.shape[0] > TABPFN_MAX_TRAIN:
@@ -255,7 +285,9 @@ def fit_predict_tabpfn(X_train_sc, Y_train_sc, X_test_sc, scaler_Y_per_output,
     out_dim = Y_train_sc.shape[1]
     preds = np.zeros((X_test_sc.shape[0], out_dim))
     for i in range(out_dim):
-        reg = TabPFNRegressor(random_state=random_state, ignore_pretraining_limits=True)
+        # tabpfn-client and local tabpfn share the TabPFNRegressor API but
+        # differ slightly in kwargs — keep it minimal for portability
+        reg = _TabPFNRegressor(random_state=random_state)
         reg.fit(X_train_sc, Y_train_sc[:, i])
         pred_sc = reg.predict(X_test_sc)
         preds[:, i] = scaler_Y_per_output[i].inverse_transform(
@@ -417,17 +449,18 @@ def main():
 
     if _TABPFN_AVAILABLE:
         print("\n" + "-" * 70)
-        print("Method: TabPFN (pretrained tabular foundation model)")
+        print(f"Method: TabPFN (backend = {_TABPFN_BACKEND})")
         print("-" * 70)
         try:
             tabpfn_results = run_method('TabPFN', df_bm)
             merge_into_existing_results(tabpfn_results, 'TabPFN')
         except Exception as e:
-            # TabPFNLicenseError, network errors, etc. — skip and continue
+            # Auth errors, network errors, etc. — skip and continue
             print(f"  SKIPPED: TabPFN run failed: {type(e).__name__}: {e}")
-            print(f"  See fit_predict_tabpfn docstring for setup instructions.")
+            print(f"  See fit_predict_tabpfn docstring for auth setup.")
     else:
-        print("\nSKIPPED: TabPFN — install with `pip install tabpfn` to enable")
+        print("\nSKIPPED: TabPFN — install with `pip install tabpfn-client` "
+              "(cloud) or `pip install tabpfn` (local) to enable")
 
     print(f"\nResults written to: {out_path}")
     print("\nAll method runs complete. Next phase: BM_Summary integration (#4).")

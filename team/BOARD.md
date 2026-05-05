@@ -18,11 +18,11 @@ Format per row: `#N — Task — owner — Pn`. Click through to TODO for full n
 - **#9** — Glottal area integration as additional feature — `tbd` — `P2`
 - **#10** — OpenIFEM coupling for full FSI training data — `tbd` — `P2`
 - **#11** — Hyperparameter sweep tracker — `tbd` — `P2`
-- **#12** — Run `BM_Alternates.py` on real `dataset_BM.csv` and land actual R² results — `brian` — `P1`
 
 ## In Progress
 
-_(empty — pick up #2, #5, or any P1 backlog item)_
+- **#12** — Run `BM_Alternates.py` on real `dataset_BM.csv` and land actual R² results — `brian` — `P1`
+  - BM data being copied to local machine. TabPFN backend swapped to `tabpfn-client` (cloud, no model-weight download). Auth: one-time `init()` browser login or `$env:TABPFN_TOKEN`
 
 ## In Review
 
