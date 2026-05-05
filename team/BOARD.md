@@ -18,20 +18,21 @@ Format per row: `#N — Task — owner — Pn`. Click through to TODO for full n
 - **#9** — Glottal area integration as additional feature — `tbd` — `P2`
 - **#10** — OpenIFEM coupling for full FSI training data — `tbd` — `P2`
 - **#11** — Hyperparameter sweep tracker — `tbd` — `P2`
+- **#13** — Re-run `BM_SmallData.py` and dump JSON for tighter head-to-head — `brian` — `P2`
+- **#14** — Investigate PINN underperformance at N≤10 (priors fighting data) — `brian` — `P2`
 
 ## In Progress
 
-- **#12** — Run `BM_Alternates.py` on real `dataset_BM.csv` and land actual R² results — `brian` — `P1`
-  - BM data being copied to local machine. TabPFN backend swapped to `tabpfn-client` (cloud, no model-weight download). Auth: one-time `init()` browser login or `$env:TABPFN_TOKEN`
+_(empty — pick up #2, #5, or #13/#14 follow-ups)_
 
 ## In Review
 
-- **#1** — Explore non-transfer alternate methods for BM — `brian` — `P1`
-  - All 5 phases complete. Code: GP + PINN + TabPFN in `BM_Alternates.py`; integration in `BM_Summary.py`. Decisions logged. Awaits real-data run (TODO #12) to produce actual R² numbers. Migrate to Recently Done once #12 lands.
+_(empty)_
 
 ## Recently Done
 
-- **2026-05-05** — Non-transfer alternates code complete: GP, PINN (3 monotonicity priors), TabPFN; `BM_Alternates.py` (~430 lines), `BM_Summary.py` extended, `bm_alternates.png` figure. Awaits real-data run (#12 in backlog) — `brian` (TODO #1 → `review`)
+- **2026-05-05** — **TODO #1 + #12 done.** Non-transfer alternates ran on real BM data. Headline: TabPFN at N=50 hits avg R²=0.66, beating Callum's best transfer (Feature Aug, R²=0.19) by +0.47. GP is comparable. PINN struggles at N≤10. Real result, possibly publishable. See `docs/MILESTONES.md` and `Beam_Membrane/figs/bm_alternates.png` — `brian`
+- **2026-05-05** — Non-transfer alternates code complete: GP, PINN (3 monotonicity priors), TabPFN; `BM_Alternates.py` (~440 lines), `BM_Summary.py` extended — `brian`
 - **2026-05-04** — Set up `/team/` shared agile folder (TODO, BOARD, MEETING_NOTES) and link from CLAUDE.md — `brian`
 - **2026-05-03** — Merge Callum's `origin/main` into `feature/fem`, reconcile `/docs/` to reflect new structure, push to main — `brian`
 - **2026-05-02** — Callum's PR #1 merged: `Beam_Membrane/`, `TBCM/`, `archive/`, `PROJECT_GUIDE.md`. 6 RF transfer methods + 3 autoencoder methods, adaptive RF complexity, real measured R² results — `callum`

@@ -8,8 +8,10 @@ When a row reaches `done` and survives a sync cycle, migrate it to `../docs/MILE
 
 | # | Task | Owner | Status | Priority | Notes |
 |---|---|---|---|---|---|
-| 1 | Explore non-transfer alternate methods for BM (BCM→BM without first stage) | brian | review | P1 | Code complete (5 phases) — `Beam_Membrane/BM_Alternates.py` with GP+PINN+TabPFN, `BM_Summary.py` extended. Real-data run pending in #12 |
-| 12 | Run `BM_Alternates.py` on real `dataset_BM.csv` and land actual R² results | brian | in-progress | P1 | BM data being copied over locally now. TabPFN auth via cloud client: `python -c "from tabpfn_client import init; init()"` (one-time browser login) OR `$env:TABPFN_TOKEN = "..."`. Once run, regenerate `bm_alternates.png` and migrate #1 + #12 to MILESTONES |
+| 1 | Explore non-transfer alternate methods for BM (BCM→BM without first stage) | brian | done | P1 | Code + real-data results landed 2026-05-05. TabPFN dominates Callum's transfer methods by +0.20 to +0.47 avg R² at small N. See `docs/MILESTONES.md` and `Beam_Membrane/figs/bm_alternates.png` |
+| 12 | Run `BM_Alternates.py` on real `dataset_BM.csv` and land actual R² results | brian | done | P1 | Done 2026-05-05. `alternates_results.json` committed; `bm_alternates.png` regenerated |
+| 13 | Re-run `BM_SmallData.py` and dump its results to JSON for tighter head-to-head | brian | backlog | P2 | The MILESTONES table compares alternates against PROJECT_GUIDE.md's small-data numbers, but those aren't committed as JSON. Tightens the apples-to-apples comparison |
+| 14 | Investigate PINN underperformance at N≤10 — monotonicity prior fighting data | brian | backlog | P2 | PINN R² collapses to negative at N=5 and N=10. Try: λ ramp-up schedule (low at start of training), or skip priors below N=20 |
 | 2 | TBCM→BM two-stage transfer experiment | tbd | backlog | P1 | Use TBCM as cheap-but-closer-to-BM intermediate. Compare against BCM→BM direct. Decide owner at next 1pm |
 | 3 | Extend NN partial-freezing transfer to BM and TBCM | brian | backlog | P2 | Brian's NN strategy from VocalFoldRegression has only been used on female BCM. Add as additional method in `BM_Summary.py` / `TBCM_Summary.py` |
 | 4 | Extend PR (degree 4–5 + Ridge) transfer to BM and TBCM | brian | backlog | P2 | Same — bring PR into the new domains |

@@ -16,6 +16,22 @@ Format per entry:
 
 ---
 
+## 2026-05-05 (later, again) — Brian solo (real-data run; TODO #1 + #12 closed)
+**Attendees:** brian
+**Decisions:**
+- BM data extracted from `~/Downloads/dataset_BM.zip` to `Beam_Membrane/dataset_BM.csv`. 5,000 rows, no NaN, ranges match Callum's spec.
+- `BM_Alternates.py` ran end-to-end (~3 min total). `BM_Summary.py` regenerated all three figures.
+- **Headline result:** non-transfer alternates beat Callum's transfer methods at every N ∈ [10, 100]. TabPFN especially. Best gain: +0.47 R² at N=50. See `MILESTONES.md` 2026-05-05 entry for the table.
+- This reframes the transfer story — at small N, BCM source is a liability, not an asset. TBCM→BM (TODO #2) might still help since TBCM is physics-closer; worth scoping.
+- Two follow-up TODOs created (#13: dump JSON for `BM_SmallData.py` to tighten comparison; #14: investigate PINN failure at N≤10).
+- TODO #1 + #12 marked `done`. Migrated to Recently Done in BOARD; will roll into MILESTONES at next sync.
+
+**Action items:**
+- Discuss TBCM→BM ownership (#2) at next 1pm with Callum given the new framing — `shared`
+- Pick up #13 or #14 next, or pivot to #2 — `brian`
+
+**Blockers:** none.
+
 ## 2026-05-05 (later) — Brian solo (TabPFN backend swap, BM data inbound)
 **Attendees:** brian
 **Decisions:**

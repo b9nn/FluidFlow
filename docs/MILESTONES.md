@@ -2,15 +2,31 @@
 
 Append-only history. Newest first. Dates from `git log` unless noted.
 
-## 2026-05-05 — Non-transfer alternate methods for BM (TODO #1, code complete)
+## 2026-05-05 — Non-transfer alternate methods for BM (TODO #1 + #12 done)
 
-Three non-transfer baselines for BCM→BM at very small N (5–100 samples), built and wired into `BM_Summary.py`:
+Three non-transfer baselines for BCM→BM at very small N (5–100 samples) ran end-to-end on real `dataset_BM.csv` (5,000 samples, no NaN). Outputs at `Beam_Membrane/results/alternates_results.json` and `Beam_Membrane/figs/bm_alternates.png`.
 
-- **GP** — Gaussian Process with `ConstantKernel * Matern(2.5) + WhiteKernel`, independent regressor per output, marginal-likelihood hyperparameter optimization
-- **PINN** — Physics-informed MLP `[3→32→32→2]`, joint head, MSE + 0.1·monotonicity penalty over 3 priors (`∂F0/∂a_CT`, `∂SPL/∂PS`, `∂F0/∂PS` all ≥ 0)
-- **TabPFN** — Pretrained tabular foundation model, one regressor per output, capped at 1000 train samples (license + token required)
+**Methods:**
+- **GP** — `ConstantKernel * Matern(2.5) + WhiteKernel`, independent per output, marginal-likelihood optimization
+- **PINN** — MLP `[3→32→32→2]` joint head, MSE + 0.1·monotonicity penalty over 3 priors (`∂F0/∂a_CT`, `∂SPL/∂PS`, `∂F0/∂PS` all ≥ 0)
+- **TabPFN** — Pretrained tabular foundation model via `tabpfn-client` (cloud), one regressor per output, capped at 1000 train samples
 
-Adds `Beam_Membrane/BM_Alternates.py` (~430 lines), extends `BM_Summary.py` to read `alternates_results.json` and emit `figs/bm_alternates.png` comparing alternates against Callum's TransRF / Feature Aug / Target Only references. End-to-end integration smoke-tested with synthetic JSONs. **Pending:** real-data run (BM dataset not on this clone) — tracked as `team/TODO.md` #12.
+**Results (avg R² over F0 and SPL, 10 bootstrap runs each):**
+
+| N | GP | PINN | TabPFN | Callum's best transfer (PROJECT_GUIDE.md table) | Best alternate gain |
+|---|---|---|---|---|---|
+| 10  | +0.19 | −0.72 | **+0.27** | TransRF +0.08 | **+0.20** |
+| 20  | +0.38 | +0.25 | +0.38 | Feature Aug +0.05 | **+0.33** |
+| 30  | +0.44 | +0.32 | **+0.47** | Feature Aug +0.19 | **+0.29** |
+| 50  | +0.60 | +0.47 | **+0.66** | Feature Aug +0.19 | **+0.47** |
+| 75  | +0.67 | +0.47 | **+0.69** | Feature Aug +0.29 | **+0.40** |
+| 100 | **+0.67** | +0.56 | **+0.67** | TransRF +0.28 | **+0.39** |
+
+**Headline:** non-transfer methods (TabPFN especially) **dominate transfer at small N** — gains of +0.20 to +0.47 R². TabPFN at N=50 (R²=0.66) matches what Callum's TransRF needed N=200 to achieve (R²=0.59). GP is competitive with TabPFN; PINN underperforms at N≤10 where the monotonicity prior fights too-little-data, recovers at N≥20.
+
+**Caveats:** Callum's "best transfer" column comes from the table in `PROJECT_GUIDE.md` — `BM_SmallData.py` results that aren't dumped to JSON, so this isn't run-on-the-same-test-pool. Same harness shape (sub-sample of N rows, separate test pool of 1000) but different invocations. Re-running `BM_SmallData.py` and dumping its JSON would tighten the comparison; tracked in roadmap.
+
+Code: `Beam_Membrane/BM_Alternates.py` (~440 lines), `BM_Summary.py` extended. Five-phase landing on 2026-05-04 / 05.
 
 ## 2026-05-03 — Merged Callum's PR #1 into `feature/fem`
 

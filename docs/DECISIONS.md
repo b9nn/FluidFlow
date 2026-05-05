@@ -141,6 +141,17 @@ df.rename(columns={'Ps': 'PS'}, inplace=True)
 **Why:** These three priors are well-established in vocal-fold physiology and unlikely to fight the data. `∂F0/∂a_TA` is intentionally not constrained — it's non-monotonic in BM (TA tightening can lower F0 in some regimes). λ=0.1 keeps the prior secondary to the data fit while still nudging predictions toward physically plausible behavior at small N. λ to be re-tuned if real-data results show the prior is fighting the data.
 **Where it shows up:** `Beam_Membrane/BM_Alternates.py:PINN_PRIORS`, `monotonicity_penalty`.
 
+## 2026-05-05 — Confirmed: non-transfer alternates beat transfer at small N
+
+**Context:** Real-data run of TODO #1 / #12 against `dataset_BM.csv`.
+**Decision:** Treat the result as a real, publishable finding: **non-transfer methods (TabPFN especially) outperform Callum's transfer methods by +0.20 to +0.47 avg R² at every N ∈ [10, 100] tested.** TabPFN at N=50 (R²=0.66) matches TransRF at N=200. This reframes the "transfer for expensive simulators" story: at small N the BCM source actively hurts (negative source-only R² ≈ −2.0, scale mismatch). A pretrained tabular foundation model with no domain knowledge wins.
+**Why:** Three non-overlapping factors:
+1. BCM and BM have a hard scale mismatch on `Ps` (BCM `[10, 2010]`, BM `[600, 1000]`) — transfer methods that trust BCM's predictions (Residual Correction, Simple Ensemble) hurt at all small sizes.
+2. At very small N (5–30), 3 input features and 2 outputs is too low-dimensional for transfer to add signal; the inductive bias of TabPFN's pretrained prior is more valuable than 54k BCM samples.
+3. PINN's monotonicity prior is helpful at moderate N (≥20) but actively damaging at N≤10 where data is too sparse to ground the prior.
+**Where it shows up:** `Beam_Membrane/results/alternates_results.json`; `MILESTONES.md` 2026-05-05 entry.
+**Implications for next steps:** TODO #2 (TBCM→BM two-stage transfer) is even more interesting now — TBCM is closer to BM in physics, so transfer might actually help where BCM didn't. Worth scoping a separate exploration. Also: re-running Callum's `BM_SmallData.py` with JSON dump would tighten the head-to-head numbers.
+
 ## 2026-05-05 — TabPFN as a third alternate (cloud client preferred)
 
 **Context:** Phase 3 of TODO #1. Adding a pretrained tabular foundation model. Initial install of the local `tabpfn` package hit a license-acceptance gate that required interactive browser login + `TABPFN_TOKEN` to download model weights, which broke headless smoke testing.

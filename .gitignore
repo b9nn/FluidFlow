@@ -17,11 +17,14 @@ backup/
 reading/
 models/
 .claude/
-figs/
+/figs/
 
 # --- SECRETS / LOCAL ENV ---
 .env
 .env.*
 !.env.example
+
+# --- RUN LOGS ---
+*.log
 
 test.py
