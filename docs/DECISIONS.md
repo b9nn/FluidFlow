@@ -123,6 +123,31 @@ df.rename(columns={'Ps': 'PS'}, inplace=True)
 **Why:** Both audiences (Claude auto-loads `CLAUDE.md` from root; humans expect `README.md` at root) find the docs without nesting.
 **Where it shows up:** `/CLAUDE.md`, `/README.md`, `/docs/*.md`.
 
+## 2026-05-05 — Non-transfer alternates: GP kernel choice (Matern 2.5)
+
+**Context:** Phase 1 of TODO #1. Picking a kernel for the Gaussian Process baseline on BM at very small N.
+**Decision:** `ConstantKernel * Matern(nu=2.5) + WhiteKernel`. Optimize hyperparameters via marginal-likelihood (sklearn default), 3 restarts. One independent regressor per output (F0, SPL).
+**Why:** Matern(ν=2.5) is twice differentiable — smoother than Matern(ν=1.5) but not as restrictive as RBF (which assumes infinite differentiability). Vocal-fold physics is smooth but not analytic; ν=2.5 is the standard middle-ground for physics regression. Multiplicative ConstantKernel allows the GP to learn output magnitude; WhiteKernel absorbs noise.
+**Where it shows up:** `Beam_Membrane/BM_Alternates.py:fit_predict_gp`.
+
+## 2026-05-05 — PINN monotonicity priors and λ choice
+
+**Context:** Phase 2 of TODO #1. Picking which physical priors to encode in the physics-informed MLP and how strongly to weight them.
+**Decision:** Three monotonicity constraints, all of form `∂y/∂x ≥ 0`:
+1. `∂F0 / ∂a_CT ≥ 0` (longer fold → higher pitch)
+2. `∂SPL / ∂PS ≥ 0` (more pressure → louder)
+3. `∂F0 / ∂PS ≥ 0` (chest-voice physiology — pressure raises pitch modestly)
+λ = 0.1 default for the monotonicity term. MLP `[3 → 32 → 32 → 2]` joint head, ReLU. Penalty = mean ReLU(y_anchor − y_nudged) over 256 random anchor pairs in standardized input space, nudge δ = 0.1.
+**Why:** These three priors are well-established in vocal-fold physiology and unlikely to fight the data. `∂F0/∂a_TA` is intentionally not constrained — it's non-monotonic in BM (TA tightening can lower F0 in some regimes). λ=0.1 keeps the prior secondary to the data fit while still nudging predictions toward physically plausible behavior at small N. λ to be re-tuned if real-data results show the prior is fighting the data.
+**Where it shows up:** `Beam_Membrane/BM_Alternates.py:PINN_PRIORS`, `monotonicity_penalty`.
+
+## 2026-05-05 — TabPFN as a third alternate, with license caveat
+
+**Context:** Phase 3 of TODO #1. Adding a pretrained tabular foundation model.
+**Decision:** Use TabPFN ≥ 7.x (`pip install tabpfn`) with one regressor per output. Train cap of 1000 samples (TabPFN's effective limit). Document the one-time license + `TABPFN_TOKEN` setup as a setup task in `team/TODO.md`. Wrap the run loop in try/except so license/network errors skip TabPFN gracefully without breaking GP and PINN.
+**Why:** TabPFN delivers strong small-N tabular regression with no hyperparameter tuning. The 1000-sample cap is fine — our regime is N ≤ 100. The license requirement was unexpected but is a one-time setup; graceful skip means TabPFN being unavailable doesn't block the GP/PINN comparison.
+**Where it shows up:** `Beam_Membrane/BM_Alternates.py:fit_predict_tabpfn`, `_TABPFN_AVAILABLE` guard in `main()`.
+
 ## 2026-05-04 — Shared agile workspace at `/team/`, per-task ownership
 
 **Context:** Brian and Callum sync at ~1pm a few times a week. Need a single place both Claude workflows can read for current state — what's in flight, who owns what, recent decisions.

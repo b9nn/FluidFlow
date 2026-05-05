@@ -2,6 +2,16 @@
 
 Append-only history. Newest first. Dates from `git log` unless noted.
 
+## 2026-05-05 — Non-transfer alternate methods for BM (TODO #1, code complete)
+
+Three non-transfer baselines for BCM→BM at very small N (5–100 samples), built and wired into `BM_Summary.py`:
+
+- **GP** — Gaussian Process with `ConstantKernel * Matern(2.5) + WhiteKernel`, independent regressor per output, marginal-likelihood hyperparameter optimization
+- **PINN** — Physics-informed MLP `[3→32→32→2]`, joint head, MSE + 0.1·monotonicity penalty over 3 priors (`∂F0/∂a_CT`, `∂SPL/∂PS`, `∂F0/∂PS` all ≥ 0)
+- **TabPFN** — Pretrained tabular foundation model, one regressor per output, capped at 1000 train samples (license + token required)
+
+Adds `Beam_Membrane/BM_Alternates.py` (~430 lines), extends `BM_Summary.py` to read `alternates_results.json` and emit `figs/bm_alternates.png` comparing alternates against Callum's TransRF / Feature Aug / Target Only references. End-to-end integration smoke-tested with synthetic JSONs. **Pending:** real-data run (BM dataset not on this clone) — tracked as `team/TODO.md` #12.
+
 ## 2026-05-03 — Merged Callum's PR #1 into `feature/fem`
 
 Pulled `origin/main` (commit `c8349ee`) into `feature/fem`. Doc tree updated to reflect the new top-level layout (`Beam_Membrane/`, `TBCM/`, `archive/`, `PROJECT_GUIDE.md`). No code changes from Brian — purely a merge + doc reconcile.

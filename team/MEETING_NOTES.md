@@ -16,6 +16,21 @@ Format per entry:
 
 ---
 
+## 2026-05-05 — Brian solo (phases 2–5 of #1, code complete)
+**Attendees:** brian
+**Decisions:**
+- PINN encodes 3 monotonicity priors: `∂F0/∂a_CT`, `∂SPL/∂PS`, and `∂F0/∂PS` (chest-voice physiology). λ = 0.1 default. Logged to DECISIONS.
+- TabPFN ≥ 7.x license + token requirement turned out to be a setup blocker — handled with graceful skip; documented in code and in TODO #12.
+- TODO #1 status moves from `in-progress` to `review` since the implementation work is complete; the actual real-data run is split out as a new TODO #12 that's the prerequisite for migrating both rows to MILESTONES.
+
+**Action items:**
+- Phase 5 (DECISIONS, MILESTONES, BOARD/TODO migration) — done — `brian`
+- TODO #12 (real-data run) — backlog — `brian` — needs `dataset_BM.csv` on local machine + `TABPFN_TOKEN`
+- At next 1pm with Callum: walk through `bm_alternates.png` once #12 has actual numbers, decide whether the alternates change his transfer story
+
+**Blockers:**
+- BM data + TabPFN license/token (both deferred to #12).
+
 ## 2026-05-04 (later) — Brian solo (planning + phase 1 of #1)
 **Attendees:** brian
 **Decisions:**
