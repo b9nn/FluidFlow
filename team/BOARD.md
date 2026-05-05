@@ -24,9 +24,11 @@ Format per row: `#N — Task — owner — Pn`. Click through to TODO for full n
 - **#1** — Explore non-transfer alternate methods for BM (BCM→BM without first stage) — `brian` — `P1`
   - Phase 1/5 done: GP method (Matern 2.5 + WhiteKernel)
   - Phase 2/5 done: PINN — MLP `[3→32→32→2]` + monotonicity penalty with **3** priors (`∂F0/∂a_CT ≥ 0`, `∂SPL/∂PS ≥ 0`, `∂F0/∂PS ≥ 0`), λ=0.1
-  - Phase 3/5 done: TabPFN integrated. Couldn't smoke-test locally — TabPFN ≥7.x requires license acceptance + `TABPFN_TOKEN` env var. Code path is correct; graceful skip on license errors
-  - GP and PINN smoke-tested on synthetic data; all three need real BM data (and `TABPFN_TOKEN`) to land actual results
-  - Next: Phase 4 (BM_Summary integration), Phase 5 (wrap-up: DECISIONS, MILESTONES, close #1)
+  - Phase 3/5 done: TabPFN integrated (graceful skip on missing license)
+  - Phase 4/5 done: `BM_Summary.py` reads `alternates_results.json` if present and emits `bm_alternates.png` (non-transfer alternates vs TransRF / Feature Aug / Target Only references on log-N axis)
+  - GP and PINN smoke-tested on synthetic data; BM_Summary integration smoke-tested with fake JSONs end-to-end
+  - All three methods need real BM data (and `TABPFN_TOKEN` for TabPFN) to produce actual numbers
+  - Next: Phase 5 (wrap-up: DECISIONS, MILESTONES, close #1)
 
 ## In Review
 

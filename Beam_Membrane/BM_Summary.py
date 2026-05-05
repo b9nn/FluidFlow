@@ -41,6 +41,18 @@ def main():
         ae_results = json.load(f)
     print(f"  Loaded AE results: {len(ae_results)} fractions")
 
+    # Load Alternates results (optional — non-transfer methods)
+    alt_path = os.path.join(results_dir, 'alternates_results.json')
+    alternates = {}
+    if os.path.exists(alt_path):
+        with open(alt_path) as f:
+            alt_raw = json.load(f)
+        # Strip _meta key, keep methods only
+        alternates = {k: v for k, v in alt_raw.items() if not k.startswith('_')}
+        print(f"  Loaded Alternates results: {list(alternates.keys())}")
+    else:
+        print(f"  Alternates results not found (run BM_Alternates.py to add)")
+
     # Build unified method list
     all_methods = {
         # RF methods
@@ -329,6 +341,98 @@ def main():
     plt.savefig(fig2_path, dpi=150, bbox_inches='tight')
     print(f"  Saved: {fig2_path}")
     plt.close()
+
+    # ==================== ALTERNATES (NON-TRANSFER METHODS) ====================
+    if alternates:
+        print("\n\n" + "=" * 70)
+        print("ALTERNATE METHODS — Non-Transfer (BM data alone), small N")
+        print("=" * 70)
+
+        # Stable color/marker per alternate method
+        alt_styles = {
+            'GP':     {'color': 'teal',    'ls': '-', 'marker': 'P'},
+            'PINN':   {'color': 'magenta', 'ls': '-', 'marker': 'X'},
+            'TabPFN': {'color': 'gold',    'ls': '-', 'marker': 'd'},
+        }
+
+        # All N_TARGETS from any method (sorted)
+        alt_n_values = sorted({int(n) for m in alternates.values() for n in m.keys()})
+
+        # Console table
+        header = f"{'N':>5}"
+        for name in alternates:
+            header += f" {name + ' F0':>14} {name + ' SPL':>14}"
+        print(header)
+        print("-" * len(header))
+        for n in alt_n_values:
+            line = f"{n:>5}"
+            for name, m in alternates.items():
+                if str(n) in m:
+                    f0_mean = float(np.mean(m[str(n)]['r2_f0']))
+                    spl_mean = float(np.mean(m[str(n)]['r2_spl']))
+                    line += f" {f0_mean:>+14.3f} {spl_mean:>+14.3f}"
+                else:
+                    line += f" {'N/A':>14} {'N/A':>14}"
+            print(line)
+
+        # Figure: alternates head-to-head with TransRF and Feature Aug references
+        print("\nGenerating alternates plot...")
+        fig3, axes3 = plt.subplots(1, 2, figsize=(16, 6))
+        fig3.suptitle(
+            'BM: Non-Transfer Alternates vs Transfer References (small N)',
+            fontsize=14, fontweight='bold')
+
+        # Reference lines: Callum's TransRF and Feature Aug from rf_results
+        ref_methods = [
+            ('TransRF',     'transrf',   'red',   '*'),
+            ('Feature Aug', 'augmented', 'green', 'v'),
+            ('Target Only', 'target_only', 'blue', 'o'),
+        ]
+        for ref_label, ref_key, ref_color, ref_marker in ref_methods:
+            for ax_idx, target in enumerate(['f0', 'spl']):
+                vals = []
+                ns_ref = []
+                for r in rf_results:
+                    val = r.get(f'{ref_key}_{target}_r2_mean')
+                    if val is not None:
+                        vals.append(val)
+                        ns_ref.append(r['n_samples'])
+                if vals:
+                    axes3[ax_idx].plot(ns_ref, vals, marker=ref_marker,
+                                       linestyle='--', color=ref_color,
+                                       linewidth=2, markersize=7,
+                                       label=f'{ref_label} (transfer ref)',
+                                       alpha=0.5)
+
+        # Alternate method lines
+        for name, m in alternates.items():
+            style = alt_styles.get(name, {'color': 'black', 'ls': '-', 'marker': 'o'})
+            ns = sorted(int(n) for n in m.keys())
+            for ax_idx, target in enumerate(['f0', 'spl']):
+                means = [float(np.mean(m[str(n)][f'r2_{target}'])) for n in ns]
+                stds = [float(np.std(m[str(n)][f'r2_{target}'])) for n in ns]
+                axes3[ax_idx].plot(ns, means, marker=style['marker'],
+                                   linestyle=style['ls'], color=style['color'],
+                                   linewidth=2.5, markersize=8, label=name)
+                axes3[ax_idx].fill_between(
+                    ns, [m_ - s for m_, s in zip(means, stds)],
+                    [m_ + s for m_, s in zip(means, stds)],
+                    alpha=0.15, color=style['color'])
+
+        for ax_idx, t_label in enumerate(['F0', 'SPL']):
+            ax = axes3[ax_idx]
+            ax.set_xlabel('Number of Training Samples')
+            ax.set_ylabel(f'R² for {t_label}')
+            ax.set_title(f'{t_label}: Alternates vs Transfer Refs')
+            ax.set_xscale('log')
+            ax.legend(loc='lower right', fontsize=9)
+            ax.grid(True, alpha=0.3)
+
+        plt.tight_layout()
+        fig3_path = os.path.join(figs_dir, 'bm_alternates.png')
+        plt.savefig(fig3_path, dpi=150, bbox_inches='tight')
+        print(f"  Saved: {fig3_path}")
+        plt.close()
 
     print("\n" + "=" * 70)
     print("COMPARISON COMPLETE")
