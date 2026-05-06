@@ -33,6 +33,9 @@
 ## Methods
 
 - **Adaptive RF complexity** — `get_model_params(n_samples)` scales `n_estimators` and `max_depth` by available data to prevent overfitting at small sizes. Pattern in `Beam_Membrane/BM_TransferRF.py:51`.
+- **Gaussian Process (GP)** — Bayesian non-parametric regressor. Places a prior over smooth functions (encoded by a kernel) and conditions on observed data via marginal-likelihood optimization. Used as a non-transfer alternate in `BM_Alternates.py` with `ConstantKernel * Matern(2.5) + WhiteKernel`.
+- **MLP (Multi-Layer Perceptron)** — Standard feedforward neural network: a stack of fully-connected (dense) layers with nonlinearities between them. Our `MonoMLP` is `[3 → 32 → 32 → 2]` with ReLU activations, ~1,200 parameters total.
+- **MonoMLP (Monotonicity-constrained MLP)** — Small MLP whose loss adds a soft inequality penalty on finite-difference approximations of first partial derivatives. Used as a non-transfer alternate. **Not** a PDE-residual PINN — we cannot reach into the BM FEM solver to extract its governing equations, so we settle for sign constraints. Originally labeled "PINN" in early commits; renamed 2026-05-06 to avoid overclaiming.
 - **Feature Augmentation** — RF transfer method 4. Input is `[x; BCM_pred(x)]` — concatenate the source-model prediction onto the feature vector. Wins at 20–75 BM samples.
 - **Gradient reversal** — Backprop trick used in DAAE. Multiplies gradients by `−1` between encoder and discriminator so optimizing the discriminator's loss makes the encoder produce domain-invariant features.
 - **K-fold CV** — K-fold cross-validation. Used to learn TransRF ensemble weights.
@@ -45,6 +48,7 @@
 - **Source Only** — RF transfer method 1. Apply BCM model directly to target inputs (zero-shot, no adaptation).
 - **StandardScaler** — Zero-mean unit-variance scaler. Always per-domain.
 - **Target Only** — RF transfer method 2. Train RF on target alone — the no-transfer baseline.
+- **TabPFN (Tabular Prior-Fitted Network)** — Pretrained transformer for tabular regression. Pretrained once by Prior Labs on millions of synthetic tabular problems; at inference, performs in-context learning on `(X_train, y_train)` and predicts `y_test` in a single forward pass — no per-task fitting loop. Used as a non-transfer alternate in `BM_Alternates.py`. Capped at ~1,000 train samples. Two install paths: `tabpfn-client` (cloud) preferred; local `tabpfn` is fallback.
 - **TransRF Ensemble** — RF transfer method 6. Learned per-output convex combination of methods 2/3/4 via `LinearRegression(positive=True)`. Wins at 100+ BM samples.
 - **Vanilla AE** — Autoencoder method A. Train encoder + decoder + predictor on BCM, fine-tune predictor on target.
 - **Waveform features** — Per-cycle features extracted from time-domain waveforms in `.mat` files. TBCM-specific. Pipeline in `TBCM/TBCM_WaveformFeatures.py` → enriched dataset `TBCM/dataset_TBCM_enriched.csv`.

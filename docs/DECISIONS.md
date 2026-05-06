@@ -130,16 +130,23 @@ df.rename(columns={'Ps': 'PS'}, inplace=True)
 **Why:** Matern(ν=2.5) is twice differentiable — smoother than Matern(ν=1.5) but not as restrictive as RBF (which assumes infinite differentiability). Vocal-fold physics is smooth but not analytic; ν=2.5 is the standard middle-ground for physics regression. Multiplicative ConstantKernel allows the GP to learn output magnitude; WhiteKernel absorbs noise.
 **Where it shows up:** `Beam_Membrane/BM_Alternates.py:fit_predict_gp`.
 
-## 2026-05-05 — PINN monotonicity priors and λ choice
+## 2026-05-06 — Rename "PINN" to "MonoMLP" (avoid overclaiming)
 
-**Context:** Phase 2 of TODO #1. Picking which physical priors to encode in the physics-informed MLP and how strongly to weight them.
+**Context:** What we built and called "PINN" is not actually a PDE-residual physics-informed neural network in the Raissi-Perdikaris-Karniadakis sense. It's a small MLP whose loss adds a soft inequality penalty on finite-difference approximations of first partial derivatives — i.e. monotonicity constraints, not PDE residuals.
+**Decision:** Rename throughout: code (`PINN_*` → `MONOMLP_*`, `PinnMLP` → `MonoMLP`, `fit_predict_pinn` → `fit_predict_monomlp`, dispatch key `'PINN'` → `'MonoMLP'`), results JSON (top-level key), and all docs (DECISIONS, MILESTONES, GLOSSARY, team/*). The historical spec at `docs/superpowers/specs/2026-05-04-bm-alternates-design.md` gets a one-line update at the top noting the rename.
+**Why:** A real PINN would constrain the residual `R[u] = ∂u/∂t − L[u] = 0` at collocation points using the actual governing equations. We can't do that here — the BM physics (Navier-Stokes + elastodynamics + WRA) lives inside the FEM solver and isn't accessible as a closed-form PDE between our (a_CT, a_TA, PS) and (F0, SPL). Naming it "PINN" overclaims; "MonoMLP" describes what the code actually does.
+**Where it shows up:** `Beam_Membrane/BM_Alternates.py`, `Beam_Membrane/BM_Summary.py`, `Beam_Membrane/results/alternates_results.json`, all `/docs/` and `/team/` markdown.
+
+## 2026-05-05 — MonoMLP monotonicity priors and λ choice
+
+**Context:** Phase 2 of TODO #1. Picking which physical priors to encode in the constrained MLP and how strongly to weight them.
 **Decision:** Three monotonicity constraints, all of form `∂y/∂x ≥ 0`:
 1. `∂F0 / ∂a_CT ≥ 0` (longer fold → higher pitch)
 2. `∂SPL / ∂PS ≥ 0` (more pressure → louder)
 3. `∂F0 / ∂PS ≥ 0` (chest-voice physiology — pressure raises pitch modestly)
 λ = 0.1 default for the monotonicity term. MLP `[3 → 32 → 32 → 2]` joint head, ReLU. Penalty = mean ReLU(y_anchor − y_nudged) over 256 random anchor pairs in standardized input space, nudge δ = 0.1.
 **Why:** These three priors are well-established in vocal-fold physiology and unlikely to fight the data. `∂F0/∂a_TA` is intentionally not constrained — it's non-monotonic in BM (TA tightening can lower F0 in some regimes). λ=0.1 keeps the prior secondary to the data fit while still nudging predictions toward physically plausible behavior at small N. λ to be re-tuned if real-data results show the prior is fighting the data.
-**Where it shows up:** `Beam_Membrane/BM_Alternates.py:PINN_PRIORS`, `monotonicity_penalty`.
+**Where it shows up:** `Beam_Membrane/BM_Alternates.py:MONOMLP_PRIORS`, `monotonicity_penalty`.
 
 ## 2026-05-05 — Confirmed: non-transfer alternates beat transfer at small N
 
@@ -148,14 +155,14 @@ df.rename(columns={'Ps': 'PS'}, inplace=True)
 **Why:** Three non-overlapping factors:
 1. BCM and BM have a hard scale mismatch on `Ps` (BCM `[10, 2010]`, BM `[600, 1000]`) — transfer methods that trust BCM's predictions (Residual Correction, Simple Ensemble) hurt at all small sizes.
 2. At very small N (5–30), 3 input features and 2 outputs is too low-dimensional for transfer to add signal; the inductive bias of TabPFN's pretrained prior is more valuable than 54k BCM samples.
-3. PINN's monotonicity prior is helpful at moderate N (≥20) but actively damaging at N≤10 where data is too sparse to ground the prior.
+3. MonoMLP's monotonicity prior is helpful at moderate N (≥20) but actively damaging at N≤10 where data is too sparse to ground the prior.
 **Where it shows up:** `Beam_Membrane/results/alternates_results.json`; `MILESTONES.md` 2026-05-05 entry.
 **Implications for next steps:** TODO #2 (TBCM→BM two-stage transfer) is even more interesting now — TBCM is closer to BM in physics, so transfer might actually help where BCM didn't. Worth scoping a separate exploration. Also: re-running Callum's `BM_SmallData.py` with JSON dump would tighten the head-to-head numbers.
 
 ## 2026-05-05 — TabPFN as a third alternate (cloud client preferred)
 
 **Context:** Phase 3 of TODO #1. Adding a pretrained tabular foundation model. Initial install of the local `tabpfn` package hit a license-acceptance gate that required interactive browser login + `TABPFN_TOKEN` to download model weights, which broke headless smoke testing.
-**Decision:** Switch to `tabpfn-client` (cloud-API; no local model-weight download, no license dance — just an account login). The code prefers `tabpfn-client` and falls back to local `tabpfn` if only that is installed. One regressor per target. Train cap of 1000 samples (matches our N ≤ 100 regime anyway). Auth either via interactive `tabpfn_client.init()` (browser, one-time, cached) or via `TABPFN_TOKEN` env var. Wrap the run loop in try/except so auth/network errors skip TabPFN without breaking GP and PINN.
+**Decision:** Switch to `tabpfn-client` (cloud-API; no local model-weight download, no license dance — just an account login). The code prefers `tabpfn-client` and falls back to local `tabpfn` if only that is installed. One regressor per target. Train cap of 1000 samples (matches our N ≤ 100 regime anyway). Auth either via interactive `tabpfn_client.init()` (browser, one-time, cached) or via `TABPFN_TOKEN` env var. Wrap the run loop in try/except so auth/network errors skip TabPFN without breaking GP and MonoMLP.
 **Why:** Cloud client removes a friction step (license + token download) and keeps TabPFN reachable from headless or fresh-clone environments. The dual-import dance (`tabpfn-client` first, `tabpfn` fallback) means whichever Brian or Callum has installed will work.
 **Where it shows up:** `Beam_Membrane/BM_Alternates.py:fit_predict_tabpfn`, `_TABPFN_BACKEND` selection at import time, `_ensure_tabpfn_auth` helper.
 

@@ -6,7 +6,11 @@ or beat transfer at very small N (5-100 BM samples).
 
 Methods:
   - GP:      Gaussian Process with Matern(2.5) kernel  [PHASE 1]
-  - PINN:    Physics-informed MLP                       [PHASE 2]
+  - MonoMLP: Monotonicity-constrained MLP                [PHASE 2]
+             (sign-constrained finite differences on first
+             partials — NOT a PDE-residual PINN; we cannot reach
+             into the BM FEM solver to extract its governing
+             equations, so we settle for inequality priors)
   - TabPFN:  Pretrained tabular foundation model        [PHASE 3, this file]
 
 Mirrors BM_SmallData.py harness:
@@ -65,15 +69,15 @@ SHARED_FEATURES = ['a_CT', 'a_TA', 'PS']
 TARGETS = ['F0', 'SPL']
 TEST_POOL_SIZE = 1000
 
-# PINN config
+# MonoMLP config
 DEVICE = torch.device('cpu')
-PINN_HIDDEN = 32
-PINN_LR = 1e-3
-PINN_MAX_EPOCHS = 2000
-PINN_PATIENCE = 200
-PINN_LAMBDA_MONO = 0.1
-PINN_N_MONO_PAIRS = 256
-PINN_NUDGE = 0.1  # in standardized input space
+MONOMLP_HIDDEN = 32
+MONOMLP_LR = 1e-3
+MONOMLP_MAX_EPOCHS = 2000
+MONOMLP_PATIENCE = 200
+MONOMLP_LAMBDA_MONO = 0.1
+MONOMLP_N_MONO_PAIRS = 256
+MONOMLP_NUDGE = 0.1  # in standardized input space
 
 # Monotonicity priors: list of (input_idx, output_idx) for d(output)/d(input) >= 0
 # Index order: features [a_CT, a_TA, PS], targets [F0, SPL]
@@ -81,7 +85,7 @@ PINN_NUDGE = 0.1  # in standardized input space
 #   d F0  / d a_CT >= 0  (longer fold -> higher pitch)
 #   d SPL / d PS   >= 0  (more pressure -> louder)
 #   d F0  / d PS   >= 0  (chest-voice physiology — modest but real)
-PINN_PRIORS = [(0, 0), (2, 1), (2, 0)]
+MONOMLP_PRIORS = [(0, 0), (2, 1), (2, 0)]
 
 # TabPFN config
 TABPFN_MAX_TRAIN = 1000  # TabPFN's effective training cap; matches our regime
@@ -117,11 +121,11 @@ def fit_predict_gp(X_train_sc, Y_train_sc, X_test_sc, scaler_Y_per_output):
     return preds
 
 
-class PinnMLP(nn.Module):
-    """Small MLP with joint [F0, SPL] head, used for the physics-informed
-    method. Inputs and outputs both standardized.
+class MonoMLP(nn.Module):
+    """Small MLP with joint [F0, SPL] head, used for the monotonicity-
+    constrained method. Inputs and outputs both standardized.
     """
-    def __init__(self, in_dim=3, hidden=PINN_HIDDEN, out_dim=2):
+    def __init__(self, in_dim=3, hidden=MONOMLP_HIDDEN, out_dim=2):
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(in_dim, hidden), nn.ReLU(),
@@ -156,9 +160,10 @@ def monotonicity_penalty(model, n_pairs, in_dim, nudge, priors, device):
     return total
 
 
-def fit_predict_pinn(X_train_sc, Y_train_sc, X_test_sc, scaler_Y_per_output,
-                     random_state=42):
-    """Train the physics-informed MLP and return predictions in original scale.
+def fit_predict_monomlp(X_train_sc, Y_train_sc, X_test_sc, scaler_Y_per_output,
+                        random_state=42):
+    """Train the monotonicity-constrained MLP and return predictions in
+    original scale.
 
     Uses early stopping on a 10% held-out slice (or all train data if N is
     too small to slice). Loss = MSE + lambda * monotonicity_penalty.
@@ -192,23 +197,23 @@ def fit_predict_pinn(X_train_sc, Y_train_sc, X_test_sc, scaler_Y_per_output,
     Y_vl_t = torch.tensor(Y_vl, dtype=torch.float32, device=DEVICE)
     X_test_t = torch.tensor(X_test_sc, dtype=torch.float32, device=DEVICE)
 
-    model = PinnMLP(in_dim=in_dim, out_dim=out_dim).to(DEVICE)
-    opt = optim.Adam(model.parameters(), lr=PINN_LR)
+    model = MonoMLP(in_dim=in_dim, out_dim=out_dim).to(DEVICE)
+    opt = optim.Adam(model.parameters(), lr=MONOMLP_LR)
     mse = nn.MSELoss()
 
     best_val = float('inf')
     best_state = {k: v.clone() for k, v in model.state_dict().items()}
     patience = 0
 
-    for epoch in range(PINN_MAX_EPOCHS):
+    for epoch in range(MONOMLP_MAX_EPOCHS):
         model.train()
         opt.zero_grad()
         pred = model(X_tr_t)
         loss_mse = mse(pred, Y_tr_t)
         loss_mono = monotonicity_penalty(
-            model, PINN_N_MONO_PAIRS, in_dim, PINN_NUDGE, PINN_PRIORS, DEVICE
+            model, MONOMLP_N_MONO_PAIRS, in_dim, MONOMLP_NUDGE, MONOMLP_PRIORS, DEVICE
         )
-        loss = loss_mse + PINN_LAMBDA_MONO * loss_mono
+        loss = loss_mse + MONOMLP_LAMBDA_MONO * loss_mono
         loss.backward()
         opt.step()
 
@@ -221,7 +226,7 @@ def fit_predict_pinn(X_train_sc, Y_train_sc, X_test_sc, scaler_Y_per_output,
             patience = 0
         else:
             patience += 1
-            if patience >= PINN_PATIENCE:
+            if patience >= MONOMLP_PATIENCE:
                 break
 
     model.load_state_dict(best_state)
@@ -335,9 +340,9 @@ def run_single(method_name, n_target, df_bm, random_state):
     # 4. Fit + predict per method
     if method_name == 'GP':
         preds = fit_predict_gp(X_train_sc, Y_train_sc, X_test_sc, scalers_Y)
-    elif method_name == 'PINN':
-        preds = fit_predict_pinn(X_train_sc, Y_train_sc, X_test_sc,
-                                  scalers_Y, random_state=random_state)
+    elif method_name == 'MonoMLP':
+        preds = fit_predict_monomlp(X_train_sc, Y_train_sc, X_test_sc,
+                                     scalers_Y, random_state=random_state)
     elif method_name == 'TabPFN':
         preds = fit_predict_tabpfn(X_train_sc, Y_train_sc, X_test_sc,
                                     scalers_Y, random_state=random_state)
@@ -441,11 +446,12 @@ def main():
     print(f"  GP results written to: {out_path}")
 
     print("\n" + "-" * 70)
-    print(f"Method: PINN (MLP {PINN_HIDDEN}/{PINN_HIDDEN}, lambda={PINN_LAMBDA_MONO}, "
-          f"{len(PINN_PRIORS)} monotonicity priors)")
+    print(f"Method: MonoMLP (MLP {MONOMLP_HIDDEN}/{MONOMLP_HIDDEN}, "
+          f"lambda={MONOMLP_LAMBDA_MONO}, "
+          f"{len(MONOMLP_PRIORS)} monotonicity priors)")
     print("-" * 70)
-    pinn_results = run_method('PINN', df_bm)
-    merge_into_existing_results(pinn_results, 'PINN')
+    monomlp_results = run_method('MonoMLP', df_bm)
+    merge_into_existing_results(monomlp_results, 'MonoMLP')
 
     if _TABPFN_AVAILABLE:
         print("\n" + "-" * 70)

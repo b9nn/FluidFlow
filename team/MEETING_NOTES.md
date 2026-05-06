@@ -23,7 +23,7 @@ Format per entry:
 - `BM_Alternates.py` ran end-to-end (~3 min total). `BM_Summary.py` regenerated all three figures.
 - **Headline result:** non-transfer alternates beat Callum's transfer methods at every N ∈ [10, 100]. TabPFN especially. Best gain: +0.47 R² at N=50. See `MILESTONES.md` 2026-05-05 entry for the table.
 - This reframes the transfer story — at small N, BCM source is a liability, not an asset. TBCM→BM (TODO #2) might still help since TBCM is physics-closer; worth scoping.
-- Two follow-up TODOs created (#13: dump JSON for `BM_SmallData.py` to tighten comparison; #14: investigate PINN failure at N≤10).
+- Two follow-up TODOs created (#13: dump JSON for `BM_SmallData.py` to tighten comparison; #14: investigate MonoMLP failure at N≤10).
 - TODO #1 + #12 marked `done`. Migrated to Recently Done in BOARD; will roll into MILESTONES at next sync.
 
 **Action items:**
@@ -51,7 +51,7 @@ Format per entry:
 ## 2026-05-05 — Brian solo (phases 2–5 of #1, code complete)
 **Attendees:** brian
 **Decisions:**
-- PINN encodes 3 monotonicity priors: `∂F0/∂a_CT`, `∂SPL/∂PS`, and `∂F0/∂PS` (chest-voice physiology). λ = 0.1 default. Logged to DECISIONS.
+- MonoMLP encodes 3 monotonicity priors: `∂F0/∂a_CT`, `∂SPL/∂PS`, and `∂F0/∂PS` (chest-voice physiology). λ = 0.1 default. Logged to DECISIONS.
 - TabPFN ≥ 7.x license + token requirement turned out to be a setup blocker — handled with graceful skip; documented in code and in TODO #12.
 - TODO #1 status moves from `in-progress` to `review` since the implementation work is complete; the actual real-data run is split out as a new TODO #12 that's the prerequisite for migrating both rows to MILESTONES.
 
@@ -72,7 +72,7 @@ Format per entry:
 
 **Action items:**
 - Phase 1 (GP scaffold) — done — `brian`
-- Phase 2 (PINN with 3 monotonicity priors: `∂F0/∂a_CT`, `∂SPL/∂PS`, `∂F0/∂PS`) — done — `brian`
+- Phase 2 (MonoMLP with 3 monotonicity priors: `∂F0/∂a_CT`, `∂SPL/∂PS`, `∂F0/∂PS`) — done — `brian`
 - Phase 3 (TabPFN integration) — done — `brian`
 - Phase 4 (BM_Summary integration) — next — `brian`
 - Phase 5 (DECISIONS + MILESTONES + close TODO #1) — pending — `brian`
@@ -80,7 +80,7 @@ Format per entry:
 - Run BM_Alternates.py against real `dataset_BM.csv` to land actual R² numbers — `brian` (blocked on having data on this machine)
 
 **Blockers:**
-- BM dataset not on this clone. GP+PINN smoke-tested on synthetic data; TabPFN couldn't be smoke-tested (needs license + token). Real numbers pending data + license.
+- BM dataset not on this clone. GP+MonoMLP smoke-tested on synthetic data; TabPFN couldn't be smoke-tested (needs license + token). Real numbers pending data + license.
 
 ## 2026-05-04 — Brian solo (post-hiatus catch-up)
 **Attendees:** brian

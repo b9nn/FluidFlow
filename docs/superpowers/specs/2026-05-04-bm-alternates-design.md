@@ -4,7 +4,9 @@
 **Author:** Brian (with Claude)
 **Branch:** feature/fem
 **Tracks:** `team/TODO.md` #1
-**Status:** Approved — proceeding to implementation
+**Status:** Implemented; spec frozen as historical record
+
+> **2026-05-06 update:** what this spec calls "PINN" was renamed to "MonoMLP" in the implementation. The method is monotonicity-constrained MLP (sign constraints on first partials), not a PDE-residual PINN. See `docs/DECISIONS.md` 2026-05-06 entry for the rationale. Spec text below is left as-written for historical accuracy.
 
 ---
 
