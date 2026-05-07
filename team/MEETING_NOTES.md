@@ -16,6 +16,19 @@ Format per entry:
 
 ---
 
+## 2026-05-06 — Brian solo (cleanup, BM equations extracted)
+**Attendees:** brian
+**Decisions:**
+- **Removed MonoMLP** (formerly "PINN") from active alternates code. Mid-tier result, didn't add to the GP/TabPFN story; kept the torch dep around for one second-rate baseline. JSON key dropped, figure regenerated, TODO #14 closed.
+- **Extracted BM governing equations** from Sean's MATLAB into `docs/BM_GOVERNING_EQUATIONS.md`. Two coupled PDEs (membrane + beam) with full BC/IC, plus the constitutive algebra, aerodynamic Bernoulli model, WRA acoustic propagation, and post-hoc F0/SPL extraction. ~Citations to MATLAB line numbers throughout.
+- **Real PINN scoped as TODO #15.** Different deliverable than GP/TabPFN — a PDE-residual physics surrogate that generalizes OOD and gives gradients for inverse problems. Multi-week project.
+
+**Action items:**
+- Decide whether to actually pursue #15 vs other research threads — `brian` (and discuss with Callum at next 1pm)
+- Pick up another P1 item: #2 (TBCM→BM transfer), #5 (verify Callum's results), or #13 (BM_SmallData JSON dump)
+
+**Blockers:** none.
+
 ## 2026-05-05 (later, again) — Brian solo (real-data run; TODO #1 + #12 closed)
 **Attendees:** brian
 **Decisions:**

@@ -1,27 +1,33 @@
 """
-BCM -> Beam-Membrane: Non-Transfer Alternate Methods (PHASES 1-3)
+BCM -> Beam-Membrane: Non-Transfer Alternate Methods
 
-Tracks team/TODO.md #1 — exploring whether non-transfer methods can match
-or beat transfer at very small N (5-100 BM samples).
+Tracks team/TODO.md #1. Two non-transfer methods evaluated against
+Callum's transfer methods on the same BM small-N regime:
 
-Methods:
-  - GP:      Gaussian Process with Matern(2.5) kernel  [PHASE 1]
-  - MonoMLP: Monotonicity-constrained MLP                [PHASE 2]
-             (sign-constrained finite differences on first
-             partials — NOT a PDE-residual PINN; we cannot reach
-             into the BM FEM solver to extract its governing
-             equations, so we settle for inequality priors)
-  - TabPFN:  Pretrained tabular foundation model        [PHASE 3, this file]
+  - GP:      Gaussian Process with Matern(2.5) kernel
+  - TabPFN:  Pretrained tabular foundation model (in-context learning)
+
+Both methods take the same standardized inputs (X_train_sc, Y_train_sc,
+X_test_sc, list of per-output StandardScaler) and return predictions in
+original units, so they swap-compatibly inside run_single().
 
 Mirrors BM_SmallData.py harness:
-  - Same sample sizes: N in [5, 10, 20, 30, 50, 75, 100]
-  - Same fixed test pool (1000 BM samples from outside the train sub-sample)
-  - Same convention: drop a_LCA, schema [a_CT, a_TA, PS] -> [F0, SPL]
-  - Per-domain scalers, fit on each sub-sample
-  - 10 bootstrap runs per (method, n_samples) with seeds 42 + run_idx
+  - Sample sizes: N in [5, 10, 20, 30, 50, 75, 100]
+  - Fixed test pool: 1000 BM samples drawn from outside the train sub-sample
+  - Schema: drop a_LCA, [a_CT, a_TA, PS] -> [F0, SPL]
+  - Per-sub-sample scalers
+  - 10 bootstrap runs per (method, n_samples), seeds 42 + run_idx
 
-Results land in results/alternates_results.json. BM_Summary.py will be
-extended in PHASE 4 to include alternate methods in the comparison figure.
+Results land in results/alternates_results.json. BM_Summary.py reads
+that JSON and emits figs/bm_alternates.png comparing alternates against
+TransRF / Feature Aug / Target Only references.
+
+Note: an earlier version of this file included a third method labeled
+'PINN' / later 'MonoMLP' (a small MLP with monotonicity penalties on
+first partial derivatives). It was a mid-tier non-transfer baseline,
+worse than GP and TabPFN, and removed 2026-05-06 as part of cleanup.
+A real PDE-residual PINN over the BM governing equations is tracked
+separately as team/TODO.md #15 — see docs/BM_GOVERNING_EQUATIONS.md.
 """
 
 import json
@@ -35,10 +41,6 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import Matern, WhiteKernel, ConstantKernel as C
 from sklearn.metrics import r2_score
 from sklearn.preprocessing import StandardScaler
-
-import torch
-import torch.nn as nn
-import torch.optim as optim
 
 # TabPFN is optional — falls back gracefully if not installed.
 # We prefer tabpfn-client (cloud-API; no model-weight download / license dance)
@@ -68,24 +70,6 @@ N_RUNS = 10
 SHARED_FEATURES = ['a_CT', 'a_TA', 'PS']
 TARGETS = ['F0', 'SPL']
 TEST_POOL_SIZE = 1000
-
-# MonoMLP config
-DEVICE = torch.device('cpu')
-MONOMLP_HIDDEN = 32
-MONOMLP_LR = 1e-3
-MONOMLP_MAX_EPOCHS = 2000
-MONOMLP_PATIENCE = 200
-MONOMLP_LAMBDA_MONO = 0.1
-MONOMLP_N_MONO_PAIRS = 256
-MONOMLP_NUDGE = 0.1  # in standardized input space
-
-# Monotonicity priors: list of (input_idx, output_idx) for d(output)/d(input) >= 0
-# Index order: features [a_CT, a_TA, PS], targets [F0, SPL]
-# Confirmed in 2026-05-04 brainstorm:
-#   d F0  / d a_CT >= 0  (longer fold -> higher pitch)
-#   d SPL / d PS   >= 0  (more pressure -> louder)
-#   d F0  / d PS   >= 0  (chest-voice physiology — modest but real)
-MONOMLP_PRIORS = [(0, 0), (2, 1), (2, 0)]
 
 # TabPFN config
 TABPFN_MAX_TRAIN = 1000  # TabPFN's effective training cap; matches our regime
@@ -117,128 +101,6 @@ def fit_predict_gp(X_train_sc, Y_train_sc, X_test_sc, scaler_Y_per_output):
         pred_sc = gp.predict(X_test_sc)
         preds[:, i] = scaler_Y_per_output[i].inverse_transform(
             pred_sc.reshape(-1, 1)
-        ).ravel()
-    return preds
-
-
-class MonoMLP(nn.Module):
-    """Small MLP with joint [F0, SPL] head, used for the monotonicity-
-    constrained method. Inputs and outputs both standardized.
-    """
-    def __init__(self, in_dim=3, hidden=MONOMLP_HIDDEN, out_dim=2):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(in_dim, hidden), nn.ReLU(),
-            nn.Linear(hidden, hidden), nn.ReLU(),
-            nn.Linear(hidden, out_dim),
-        )
-
-    def forward(self, x):
-        return self.net(x)
-
-
-def monotonicity_penalty(model, n_pairs, in_dim, nudge, priors, device):
-    """Sample n_pairs random anchor points in standardized input space,
-    nudge the prior's input dimension by `nudge`, evaluate model at both,
-    and penalize predictions that violate the d(output)/d(input) >= 0
-    constraint.
-
-    Penalty per prior is mean ReLU(y_anchor[out_idx] - y_nudged[out_idx]):
-    positive when the model goes the wrong way.
-    """
-    # Anchors uniform in [-2, 2] (most of N(0, 1) mass; mirrors standardized features)
-    anchor = torch.empty(n_pairs, in_dim, device=device).uniform_(-2.0, 2.0)
-    total = torch.zeros((), device=device)
-    for in_idx, out_idx in priors:
-        nudged = anchor.clone()
-        nudged[:, in_idx] = nudged[:, in_idx] + nudge
-        y_anchor = model(anchor)
-        y_nudged = model(nudged)
-        # We want y_nudged >= y_anchor for this output. Penalize the gap when violated.
-        violation = torch.relu(y_anchor[:, out_idx] - y_nudged[:, out_idx])
-        total = total + violation.mean()
-    return total
-
-
-def fit_predict_monomlp(X_train_sc, Y_train_sc, X_test_sc, scaler_Y_per_output,
-                        random_state=42):
-    """Train the monotonicity-constrained MLP and return predictions in
-    original scale.
-
-    Uses early stopping on a 10% held-out slice (or all train data if N is
-    too small to slice). Loss = MSE + lambda * monotonicity_penalty.
-    """
-    torch.manual_seed(random_state)
-    np.random.seed(random_state)
-
-    n_train = X_train_sc.shape[0]
-    in_dim = X_train_sc.shape[1]
-    out_dim = Y_train_sc.shape[1]
-
-    # Held-out validation slice for early stopping
-    if n_train >= 20:
-        rng = np.random.RandomState(random_state)
-        idx = rng.permutation(n_train)
-        val_size = max(2, n_train // 10)
-        val_idx = idx[:val_size]
-        train_idx = idx[val_size:]
-        X_tr = X_train_sc[train_idx]
-        Y_tr = Y_train_sc[train_idx]
-        X_vl = X_train_sc[val_idx]
-        Y_vl = Y_train_sc[val_idx]
-    else:
-        # Too small to slice — train on all, use train as val (no real early stopping)
-        X_tr, Y_tr = X_train_sc, Y_train_sc
-        X_vl, Y_vl = X_train_sc, Y_train_sc
-
-    X_tr_t = torch.tensor(X_tr, dtype=torch.float32, device=DEVICE)
-    Y_tr_t = torch.tensor(Y_tr, dtype=torch.float32, device=DEVICE)
-    X_vl_t = torch.tensor(X_vl, dtype=torch.float32, device=DEVICE)
-    Y_vl_t = torch.tensor(Y_vl, dtype=torch.float32, device=DEVICE)
-    X_test_t = torch.tensor(X_test_sc, dtype=torch.float32, device=DEVICE)
-
-    model = MonoMLP(in_dim=in_dim, out_dim=out_dim).to(DEVICE)
-    opt = optim.Adam(model.parameters(), lr=MONOMLP_LR)
-    mse = nn.MSELoss()
-
-    best_val = float('inf')
-    best_state = {k: v.clone() for k, v in model.state_dict().items()}
-    patience = 0
-
-    for epoch in range(MONOMLP_MAX_EPOCHS):
-        model.train()
-        opt.zero_grad()
-        pred = model(X_tr_t)
-        loss_mse = mse(pred, Y_tr_t)
-        loss_mono = monotonicity_penalty(
-            model, MONOMLP_N_MONO_PAIRS, in_dim, MONOMLP_NUDGE, MONOMLP_PRIORS, DEVICE
-        )
-        loss = loss_mse + MONOMLP_LAMBDA_MONO * loss_mono
-        loss.backward()
-        opt.step()
-
-        model.eval()
-        with torch.no_grad():
-            val_loss = mse(model(X_vl_t), Y_vl_t).item()
-        if val_loss < best_val - 1e-6:
-            best_val = val_loss
-            best_state = {k: v.clone() for k, v in model.state_dict().items()}
-            patience = 0
-        else:
-            patience += 1
-            if patience >= MONOMLP_PATIENCE:
-                break
-
-    model.load_state_dict(best_state)
-    model.eval()
-    with torch.no_grad():
-        pred_sc = model(X_test_t).cpu().numpy()
-
-    # Inverse-standardize per output
-    preds = np.zeros_like(pred_sc)
-    for i in range(out_dim):
-        preds[:, i] = scaler_Y_per_output[i].inverse_transform(
-            pred_sc[:, i].reshape(-1, 1)
         ).ravel()
     return preds
 
@@ -340,9 +202,6 @@ def run_single(method_name, n_target, df_bm, random_state):
     # 4. Fit + predict per method
     if method_name == 'GP':
         preds = fit_predict_gp(X_train_sc, Y_train_sc, X_test_sc, scalers_Y)
-    elif method_name == 'MonoMLP':
-        preds = fit_predict_monomlp(X_train_sc, Y_train_sc, X_test_sc,
-                                     scalers_Y, random_state=random_state)
     elif method_name == 'TabPFN':
         preds = fit_predict_tabpfn(X_train_sc, Y_train_sc, X_test_sc,
                                     scalers_Y, random_state=random_state)
@@ -444,14 +303,6 @@ def main():
     gp_results = run_method('GP', df_bm)
     out_path = merge_into_existing_results(gp_results, 'GP')
     print(f"  GP results written to: {out_path}")
-
-    print("\n" + "-" * 70)
-    print(f"Method: MonoMLP (MLP {MONOMLP_HIDDEN}/{MONOMLP_HIDDEN}, "
-          f"lambda={MONOMLP_LAMBDA_MONO}, "
-          f"{len(MONOMLP_PRIORS)} monotonicity priors)")
-    print("-" * 70)
-    monomlp_results = run_method('MonoMLP', df_bm)
-    merge_into_existing_results(monomlp_results, 'MonoMLP')
 
     if _TABPFN_AVAILABLE:
         print("\n" + "-" * 70)

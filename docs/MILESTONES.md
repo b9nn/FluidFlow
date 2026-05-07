@@ -8,21 +8,20 @@ Three non-transfer baselines for BCM→BM at very small N (5–100 samples) ran 
 
 **Methods:**
 - **GP** — `ConstantKernel * Matern(2.5) + WhiteKernel`, independent per output, marginal-likelihood optimization
-- **MonoMLP** — MLP `[3→32→32→2]` joint head, MSE + 0.1·monotonicity penalty over 3 priors (`∂F0/∂a_CT`, `∂SPL/∂PS`, `∂F0/∂PS` all ≥ 0). Originally labeled "PINN" in early commits — renamed 2026-05-06 because it's not a PDE-residual PINN, just sign-constraints on first partials
 - **TabPFN** — Pretrained tabular foundation model via `tabpfn-client` (cloud), one regressor per output, capped at 1000 train samples
 
 **Results (avg R² over F0 and SPL, 10 bootstrap runs each):**
 
-| N | GP | MonoMLP | TabPFN | Callum's best transfer (PROJECT_GUIDE.md table) | Best alternate gain |
-|---|---|---|---|---|---|
-| 10  | +0.19 | −0.72 | **+0.27** | TransRF +0.08 | **+0.20** |
-| 20  | +0.38 | +0.25 | +0.38 | Feature Aug +0.05 | **+0.33** |
-| 30  | +0.44 | +0.32 | **+0.47** | Feature Aug +0.19 | **+0.29** |
-| 50  | +0.60 | +0.47 | **+0.66** | Feature Aug +0.19 | **+0.47** |
-| 75  | +0.67 | +0.47 | **+0.69** | Feature Aug +0.29 | **+0.40** |
-| 100 | **+0.67** | +0.56 | **+0.67** | TransRF +0.28 | **+0.39** |
+| N | GP | TabPFN | Callum's best transfer (PROJECT_GUIDE.md table) | Best alternate gain |
+|---|---|---|---|---|
+| 10  | 0.19 | **0.27** | TransRF 0.08 | **+0.20** |
+| 20  | 0.38 | 0.38 | Feature Aug 0.05 | **+0.33** |
+| 30  | 0.44 | **0.47** | Feature Aug 0.19 | **+0.29** |
+| 50  | 0.60 | **0.66** | Feature Aug 0.19 | **+0.47** |
+| 75  | 0.67 | **0.69** | Feature Aug 0.29 | **+0.40** |
+| 100 | 0.67 | 0.67 | TransRF 0.28 | **+0.39** |
 
-**Headline:** non-transfer methods (TabPFN especially) **dominate transfer at small N** — gains of +0.20 to +0.47 R². TabPFN at N=50 (R²=0.66) matches what Callum's TransRF needed N=200 to achieve (R²=0.59). GP is competitive with TabPFN; MonoMLP underperforms at N≤10 where the monotonicity prior fights too-little-data, recovers at N≥20.
+**Headline:** non-transfer methods (TabPFN especially) **dominate transfer at small N** — gains of 0.20 to 0.47 R². TabPFN at N=50 (R²=0.66) matches what Callum's TransRF needed N=200 to achieve (R²=0.59). GP is competitive with TabPFN throughout. A third method (originally "PINN", later "MonoMLP") was implemented and then removed 2026-05-06 — it was a mid-tier baseline that didn't add to the GP/TabPFN story; see `docs/DECISIONS.md` for the rationale.
 
 **Caveats:** Callum's "best transfer" column comes from the table in `PROJECT_GUIDE.md` — `BM_SmallData.py` results that aren't dumped to JSON, so this isn't run-on-the-same-test-pool. Same harness shape (sub-sample of N rows, separate test pool of 1000) but different invocations. Re-running `BM_SmallData.py` and dumping its JSON would tighten the comparison; tracked in roadmap.
 

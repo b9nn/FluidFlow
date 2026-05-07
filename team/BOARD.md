@@ -19,8 +19,7 @@ Format per row: `#N — Task — owner — Pn`. Click through to TODO for full n
 - **#10** — OpenIFEM coupling for full FSI training data — `tbd` — `P2`
 - **#11** — Hyperparameter sweep tracker — `tbd` — `P2`
 - **#13** — Re-run `BM_SmallData.py` and dump JSON for tighter head-to-head — `brian` — `P2`
-- **#14** — Investigate MonoMLP underperformance at N≤10 (priors fighting data) — `brian` — `P2`
-- **#15** — Upgrade MonoMLP toward an actual PINN if feasible — `brian` — `P3`
+- **#15** — Build a real PDE-residual PINN over BM governing equations — `brian` — `P3`
 
 ## In Progress
 
@@ -32,6 +31,7 @@ _(empty)_
 
 ## Recently Done
 
+- **2026-05-06** — Code cleanup: MonoMLP method removed from `BM_Alternates.py` (mid-tier, didn't add to GP/TabPFN story); JSON key dropped; figure regenerated; torch import no longer needed for alternates. Closes TODO #14. Real PDE-residual PINN scoped as TODO #15 (separate project, equations extracted in `docs/BM_GOVERNING_EQUATIONS.md`). BM governing equations doc added — `brian`
 - **2026-05-05** — **TODO #1 + #12 done.** Non-transfer alternates ran on real BM data. Headline: TabPFN at N=50 hits avg R²=0.66, beating Callum's best transfer (Feature Aug, R²=0.19) by +0.47. GP is comparable. MonoMLP struggles at N≤10. Real result, possibly publishable. See `docs/MILESTONES.md` and `Beam_Membrane/figs/bm_alternates.png` — `brian`
 - **2026-05-05** — Non-transfer alternates code complete: GP, MonoMLP (3 monotonicity priors), TabPFN; `BM_Alternates.py` (~440 lines), `BM_Summary.py` extended — `brian`
 - **2026-05-04** — Set up `/team/` shared agile folder (TODO, BOARD, MEETING_NOTES) and link from CLAUDE.md — `brian`

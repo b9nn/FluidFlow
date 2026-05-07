@@ -130,6 +130,13 @@ df.rename(columns={'Ps': 'PS'}, inplace=True)
 **Why:** Matern(ν=2.5) is twice differentiable — smoother than Matern(ν=1.5) but not as restrictive as RBF (which assumes infinite differentiability). Vocal-fold physics is smooth but not analytic; ν=2.5 is the standard middle-ground for physics regression. Multiplicative ConstantKernel allows the GP to learn output magnitude; WhiteKernel absorbs noise.
 **Where it shows up:** `Beam_Membrane/BM_Alternates.py:fit_predict_gp`.
 
+## 2026-05-06 — Remove MonoMLP from active code (keep GP + TabPFN only)
+
+**Context:** After the rename and the real-data run, MonoMLP was a mid-tier non-transfer method — better than Callum's transfer at moderate N (≥20), worse than GP and TabPFN throughout, and actively bad at N≤10 where the monotonicity prior dominated too-little data. The story we tell is "non-transfer alternates beat transfer at small N"; MonoMLP didn't sharpen that story and added a torch dependency for the only methods that needed it.
+**Decision:** Remove `MonoMLP`, `monotonicity_penalty`, `MONOMLP_*` constants, and the torch imports from `Beam_Membrane/BM_Alternates.py`. Drop `'MonoMLP'` styling from `BM_Summary.py`. Drop the `'MonoMLP'` key from `Beam_Membrane/results/alternates_results.json`. Regenerate `figs/bm_alternates.png` with only GP + TabPFN curves. Mark `team/TODO.md` #14 (investigate MonoMLP collapse) as `done`/canceled — no longer relevant. Keep `team/TODO.md` #15 (build a real PDE-residual PINN over the BM equations) since that's a different, larger project.
+**Why:** The earlier rename (PINN → MonoMLP, 2026-05-06) addressed the misnaming. This removal addresses the substance: a method that doesn't improve the story is dead weight. A real PINN over the BM PDEs (now extracted in `docs/BM_GOVERNING_EQUATIONS.md`) is a separate, deliberate project — not a continuation of the MonoMLP work.
+**Where it shows up:** `Beam_Membrane/BM_Alternates.py`, `Beam_Membrane/BM_Summary.py`, `Beam_Membrane/results/alternates_results.json`, `figs/bm_alternates.png`, `docs/MILESTONES.md` (results table simplified), `team/TODO.md` (#14 closed).
+
 ## 2026-05-06 — Rename "PINN" to "MonoMLP" (avoid overclaiming)
 
 **Context:** What we built and called "PINN" is not actually a PDE-residual physics-informed neural network in the Raissi-Perdikaris-Karniadakis sense. It's a small MLP whose loss adds a soft inequality penalty on finite-difference approximations of first partial derivatives — i.e. monotonicity constraints, not PDE residuals.

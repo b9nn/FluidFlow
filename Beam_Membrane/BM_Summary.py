@@ -350,9 +350,8 @@ def main():
 
         # Stable color/marker per alternate method
         alt_styles = {
-            'GP':     {'color': 'teal',    'ls': '-', 'marker': 'P'},
-            'MonoMLP': {'color': 'magenta', 'ls': '-', 'marker': 'X'},
-            'TabPFN': {'color': 'gold',    'ls': '-', 'marker': 'd'},
+            'GP':     {'color': 'teal',  'ls': '-', 'marker': 'P'},
+            'TabPFN': {'color': 'gold',  'ls': '-', 'marker': 'd'},
         }
 
         # All N_TARGETS from any method (sorted)
