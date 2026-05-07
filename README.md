@@ -13,10 +13,16 @@ python "VocalFoldRegression/BCM Model/RandomForest/MaleRF.py"
 python "VocalFoldRegression/BCM Model/RandomForest/FemaleRFTransfer.py"
 
 # --- BCM → BM transfer (Callum) ---
-MPLBACKEND=Agg python Beam_Membrane/BM_TransferRF.py     # 6 RF methods
-MPLBACKEND=Agg python Beam_Membrane/BM_TransferAE.py     # 3 autoencoder methods
-MPLBACKEND=Agg python Beam_Membrane/BM_SmallData.py      # 10–500 sample sweep
-MPLBACKEND=Agg python Beam_Membrane/BM_Summary.py        # cross-method comparison
+MPLBACKEND=Agg python Beam_Membrane/BM_TransferRF.py     # 6 RF methods (Callum)
+MPLBACKEND=Agg python Beam_Membrane/BM_TransferAE.py     # 3 autoencoder methods (Callum)
+MPLBACKEND=Agg python Beam_Membrane/BM_SmallData.py      # 10–500 sample sweep (Callum)
+
+# --- Non-transfer alternates (Brian) ---
+MPLBACKEND=Agg python Beam_Membrane/BM_GP.py             # Gaussian Process baseline
+MPLBACKEND=Agg python Beam_Membrane/BM_TabPFN.py         # Pretrained tabular foundation model
+
+# --- Comparison summary (reads all of the above) ---
+MPLBACKEND=Agg python Beam_Membrane/BM_Summary.py        # cross-method comparison + figures
 
 # --- BCM → TBCM transfer (Callum) ---
 MPLBACKEND=Agg python TBCM/TBCM_TransferRF.py

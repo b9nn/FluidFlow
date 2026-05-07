@@ -130,6 +130,13 @@ df.rename(columns={'Ps': 'PS'}, inplace=True)
 **Why:** Matern(ν=2.5) is twice differentiable — smoother than Matern(ν=1.5) but not as restrictive as RBF (which assumes infinite differentiability). Vocal-fold physics is smooth but not analytic; ν=2.5 is the standard middle-ground for physics regression. Multiplicative ConstantKernel allows the GP to learn output magnitude; WhiteKernel absorbs noise.
 **Where it shows up:** `Beam_Membrane/BM_Alternates.py:fit_predict_gp`.
 
+## 2026-05-06 — Split BM_Alternates.py into BM_GP.py and BM_TabPFN.py
+
+**Context:** After removing MonoMLP, the file was a single ~280-line module hosting two unrelated methods (sklearn GP and a cloud-API call to TabPFN). One file, two completely different dependencies and authentication paths. Inconsistent with Callum's per-method-family pattern (`BM_TransferRF.py`, `BM_TransferAE.py`).
+**Decision:** Split `BM_Alternates.py` into `Beam_Membrane/BM_GP.py` and `Beam_Membrane/BM_TabPFN.py`. Each file is self-contained: own harness (`run_single`, `run_method`), own data loader, own JSON merge helper. Both write to the same `Beam_Membrane/results/alternates_results.json` using `merge_into_alternates()`, so they don't clobber each other. Order of execution doesn't matter. Delete the merged `BM_Alternates.py`. `BM_Summary.py` reads the unified JSON unchanged.
+**Why:** Matches Callum's existing convention (one file per method family), makes auth/dependency boundaries clear (GP needs only sklearn, TabPFN needs cloud auth), and lets either method be re-run independently without dragging the other along.
+**Where it shows up:** `Beam_Membrane/BM_GP.py` (NEW), `Beam_Membrane/BM_TabPFN.py` (NEW), `Beam_Membrane/BM_Alternates.py` (DELETED), `README.md` quick-start, `docs/GLOSSARY.md` GP/TabPFN entries point at the split files.
+
 ## 2026-05-06 — Remove MonoMLP from active code (keep GP + TabPFN only)
 
 **Context:** After the rename and the real-data run, MonoMLP was a mid-tier non-transfer method — better than Callum's transfer at moderate N (≥20), worse than GP and TabPFN throughout, and actively bad at N≤10 where the monotonicity prior dominated too-little data. The story we tell is "non-transfer alternates beat transfer at small N"; MonoMLP didn't sharpen that story and added a torch dependency for the only methods that needed it.

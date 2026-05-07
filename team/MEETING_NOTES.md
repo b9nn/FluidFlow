@@ -16,6 +16,15 @@ Format per entry:
 
 ---
 
+## 2026-05-06 (later) — Brian solo (file split)
+**Attendees:** brian
+**Decisions:**
+- Split `BM_Alternates.py` into `BM_GP.py` and `BM_TabPFN.py`. Self-contained per-method-family files matching Callum's existing convention. Both still write to the same `alternates_results.json` so `BM_Summary.py` is unchanged.
+
+**Action items:** none — code-organization-only change.
+
+**Blockers:** none.
+
 ## 2026-05-06 — Brian solo (cleanup, BM equations extracted)
 **Attendees:** brian
 **Decisions:**

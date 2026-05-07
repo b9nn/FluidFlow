@@ -51,7 +51,7 @@ def main():
         alternates = {k: v for k, v in alt_raw.items() if not k.startswith('_')}
         print(f"  Loaded Alternates results: {list(alternates.keys())}")
     else:
-        print(f"  Alternates results not found (run BM_Alternates.py to add)")
+        print(f"  Alternates results not found (run BM_GP.py and/or BM_TabPFN.py to add)")
 
     # Build unified method list
     all_methods = {
