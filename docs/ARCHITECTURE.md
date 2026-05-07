@@ -23,9 +23,10 @@ Inputs and outputs are scaled separately per domain. **Three scalers per domain:
 ```
 /
 ├── VocalFoldRegression/   ← Brian's male/female BCM work (RF, NN, PR)
-├── Beam_Membrane/         ← Callum: BCM→BM transfer (RF + AE)
+├── Beam_Membrane/         ← BCM→BM transfer (Callum) + non-transfer alternates (Brian: GP, TabPFN)
 ├── TBCM/                  ← Callum: BCM→TBCM transfer (RF + AE + waveform)
 ├── archive/               ← Old experiments parked here in PR #1
+├── team/                  ← Shared agile workspace (TODO, BOARD, MEETING_NOTES)
 └── docs/, CLAUDE.md, README.md, PROJECT_GUIDE.md
 ```
 
@@ -75,7 +76,48 @@ Architecture: Encoder `3 → 64 → 32 → 16` → Decoder `16 → 32 → 64 →
 
 `TBCM_WaveformFeatures.py` extracts per-cycle waveform features from `.mat` files; `TBCM_WaveformTransfer.py` evaluates whether richer features close the BCM→TBCM gap. Result enriched dataset: `TBCM/dataset_TBCM_enriched.csv`.
 
-## Key empirical results (from Callum's PR #1)
+### Era 3 — Brian's non-transfer alternates (BM only)
+
+Two methods that **don't use BCM source data at all** — the question they answer is "do strong generic priors beat domain-specific transfer at small N?" Per file, matching Callum's per-method-family convention:
+
+| Method | File | Library | Per-task fitting? |
+|---|---|---|---|
+| **Gaussian Process** | `Beam_Membrane/BM_GP.py` | `sklearn` | Yes (marginal-likelihood, ~1 s) |
+| **TabPFN** | `Beam_Membrane/BM_TabPFN.py` | `tabpfn-client` (cloud) → `tabpfn` (local fallback) | No (one forward pass per row) |
+
+**GP details:** kernel `ConstantKernel * Matern(ν=2.5) + WhiteKernel`. Independent regressor per output (F0, SPL). Hyperparameters via marginal-likelihood with 3 random restarts.
+
+**TabPFN details:** pretrained transformer for tabular regression. Single-output → two regressors (one per target). Train cap of 1,000 samples (matches our N≤100 regime). Cloud client preferred; auth via one-time browser login (`tabpfn_client.init()`) or `TABPFN_TOKEN` env var.
+
+Both files:
+- Mirror Callum's harness: N ∈ [5, 10, 20, 30, 50, 75, 100], 10 bootstrap runs, 1,000-row test pool
+- Drop `a_LCA` for shared-feature parity with BCM
+- Per-sub-sample scalers
+- Merge into shared `Beam_Membrane/results/alternates_results.json` via `merge_into_alternates()` — order-independent
+- `BM_Summary.py` reads the unified JSON and emits `figs/bm_alternates.png`
+
+**Removed methods:** an earlier "PINN" / "MonoMLP" (small MLP with monotonicity penalties on first partials) was implemented and removed 2026-05-06 — mid-tier results, didn't sharpen the GP/TabPFN story. A real PDE-residual PINN over the BM equations is scoped separately as `team/TODO.md` #15; PDEs extracted in `docs/BM_GOVERNING_EQUATIONS.md`.
+
+## Key empirical results
+
+### Non-transfer alternates vs transfer (BCM → BM, small N)
+
+Average R² over F0+SPL on a 1,000-row held-out BM test pool, 10 bootstrap runs each:
+
+| N | Best transfer (Callum) | GP (Brian) | TabPFN (Brian) | Best-alternate gain |
+|---|---|---|---|---|
+| 10  | TransRF 0.08 | 0.19 | **0.27** | +0.20 |
+| 20  | Feature Aug 0.05 | 0.38 | 0.38 | +0.33 |
+| 30  | Feature Aug 0.19 | 0.44 | **0.47** | +0.29 |
+| 50  | Feature Aug 0.19 | 0.60 | **0.66** | +0.47 |
+| 75  | Feature Aug 0.29 | 0.67 | **0.69** | +0.40 |
+| 100 | TransRF 0.28 | 0.67 | 0.67 | +0.39 |
+
+**Headline:** non-transfer alternates beat transfer at every small-N point tested. TabPFN at N=50 (R²=0.66) matches what TransRF needed N=200 to achieve. Two factors: (1) BCM→BM scale mismatch on `Ps` (`[10, 2010]` vs `[600, 1000]`) makes BCM source predictions actively misleading; (2) TabPFN's pretrained prior is stronger than 54k BCM samples worth of misaligned signal at small N.
+
+> Caveat: transfer numbers come from Callum's `BM_SmallData.py` results in `PROJECT_GUIDE.md` (separate runs, same harness shape). Tightening this comparison is `team/TODO.md` #13.
+
+### Original transfer-only results (from Callum's PR #1)
 
 ### BCM → TBCM (same physics family)
 

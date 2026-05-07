@@ -2,55 +2,62 @@
 
 No hard deadlines — phases are ordered, not dated. Each phase ends with a measurable artifact written to disk.
 
-> **State as of 2026-05-03:** Callum's PR #1 already shipped working BCM→BM and BCM→TBCM transfer pipelines with measured results. The "build the transfer pipelines" phase is done. Remaining work is analysis, NN/PR coverage, and write-up.
+> **State as of 2026-05-07:** TODO #1 (non-transfer alternates) closed — GP and TabPFN both ran on real BM data and beat all of Callum's transfer methods at small N. Headline result documented in `docs/MILESTONES.md` 2026-05-05 entry. Decision point coming at the next 1pm sync: which of Phase A / Phase B below to scope next.
 
-## Now — Phase A: Digest Callum's results, decide next direction
+## Decision point — pick one of A / B at next 1pm
 
-**Goal:** Brian (returning from hiatus) reviews Callum's empirical results and picks the next research thread.
+### Phase A — TBCM → BM two-stage transfer (TODO #2)
 
-- Read `PROJECT_GUIDE.md` end-to-end.
-- Run one or more of Callum's scripts locally to verify reproducibility (`BM_Summary.py` is a fast sanity check).
-- Open `Beam_Membrane/results/rf_transfer_results.json` and `TBCM/results/rf_transfer_results.json` to inspect raw R² numbers.
-- Decide: which of Phases B–D below to prioritize.
+**Question:** does *physics-aligned* transfer beat the alternates? BCM→BM failed because of the `Ps` scale mismatch. TBCM has the same `Ps` range as BM and the same physics family, so transfer might actually help here.
 
-**Done when:** decision recorded in `DECISIONS.md`.
+**Plan:**
+- Train RF on TBCM (~43k samples) as the source
+- Use BCM as a control source (run parallel)
+- Apply Callum's 6 RF methods + 3 AE methods with TBCM as source
+- Add TabPFN with TBCM features added (TabPFN-with-source-features as a baseline)
+- Compare against Brian's GP + TabPFN non-transfer baselines
 
-## Next options (any order)
+**Effort:** ~1–2 weeks. Reuses existing harness; mostly data plumbing.
 
-### Phase B — Extend NN/PR transfer to BM and TBCM
+**Done when:** updated `bm_alternates.png` + summary CSV showing TBCM→BM curves alongside BCM→BM and non-transfer.
 
-The new BM/TBCM work is RF + autoencoder only. Brian's NN (partial freezing) and PR (weighted ensemble) strategies haven't been tested on these domains.
+### Phase B — Real PDE-residual PINN over BM equations (TODO #15)
 
-- Apply NN partial-freezing to BCM→TBCM (likely easy win — same physics family).
-- Apply NN partial-freezing to BCM→BM (likely hard — scale mismatch).
-- Apply PR ensemble (degree 4–5 + Ridge) to both. Expect PR to struggle on BM specifically.
-- Add results to `BM_Summary.py` / `TBCM_Summary.py` as additional rows.
+**Question:** can we build a physics surrogate that generalizes outside the BM training distribution and provides gradients for inverse problems? Different *kind* of model than GP/TabPFN — not a marginal R² improvement, a different deliverable.
 
-**Done when:** updated cross-regressor comparison includes NN and PR.
+**Plan:**
+- Port BM Stage 2 (constitutive algebra) and Stage 3 (coupled membrane + beam PDE) from MATLAB to PyTorch using the equations extracted in `docs/BM_GOVERNING_EQUATIONS.md`
+- Predict displacement fields `w(x, y, t)` and `w_b(x, t)` with neural networks
+- Compute PDE residuals at collocation points via autograd
+- Encode boundary and initial conditions as additional loss terms
+- Derive F0 (FFT on `Am(t)`) and SPL (RMS via simplified WRA or call-out) from the predicted fields
+- Connect inputs `(a_CT, a_TA, PS, eps0, Theta_G)` — call MATLAB once per training sample for `(eps0, Theta_G)` since posturing is black-box
 
-### Phase C — Push the small-data regime further
+**Effort:** ~3–4 weeks of focused work. Substantial engineering project.
 
-Callum's small-data sweep covers 10–500 BM samples. The interesting question is what happens below 10 (3, 5, 8 samples) — physically motivated priors might dominate at that scale.
+**Done when:** PINN predicts F0/SPL on a held-out BM set with R² ≥ 0.5 *and* generalizes to one OOD test condition (e.g., a `Ps` value outside the training range). Then we can compare its OOD performance vs GP/TabPFN, which can't extrapolate.
 
-- Re-run `BM_SmallData.py` with `n ∈ {3, 5, 8}` and many more bootstrap runs.
-- Try a physics-informed prior on the residual model.
-- Document where target-only collapses to near-zero R².
+## Then — Phase C: Paper write-up (TODO #6)
 
-**Done when:** updated small-data figure committed.
+Whichever of A or B happens first, the write-up should fold in:
 
-### Phase D — Write-up / paper draft
+- BCM→BM and BCM→TBCM transfer (Callum's full results)
+- Non-transfer alternates (GP + TabPFN) — the surprise headline
+- Domain-gap quantification: when does transfer help, when does it hurt?
+- Whichever follow-up was pursued (TBCM→BM transfer or real PINN)
 
-- Quantify the BCM↔BM and BCM↔TBCM domain gaps with measured numbers.
-- Physical interpretation: what does BM capture that BCM doesn't, and where does that show up in the errors?
-- Generate paper-ready figures from `Beam_Membrane/figs/` and `TBCM/figs/`.
-- Prose narrative around "transfer for expensive simulators" pitch.
-
-**Done when:** results section drafted; figures finalized.
+**Done when:** results section drafted, figures paper-ready.
 
 ## Maybe-later
 
-- Female BM / female TBCM transfer (if those datasets exist).
-- Glottal-area integration as an additional input/output feature.
-- OpenIFEM coupling for full FSI training data (replaces reduced-order BM).
-- Hyperparameter sweep tracker (e.g., a small CSV log or a tracker like MLflow).
-- Decide fate of `VocalFoldRegression/Beam+Membrane_ForSean/` — Sean's upstream MATLAB FE solver (currently untracked locally; needs his consent before vendoring or a `data/README.md` documenting it as an external dependency). Tracked as `team/TODO.md` #7.
+- Female BM / female TBCM transfer (if those datasets exist)
+- Glottal-area integration as additional input/output feature
+- OpenIFEM coupling for full FSI training data (replaces reduced-order BM)
+- Hyperparameter sweep tracker (e.g., a small CSV log or MLflow)
+- Decide fate of `VocalFoldRegression/Beam+Membrane_ForSean/` — Sean's upstream MATLAB FE solver (currently untracked locally; needs his consent before vendoring or a `data/README.md` documenting it as an external dependency). Tracked as `team/TODO.md` #7
+- Re-run Callum's `BM_SmallData.py` with JSON dump for tighter alternates-vs-transfer head-to-head — `team/TODO.md` #13
+
+## What's already done (was in this roadmap before)
+
+- Phase 0 (digest Callum's PR + decide direction) — closed 2026-05-04
+- Original "Phase B/C" (NN/PR coverage of BM/TBCM, push small-N) — superseded by the non-transfer alternates direction; remaining bits are TODO #3 and #4 in backlog

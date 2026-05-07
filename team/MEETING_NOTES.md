@@ -16,6 +16,94 @@ Format per entry:
 
 ---
 
+## 2026-05-07 — Advisor briefing prep (notes for shared meeting)
+
+**Purpose:** condensed handoff for advisors / non-day-to-day stakeholders. Full notes are in this section so they can be cut-and-pasted into a shared doc or email if needed.
+
+### Recap of where we were
+
+Project goal: replace expensive Beam-Membrane (BM) MATLAB simulations with a fast ML model that maps muscle activations + subglottal pressure → fundamental frequency (F0) and sound pressure level (SPL). Each MATLAB BM simulation is slow (~8 min), so we want a model that predicts accurately from a small number of expensive simulations.
+
+Prior state (Callum's PR, 2026-05-02): six transfer-learning methods that pretrain on cheap BCM simulations (~54,000 samples) and adapt to expensive BM simulations. Best transfer method (TransRF) achieved R² ≈ 0.28 at N=100 BM samples on average.
+
+### What we did this round
+
+Brian asked: does transfer learning actually help here, or could a simpler non-transfer method match or beat it? Tested two non-transfer baselines on the same data:
+
+1. **Gaussian Process (GP)** — classical Bayesian method that fits a smooth function to BM data alone, no BCM involved
+2. **TabPFN** — pretrained foundation model (a transformer, similar in spirit to a language model but for tables); makes predictions in one forward pass without per-task fitting
+
+Both run on Callum's data, same sample sizes, same evaluation protocol. **No BCM source data used.**
+
+### Findings
+
+Average R² (F0+SPL, 10 bootstrap runs each) on a 1,000-row held-out BM test pool:
+
+| Training samples | Best transfer (Callum) | GP (ours) | TabPFN (ours) | Gain over transfer |
+|---|---|---|---|---|
+| 10  | 0.08 | 0.19 | 0.27 | **+0.20** |
+| 20  | 0.05 | 0.38 | 0.38 | **+0.33** |
+| 30  | 0.19 | 0.44 | 0.47 | **+0.29** |
+| 50  | 0.19 | 0.60 | **0.66** | **+0.47** |
+| 75  | 0.29 | 0.67 | **0.69** | **+0.40** |
+| 100 | 0.28 | 0.67 | 0.67 | **+0.39** |
+
+**Headline:** non-transfer methods beat transfer at every small data size we tested, with gains of 0.20 to 0.47 R². TabPFN at N=50 matches what Callum's best transfer needed N=200 to achieve.
+
+### Why transfer didn't help here
+
+1. **Domain mismatch.** BCM operates over Ps `[10, 2010]` Pa; BM over `[600, 1000]`. Source-only R² on BM ≈ −2 — actively misleading.
+2. **Strong generic priors beat weak domain priors at small N.** TabPFN's pretrained prior (millions of synthetic regression problems) plus 50 BM examples beats transfer methods leveraging 54k BCM examples that are pointing the wrong direction.
+
+### Practical implications
+
+- Fast/accurate BM acoustic predictions: simplest path is now "run 50 BM sims, fit TabPFN." The BCM step is unnecessary.
+- Simulation budget: TabPFN at N=50 (R²=0.66) is good enough as a screening surrogate.
+- Transfer learning research: transfer's value depends critically on source-target alignment. BCM↔BM is misaligned; TBCM↔BM (matching Ps range, same physics family) might work where BCM didn't.
+
+### Caveats
+
+1. Transfer numbers come from Callum's `BM_SmallData.py` results in `PROJECT_GUIDE.md`, run separately from our alternates. Same protocol, not literally the same test rows. Tightening: TODO #13.
+2. Tested at N ≤ 100 only. Transfer may catch up at larger N (Callum's published results show TransRF improving toward R²=0.59 at N=200).
+3. TabPFN is a cloud-API service. If we ship a model that depends on it, we depend on Prior Labs' uptime. Local-install fallback exists.
+
+### Next steps (decision at next 1pm)
+
+A. **TBCM → BM two-stage transfer** (~1–2 weeks): tests whether physics-aligned transfer beats the alternates.
+B. **Real PDE-residual PINN over BM equations** (~3–4 weeks): different *kind* of model — physics surrogate that generalizes OOD and gives gradients. PDEs already extracted from Sean's MATLAB in `docs/BM_GOVERNING_EQUATIONS.md`.
+
+### Anticipated advisor questions (with prepared answers)
+
+See bottom of this entry for full Q&A. Twelve questions covering: result robustness, why transfer didn't help, what TabPFN actually is, reproducibility, project direction, cost, timeline.
+
+---
+
+#### Q&A — short version
+
+**Q: Was Callum's transfer work wasted?** No. Same infrastructure (data, harness, evaluation). The finding is "transfer doesn't beat strong generic priors at small N for *this specific domain pair*", not "transfer is bad." Different pair (TBCM→BM) might still win.
+
+**Q: Why is TabPFN so much better than transfer? Sounds too good.** Two factors compound: (1) TabPFN was pretrained on millions of synthetic tabular problems, strong built-in priors; (2) BCM source operates at 5× the Ps range of BM, so the source signal is misleading. Remove misleading signal + add strong generic prior = simpler approach wins.
+
+**Q: How robust is the +0.47 gap at N=50?** 10 bootstrap replicates per (method, N). Std per replicate is 0.13–0.18. 0.47 is ~3× std — well outside noise. Can rerun with more replicates if needed.
+
+**Q: What is TabPFN, in plain language?** A neural network trained once by Prior Labs on millions of synthetic regression problems, then frozen. To predict on a new dataset, give it your training rows + test rows; it outputs predictions in one forward pass without further training. Like an LLM doing in-context learning, but for tables.
+
+**Q: Why do GPs work at small N?** Bayesian model fitting a probability distribution over smooth functions. Only ~3 hyperparameters; can't really overfit. Textbook small-N method.
+
+**Q: Could we use polynomial regression / small neural networks instead?** Tested earlier in Brian's female-BCM work. Polynomials overfit catastrophically at small N; small NNs need more data. GP and TabPFN are specifically designed for the small-N regime.
+
+**Q: Should we abandon transfer learning?** No. (a) TBCM→BM might work since it's physics-aligned. (b) At larger N transfer's benefit grows. (c) Callum's transfer infrastructure is the test bed. We're augmenting, not replacing.
+
+**Q: How does this affect publication?** Strengthens it. Original story: "transfer learning helps for expensive simulators." New story: "transfer's value depends on source-target alignment; here's a head-to-head against strong generic baselines that establishes when transfer is and isn't useful." More rigorous.
+
+**Q: Is TabPFN reproducible?** TabPFN v2 is in a Nature 2025 paper. Weights publicly available. Cloud API is convenient but not required — local-install fallback. Can pin to a specific version.
+
+**Q: How long did this take?** ~3 days of focused work: GP and TabPFN methods, real-data run, doc reorganization, BM equation extraction.
+
+**Q: What's the next milestone?** Either TBCM→BM transfer (~1–2 weeks) or real PINN (~3–4 weeks). Decide at next 1pm.
+
+**Q: Do we need more BM simulations from Sean?** For regression: probably not — TabPFN at N=50 is already strong. For PINN: yes, ideally with broader sampling of input space. Open question.
+
 ## 2026-05-06 (later) — Brian solo (file split)
 **Attendees:** brian
 **Decisions:**
