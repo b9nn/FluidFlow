@@ -12,6 +12,7 @@ Outputs (Beam_Membrane/figs/):
   - bm_showcase_headline.png    Average R^2 vs N, alternates vs transfer envelope
   - bm_showcase_sim_budget.png  How many BM sims needed to hit R^2 thresholds
   - bm_showcase_bootstrap.png   Bootstrap-replicate distributions at key N
+  - bm_showcase_table.png       Per-N R^2 table: GP vs TransRF vs TabPFN
 """
 
 import json
@@ -353,6 +354,108 @@ def fig_bootstrap():
     print(f'  wrote {path}')
 
 
+def fig_table():
+    """Per-N table figure: GP (mean ± std), TransRF, TabPFN (mean ± std).
+    Winner per row highlighted. TransRF means come from PROJECT_GUIDE.md
+    (small N) and rf_transfer_results.json (full N); per-replicate
+    standard deviations for TransRF aren't committed yet — TODO #13."""
+    alt = load_alternates()
+    xfer_full = load_full_n_transfer()  # {label: [(n, mean_avg_R2), ...]}
+
+    # Build TransRF lookup over the union of small-N table + full-N JSON.
+    transrf_mean = {n: SMALL_N_TRANSFER[n]['TransRF'] for n in SMALL_N_TRANSFER}
+    for n, v in xfer_full.get('TransRF', []):
+        transrf_mean.setdefault(n, v)
+
+    # Rows: all N where we have at least one of the alternates.
+    rows_n = sorted({n for m in ('GP', 'TabPFN') for n in alt.get(m, {}).keys()})
+    rows_n = [n for n in rows_n if n >= 5]  # drop edge cases
+
+    headers = ['N', 'GP', 'TransRF (best transfer)', 'TabPFN']
+    cell_text = []
+    cell_colors = []
+    bg_default = '#ffffff'
+    bg_winner = '#dcfce7'   # soft green
+    bg_alt_row = '#f8fafc'  # subtle row banding
+    text_winner = '#065f46'
+
+    for i, n in enumerate(rows_n):
+        gp_vals = alt.get('GP', {}).get(n)
+        tab_vals = alt.get('TabPFN', {}).get(n)
+        trf = transrf_mean.get(n)
+
+        def fmt_alt(arr):
+            if arr is None:
+                return '—', None
+            mean = float(np.mean(arr))
+            std = float(np.std(arr))
+            return f'{mean:+.3f} ± {std:.2f}', mean
+
+        gp_text, gp_mean = fmt_alt(gp_vals)
+        tab_text, tab_mean = fmt_alt(tab_vals)
+        trf_text = f'{trf:+.3f}' if trf is not None else '—'
+
+        candidates = [(gp_mean, 1), (trf, 2), (tab_mean, 3)]
+        valid = [(v, idx) for v, idx in candidates if v is not None]
+        winner_col = max(valid, key=lambda t: t[0])[1] if valid else None
+
+        cell_text.append([f'{n}', gp_text, trf_text, tab_text])
+
+        row_bg = bg_alt_row if i % 2 == 1 else bg_default
+        row_colors = [row_bg] * 4
+        if winner_col is not None:
+            row_colors[winner_col] = bg_winner
+        cell_colors.append(row_colors)
+
+    # Figure sizing
+    n_rows = len(rows_n)
+    fig_h = 0.55 + 0.40 * n_rows
+    fig, ax = plt.subplots(figsize=(10.5, fig_h))
+    ax.axis('off')
+
+    tbl = ax.table(
+        cellText=cell_text,
+        colLabels=headers,
+        cellColours=cell_colors,
+        colColours=['#0f172a'] * 4,
+        cellLoc='center',
+        loc='upper center',
+        colWidths=[0.10, 0.30, 0.30, 0.30],
+    )
+    tbl.auto_set_font_size(False)
+    tbl.set_fontsize(11)
+    tbl.scale(1, 1.55)
+
+    # Header text white; cell font weights
+    for (row, col), cell in tbl.get_celld().items():
+        if row == 0:
+            cell.get_text().set_color('white')
+            cell.get_text().set_fontweight('bold')
+            cell.set_edgecolor('#0f172a')
+        else:
+            cell.set_edgecolor('#cbd5e1')
+            # Highlight winner cells in green text
+            if cell.get_facecolor()[:3] == tuple(int(bg_winner[i:i+2], 16) / 255
+                                                  for i in (1, 3, 5)):
+                cell.get_text().set_color(text_winner)
+                cell.get_text().set_fontweight('bold')
+
+    ax.set_title(
+        'BM head-to-head: average R² (F0+SPL)/2  —  winner per N highlighted',
+        fontweight='bold', fontsize=13, pad=14)
+    fig.text(0.5, 0.02,
+             'GP & TabPFN: mean ± std over 10 bootstrap replicates.  '
+             'TransRF: means only (per-replicate values not yet committed — TODO #13).  '
+             'Source: alternates_results.json, rf_transfer_results.json, PROJECT_GUIDE.md.',
+             ha='center', fontsize=8.5, style='italic', color='#475569')
+    fig.tight_layout(rect=(0, 0.03, 1, 1))
+
+    path = os.path.join(figs_dir, 'bm_showcase_table.png')
+    fig.savefig(path, dpi=180, bbox_inches='tight')
+    plt.close(fig)
+    print(f'  wrote {path}')
+
+
 def main():
     print('=' * 70)
     print('BM SHOWCASE — generating presentation-quality figures')
@@ -361,6 +464,7 @@ def main():
     fig_headline()
     fig_sim_budget()
     fig_bootstrap()
+    fig_table()
     print('=' * 70)
     print('Done.')
 

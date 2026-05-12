@@ -11,6 +11,7 @@ New script `Beam_Membrane/BM_Showcase.py` builds three presentation-quality figu
 - **`figs/bm_showcase_headline.png`** — Avg R² (F0+SPL)/2 vs N on log-x. Best BCM→BM transfer (Callum, solid slate) and individual transfer methods (gray spaghetti); TransRF reference at full N (dashed). GP (teal) and TabPFN (amber) curves with 1σ bands, now extending across N=5..500. Annotated `+0.47 R²` gap at N=50.
 - **`figs/bm_showcase_sim_budget.png`** — Horizontal bar chart of BM simulations required to hit R²≥0.5 and R²≥0.7. **TabPFN N=32, GP N=36 vs transfer N=165–205 to reach R²=0.5; TabPFN N=111, GP N=114 vs transfer N=396–463 to reach R²=0.7** — alternates are ~5× more sample-efficient at both thresholds.
 - **`figs/bm_showcase_bootstrap.png`** — Boxplots of all 10 bootstrap replicates per N at N=10, 50, 100, 200, 500 for GP and TabPFN, with the best-transfer reference at each N as a dashed line. Distributions tighten visibly as N grows; both alternates clearly above the transfer reference at every N≥20.
+- **`figs/bm_showcase_table.png`** — Rendered head-to-head table: per-N avg R² for GP (mean ± std), TransRF (best transfer method), and TabPFN. Winner per row highlighted green. TabPFN wins 9 of 11 rows; GP wins 2; TransRF never wins inside the tested N range. TransRF cells show means only (per-replicate values pending TODO #13).
 
 Small-N transfer numbers (for N=10..500) come from `PROJECT_GUIDE.md`'s table — not committed as JSON yet (TODO #13). Same caveat as the 2026-05-05 milestone.
 
