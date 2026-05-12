@@ -31,6 +31,7 @@ _(empty)_
 
 ## Recently Done
 
+- **2026-05-12 (later)** — Extended alternates to N=500 (was N≤100). `BM_GP.py` and `BM_TabPFN.py` now run at N ∈ {…, 150, 200, 300, 500}, with per-N JSON merge so existing N values are preserved. Showcase figures regenerated: sim-budget R²≥0.7 panel now resolves (TabPFN N=111, GP N=114 vs transfer N=396–463); bootstrap fig adds N=200, N=500 panels. Even at N=500 alternates lead transfer by +0.17 R² — `brian`
 - **2026-05-12** — Showcase figures for advisor / paper. New `Beam_Membrane/BM_Showcase.py` produces three figures: `bm_showcase_headline.png` (avg R² vs N with annotated +0.47 gap), `bm_showcase_sim_budget.png` (TabPFN N=32 vs transfer N=165 to hit R²=0.5), `bm_showcase_bootstrap.png` (10-replicate boxplots beating transfer at N≥20). README + MILESTONES updated — `brian`
 - **2026-05-06 (later)** — Split `BM_Alternates.py` into `Beam_Membrane/BM_GP.py` and `Beam_Membrane/BM_TabPFN.py`. Self-contained per-method-family files matching Callum's convention; both merge into the shared `alternates_results.json`. Delete merged file. Update README quick-start and glossary pointers — `brian`
 - **2026-05-06** — Code cleanup: MonoMLP method removed from `BM_Alternates.py` (mid-tier, didn't add to GP/TabPFN story); JSON key dropped; figure regenerated; torch import no longer needed for alternates. Closes TODO #14. Real PDE-residual PINN scoped as TODO #15 (separate project, equations extracted in `docs/BM_GOVERNING_EQUATIONS.md`). BM governing equations doc added — `brian`

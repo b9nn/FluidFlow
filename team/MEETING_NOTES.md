@@ -16,6 +16,21 @@ Format per entry:
 
 ---
 
+## 2026-05-12 (later) — Brian solo (extended alternates to N=500)
+**Attendees:** brian
+**Decisions:**
+- Extended `BM_GP.py` and `BM_TabPFN.py` from `N ≤ 100` to `N ∈ {…, 150, 200, 300, 500}`. Changed merge logic in both scripts to per-N: existing JSON entries are preserved, only new N values are fit. Added a `_existing_complete_ns` guard that skips N values already at full `N_RUNS` replicates — re-running is now idempotent and cheap.
+- Result: alternates lead transfer by **+0.17 R²** even at N=500 (TabPFN 0.91 vs TransRF 0.74). At N=200 the gap is +0.26 R². The small-N dominance is not a small-N artifact — it persists through the regime where Callum's transfer was supposed to start winning.
+- Sim-budget figure is much stronger now: R²≥0.7 panel resolves (TabPFN N=111, GP N=114 vs transfer N=396–463), so the "~5× sample efficiency" claim holds at both R²=0.5 and R²=0.7 thresholds. No more "not reached in tested range" caveat to explain away.
+- Bootstrap figure extended to 5 panels (N=10/50/100/200/500). Visible tightening of distributions at large N gives a clean robustness story — the gain over transfer is monotonic and the variance shrinks as expected.
+
+**Action items:**
+- Share regenerated figures with Callum at next 1pm — `brian`
+- TODO #13 is even more valuable now that we have alternates across the full N=200/500 range — needed for like-for-like boxplot comparison vs transfer — `brian`
+- New question to raise with Callum: where (if anywhere) does transfer actually win? `rf_transfer_results.json` has transfer up to N=3200 (frac=1.0). Worth checking whether the curves ever cross — if not, "transfer doesn't help for BCM→BM at any N" becomes a stronger thesis than "transfer doesn't help at small N." — `shared`
+
+**Blockers:** none.
+
 ## 2026-05-12 — Brian solo (showcase figures)
 **Attendees:** brian
 **Decisions:**

@@ -2,15 +2,34 @@
 
 Append-only history. Newest first. Dates from `git log` unless noted.
 
-## 2026-05-12 — Showcase figures for the alternates-vs-transfer story (Brian)
+## 2026-05-12 — Showcase figures + extended alternates to N=500 (Brian)
 
-New script `Beam_Membrane/BM_Showcase.py` builds three presentation-quality figures from the existing `alternates_results.json` + `rf_transfer_results.json` + the small-N transfer table in `PROJECT_GUIDE.md`. Intended for advisor briefings and the paper:
+### Showcase script
 
-- **`figs/bm_showcase_headline.png`** — Avg R² (F0+SPL)/2 vs N on log-x. Best BCM→BM transfer (Callum, solid slate) and individual transfer methods (gray spaghetti) at small N; TransRF reference line at full N (dashed). GP (teal) and TabPFN (amber) curves with 1σ bands. Annotated `+0.47 R²` gap at N=50.
-- **`figs/bm_showcase_sim_budget.png`** — Horizontal bar chart of BM simulations required to hit R²≥0.5 and R²≥0.7. **TabPFN N=32, GP N=36 vs transfer methods N=165–205 to reach 0.5** — ~5× sample-efficiency win. R²≥0.7 panel marked "not reached at N≤100" for alternates (test range, not a ceiling).
-- **`figs/bm_showcase_bootstrap.png`** — Boxplots of all 10 bootstrap replicates per N (at N=10, 20, 50, 100) for GP and TabPFN, with the best-transfer reference at each N drawn as a dashed line. Visceral robustness check — at every N≥20, both alternate distributions sit clearly above transfer.
+New script `Beam_Membrane/BM_Showcase.py` builds three presentation-quality figures from `alternates_results.json` + `rf_transfer_results.json` + the small-N transfer table in `PROJECT_GUIDE.md`. Intended for advisor briefings and the paper:
 
-Small-N transfer numbers used in the showcase come from `PROJECT_GUIDE.md`'s table (not committed as JSON yet — TODO #13). Carries the same caveat as the 2026-05-05 milestone.
+- **`figs/bm_showcase_headline.png`** — Avg R² (F0+SPL)/2 vs N on log-x. Best BCM→BM transfer (Callum, solid slate) and individual transfer methods (gray spaghetti); TransRF reference at full N (dashed). GP (teal) and TabPFN (amber) curves with 1σ bands, now extending across N=5..500. Annotated `+0.47 R²` gap at N=50.
+- **`figs/bm_showcase_sim_budget.png`** — Horizontal bar chart of BM simulations required to hit R²≥0.5 and R²≥0.7. **TabPFN N=32, GP N=36 vs transfer N=165–205 to reach R²=0.5; TabPFN N=111, GP N=114 vs transfer N=396–463 to reach R²=0.7** — alternates are ~5× more sample-efficient at both thresholds.
+- **`figs/bm_showcase_bootstrap.png`** — Boxplots of all 10 bootstrap replicates per N at N=10, 50, 100, 200, 500 for GP and TabPFN, with the best-transfer reference at each N as a dashed line. Distributions tighten visibly as N grows; both alternates clearly above the transfer reference at every N≥20.
+
+Small-N transfer numbers (for N=10..500) come from `PROJECT_GUIDE.md`'s table — not committed as JSON yet (TODO #13). Same caveat as the 2026-05-05 milestone.
+
+### Extended alternates to N=500
+
+Both `BM_GP.py` and `BM_TabPFN.py` now run at N ∈ {5, 10, 20, 30, 50, 75, 100, 150, 200, 300, 500} (was: 5..100). Merge logic in both scripts changed to per-N: re-running with a wider `N_TARGETS` only fits the new sizes; existing per-N replicates in `alternates_results.json` are preserved automatically by a `_existing_complete_ns` guard.
+
+**New numbers (avg R²):**
+
+| N   | GP    | TabPFN | Best transfer (PROJECT_GUIDE) | Best alternate gain |
+|-----|-------|--------|-------------------------------|---------------------|
+| 150 | 0.76  | 0.79   | — (interp ~0.43)              | ~+0.36 |
+| 200 | 0.78  | **0.85** | TransRF 0.59                 | **+0.26** |
+| 300 | 0.81  | **0.88** | — (interp ~0.66)             | ~+0.22 |
+| 500 | 0.86  | **0.91** | TransRF 0.74                 | **+0.17** |
+
+The +R² gap narrows but never closes within the tested range — alternates lead by +0.17 R² even at N=500. Headline single-number story stays: **TabPFN at N=200 (R²=0.85) matches what Callum's TransRF needs N=1600 to reach** (~R²=0.85 at frac=0.5 in `rf_transfer_results.json`). ~8× sample-efficiency for the larger-N regime, on top of the small-N dominance.
+
+## 2026-05-05 — Non-transfer alternate methods for BM (TODO #1 + #12 done)
 
 ## 2026-05-05 — Non-transfer alternate methods for BM (TODO #1 + #12 done)
 

@@ -292,9 +292,18 @@ def fig_sim_budget():
 # ============================================================================
 def fig_bootstrap():
     alt = load_alternates()
-    key_ns = [10, 20, 50, 100]
+    # Show progression including extended N range. Only include N's actually
+    # present for both GP and TabPFN.
+    candidates = [10, 50, 100, 200, 500]
+    key_ns = [n for n in candidates if n in alt.get('GP', {}) and n in alt.get('TabPFN', {})]
+    if not key_ns:
+        print('  WARN: no overlapping N values for bootstrap figure')
+        return
 
-    fig, axes = plt.subplots(1, len(key_ns), figsize=(14, 5), sharey=True)
+    fig, axes = plt.subplots(1, len(key_ns), figsize=(3.0 * len(key_ns) + 1.5, 5),
+                             sharey=True)
+    if len(key_ns) == 1:
+        axes = [axes]
 
     for ax, n in zip(axes, key_ns):
         gp_vals = alt['GP'][n]

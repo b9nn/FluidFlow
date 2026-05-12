@@ -2,13 +2,15 @@
 BCM -> Beam-Membrane: TabPFN baseline (non-transfer)
 
 Tracks team/TODO.md #1. One of two non-transfer alternates evaluated
-against Callum's transfer methods on the same BM small-N regime.
+against Callum's transfer methods on the BM small-to-medium-N regime
+(N = 5 .. 500).
 
 Method:
   TabPFN — pretrained tabular foundation model. Single forward pass
   over (X_train, y_train, X_test) per target; no per-task gradient
   updates. Single-output -> two regressors (one per target). Train
-  truncated at TABPFN_MAX_TRAIN samples (matches our N <= 100 regime).
+  truncated at TABPFN_MAX_TRAIN samples (1000; we test up to N=500
+  so this cap is not yet binding).
 
   Backend selection at import time:
     1. tabpfn-client (cloud-API, recommended — no model-weight download)
@@ -25,7 +27,7 @@ Auth (one-time):
         handles its own auth)
 
 Harness mirrors BM_SmallData.py:
-  - Sample sizes: N in [5, 10, 20, 30, 50, 75, 100]
+  - Sample sizes: N in [5, 10, 20, 30, 50, 75, 100, 150, 200, 300, 500]
   - Fixed test pool: 1000 BM samples drawn from outside the train sub-sample
   - Schema: drop a_LCA, [a_CT, a_TA, PS] -> [F0, SPL]
   - Per-sub-sample scalers
@@ -66,7 +68,7 @@ except ImportError:
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
-N_TARGETS = [5, 10, 20, 30, 50, 75, 100]
+N_TARGETS = [5, 10, 20, 30, 50, 75, 100, 150, 200, 300, 500]
 N_RUNS = 10
 
 SHARED_FEATURES = ['a_CT', 'a_TA', 'PS']
@@ -161,16 +163,39 @@ def run_single(n_target, df_bm, random_state):
     }
 
 
-def run_method(df_bm):
-    """Run TabPFN across all N_TARGETS x N_RUNS. Return nested dict."""
+def _existing_complete_ns(method_name='TabPFN'):
+    """Return set of N values already in the JSON with full N_RUNS replicates,
+    so re-runs can skip them. Returns empty set if the JSON doesn't exist."""
+    out_path = os.path.join(script_dir, 'results', 'alternates_results.json')
+    if not os.path.exists(out_path):
+        return set()
+    with open(out_path) as f:
+        data = json.load(f)
+    block = data.get(method_name, {})
+    done = set()
+    for n_key, rec in block.items() if isinstance(block, dict) else []:
+        if not n_key.isdigit():
+            continue
+        if len(rec.get('r2_f0', [])) >= N_RUNS and len(rec.get('r2_spl', [])) >= N_RUNS:
+            done.add(int(n_key))
+    return done
+
+
+def run_method(df_bm, skip_existing=True):
+    """Run TabPFN across all N_TARGETS x N_RUNS. Skips N values that already
+    have full results in the JSON when skip_existing=True. Return nested dict."""
+    done = _existing_complete_ns('TabPFN') if skip_existing else set()
     out = {}
     for n in N_TARGETS:
+        if n in done:
+            print(f"  N={n:>4}  skip (already in JSON with {N_RUNS} replicates)")
+            continue
         runs = [run_single(n, df_bm, random_state=42 + r) for r in range(N_RUNS)]
         r2_f0 = [r['r2_f0'] for r in runs]
         r2_spl = [r['r2_spl'] for r in runs]
         out[str(n)] = {'r2_f0': r2_f0, 'r2_spl': r2_spl,
                        'n_train': runs[0]['n_train']}
-        print(f"  N={n:>3}  F0 R2 = {np.mean(r2_f0):+.3f} +/- {np.std(r2_f0):.3f}  "
+        print(f"  N={n:>4}  F0 R2 = {np.mean(r2_f0):+.3f} +/- {np.std(r2_f0):.3f}  "
               f"SPL R2 = {np.mean(r2_spl):+.3f} +/- {np.std(r2_spl):.3f}")
     return out
 
@@ -199,8 +224,9 @@ def load_bm():
 
 def merge_into_alternates(method_results, method_name='TabPFN'):
     """Load existing alternates_results.json (if any), merge in this method's
-    results, write back. Allows GP and TabPFN to share the JSON without
-    clobbering each other.
+    results, write back. Per-N merge: existing N values are preserved unless
+    the same N appears in method_results (in which case it's overwritten).
+    Allows extending N_TARGETS without re-running prior sizes.
     """
     out_path = os.path.join(script_dir, 'results', 'alternates_results.json')
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
@@ -210,14 +236,21 @@ def merge_into_alternates(method_results, method_name='TabPFN'):
         with open(out_path) as f:
             existing = json.load(f)
 
-    existing[method_name] = method_results
-    existing['_meta'] = {
-        'n_targets': N_TARGETS,
-        'n_runs': N_RUNS,
-        'shared_features': SHARED_FEATURES,
-        'targets': TARGETS,
-        'test_pool_size': TEST_POOL_SIZE,
-    }
+    method_block = existing.get(method_name, {}) if isinstance(
+        existing.get(method_name), dict) else {}
+    for n_key, rec in method_results.items():
+        method_block[n_key] = rec
+    existing[method_name] = method_block
+
+    all_n = sorted({int(k) for k in method_block.keys() if k.isdigit()})
+    meta = existing.get('_meta', {}) or {}
+    meta['n_targets'] = sorted(set(meta.get('n_targets', [])) | set(all_n))
+    meta['n_runs'] = N_RUNS
+    meta['shared_features'] = SHARED_FEATURES
+    meta['targets'] = TARGETS
+    meta['test_pool_size'] = TEST_POOL_SIZE
+    existing['_meta'] = meta
+
     with open(out_path, 'w') as f:
         json.dump(existing, f, indent=2)
     return out_path
