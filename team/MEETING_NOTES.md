@@ -16,6 +16,21 @@ Format per entry:
 
 ---
 
+## 2026-05-12 — Brian solo (showcase figures)
+**Attendees:** brian
+**Decisions:**
+- Built presentation-quality showcase figures for the alternates-vs-transfer headline: `Beam_Membrane/BM_Showcase.py` produces three figures (`bm_showcase_headline.png`, `bm_showcase_sim_budget.png`, `bm_showcase_bootstrap.png`). Intended for advisor briefings and paper draft. Standalone from `BM_Summary.py` — different audience, different framing.
+- Sim-budget framing: cast the small-N win as "BM simulations required to hit accuracy thresholds." TabPFN/GP need ~5× fewer expensive sims than transfer methods to reach R²≥0.5. Strongest single number for non-ML audiences (every expensive sim costs ~8 min).
+- Bootstrap fig uses all 10 replicates per N for GP/TabPFN (we have per-replicate data) and a dashed reference line for Callum's best transfer mean at each N (we only have means in `PROJECT_GUIDE.md`). Carries the same TODO #13 caveat as the 2026-05-05 result.
+
+**Action items:**
+- Share figures at next 1pm with Callum — `brian`
+- TODO #13 (dump `BM_SmallData.py` to JSON) gets more valuable now — would let the showcase boxplot fig include transfer distributions, not just means — `brian`
+
+**Blockers:** none.
+
+---
+
 ## 2026-05-07 — Advisor briefing prep (notes for shared meeting)
 
 **Purpose:** condensed handoff for advisors / non-day-to-day stakeholders. Full notes are in this section so they can be cut-and-pasted into a shared doc or email if needed.

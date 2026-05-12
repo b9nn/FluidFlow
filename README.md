@@ -23,6 +23,7 @@ MPLBACKEND=Agg python Beam_Membrane/BM_TabPFN.py         # Pretrained tabular fo
 
 # --- Comparison summary (reads all of the above) ---
 MPLBACKEND=Agg python Beam_Membrane/BM_Summary.py        # cross-method comparison + figures
+MPLBACKEND=Agg python Beam_Membrane/BM_Showcase.py       # presentation-quality figures: headline, sim-budget, bootstrap
 
 # --- BCM → TBCM transfer (Callum) ---
 MPLBACKEND=Agg python TBCM/TBCM_TransferRF.py

@@ -2,6 +2,16 @@
 
 Append-only history. Newest first. Dates from `git log` unless noted.
 
+## 2026-05-12 — Showcase figures for the alternates-vs-transfer story (Brian)
+
+New script `Beam_Membrane/BM_Showcase.py` builds three presentation-quality figures from the existing `alternates_results.json` + `rf_transfer_results.json` + the small-N transfer table in `PROJECT_GUIDE.md`. Intended for advisor briefings and the paper:
+
+- **`figs/bm_showcase_headline.png`** — Avg R² (F0+SPL)/2 vs N on log-x. Best BCM→BM transfer (Callum, solid slate) and individual transfer methods (gray spaghetti) at small N; TransRF reference line at full N (dashed). GP (teal) and TabPFN (amber) curves with 1σ bands. Annotated `+0.47 R²` gap at N=50.
+- **`figs/bm_showcase_sim_budget.png`** — Horizontal bar chart of BM simulations required to hit R²≥0.5 and R²≥0.7. **TabPFN N=32, GP N=36 vs transfer methods N=165–205 to reach 0.5** — ~5× sample-efficiency win. R²≥0.7 panel marked "not reached at N≤100" for alternates (test range, not a ceiling).
+- **`figs/bm_showcase_bootstrap.png`** — Boxplots of all 10 bootstrap replicates per N (at N=10, 20, 50, 100) for GP and TabPFN, with the best-transfer reference at each N drawn as a dashed line. Visceral robustness check — at every N≥20, both alternate distributions sit clearly above transfer.
+
+Small-N transfer numbers used in the showcase come from `PROJECT_GUIDE.md`'s table (not committed as JSON yet — TODO #13). Carries the same caveat as the 2026-05-05 milestone.
+
 ## 2026-05-05 — Non-transfer alternate methods for BM (TODO #1 + #12 done)
 
 Three non-transfer baselines for BCM→BM at very small N (5–100 samples) ran end-to-end on real `dataset_BM.csv` (5,000 samples, no NaN). Outputs at `Beam_Membrane/results/alternates_results.json` and `Beam_Membrane/figs/bm_alternates.png`.

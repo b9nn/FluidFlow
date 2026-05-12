@@ -31,6 +31,7 @@ _(empty)_
 
 ## Recently Done
 
+- **2026-05-12** — Showcase figures for advisor / paper. New `Beam_Membrane/BM_Showcase.py` produces three figures: `bm_showcase_headline.png` (avg R² vs N with annotated +0.47 gap), `bm_showcase_sim_budget.png` (TabPFN N=32 vs transfer N=165 to hit R²=0.5), `bm_showcase_bootstrap.png` (10-replicate boxplots beating transfer at N≥20). README + MILESTONES updated — `brian`
 - **2026-05-06 (later)** — Split `BM_Alternates.py` into `Beam_Membrane/BM_GP.py` and `Beam_Membrane/BM_TabPFN.py`. Self-contained per-method-family files matching Callum's convention; both merge into the shared `alternates_results.json`. Delete merged file. Update README quick-start and glossary pointers — `brian`
 - **2026-05-06** — Code cleanup: MonoMLP method removed from `BM_Alternates.py` (mid-tier, didn't add to GP/TabPFN story); JSON key dropped; figure regenerated; torch import no longer needed for alternates. Closes TODO #14. Real PDE-residual PINN scoped as TODO #15 (separate project, equations extracted in `docs/BM_GOVERNING_EQUATIONS.md`). BM governing equations doc added — `brian`
 - **2026-05-05** — **TODO #1 + #12 done.** Non-transfer alternates ran on real BM data. Headline: TabPFN at N=50 hits avg R²=0.66, beating Callum's best transfer (Feature Aug, R²=0.19) by +0.47. GP is comparable. MonoMLP struggles at N≤10. Real result, possibly publishable. See `docs/MILESTONES.md` and `Beam_Membrane/figs/bm_alternates.png` — `brian`
