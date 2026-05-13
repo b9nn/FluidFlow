@@ -16,6 +16,57 @@ Format per entry:
 
 ---
 
+## 2026-05-12 (later 3) — Brian solo (advisor follow-up implementation)
+
+**Attendees:** brian
+
+**Decisions:**
+- Implemented all four 2026-05-12 advisor-meeting follow-ups except the TBCM
+  components (which remain data-gated). Plan was approved with amendments
+  (added Task 5.5 for TBCM JSON dump, fixed Task 6 loaders for the actual
+  CSV/JSON schemas on disk) before execution.
+- Order executed: plan-commit → N=20 boxplot → Female_GP → Female_TabPFN
+  → cross-domain figure → F0 heatmaps → email draft → these docs.
+- **Surprise finding (refines headline story):** For the well-aligned
+  Male→Female BCM domain pair, the existing RF transfer baseline holds at
+  r²_avg ≈ 0.72 across N=25..843 — an _extremely_ strong transfer baseline.
+  Yet TabPFN catches up by N≈75 (r²_avg 0.72) and dominates from N=100
+  (0.79 vs 0.73), reaching 0.97 at N=500. GP alone _doesn't_ catch up.
+  TabPFN's pretrained prior is the load-bearing component.
+- Refined paper thesis: **alternates win when source-target alignment is
+  poor; TabPFN catches transfer by N≈75 even when alignment is good.**
+  Different framing than "alternates always win at small N." Documented in
+  the email draft as the leading question for Matias.
+- Female BCM convention: applied `ACFL > 30` quality filter (matches
+  Brian's existing `FemaleRFTransfer.py:24`) and capped `TEST_POOL_SIZE = 500`
+  (dataset is 1195 rows post-filter; needed to keep ≥700 for the test pool
+  at N=500).
+- Heatmap: had to set `matplotlib.use('Agg')` explicitly before pyplot
+  import — default tkinter backend crashes on Windows with
+  `Tcl_AsyncDelete: async handler deleted by the wrong thread` during the
+  second figure write. Documented inline.
+
+**Commits landed (in order, all on `feature/fem`):**
+- `4a81b9c` — plan + team doc updates
+- `4d5b747` — Task 1: N=20 boxplot panel
+- `50837fa` — Task 4: Female_GP
+- `23351e7` — Task 5: Female_TabPFN
+- `fe6b642` — Task 6: cross-domain figure (BM + Female; TBCM placeholder)
+- `38bfe81` — Task 7: F0 heatmaps (BM + Female)
+- `1fdd6e7` — Task 8: email draft
+
+**Action items:**
+- Send email after sanity-checking attachments and once TBCM portion lands
+  (or send now noting TBCM as a separate follow-up) — `brian`
+- Ask Callum for `dataset_TBCM.csv` at next 1pm sync to unblock #17b + #18b — `brian`
+- Wait for Matias's reply on publication framing — `brian`
+
+**Blockers:**
+- TBCM dataset for #17b and #18b. Female BCM (1195 rows post-filter) and
+  BM (5000 rows) both fully unblocked through this cycle.
+
+---
+
 ## 2026-05-12 (later 2) — Brian solo (plan for 2026-05-12 advisor follow-ups)
 **Attendees:** brian
 **Decisions:**

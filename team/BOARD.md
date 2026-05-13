@@ -20,21 +20,21 @@ Format per row: `#N — Task — owner — Pn`. Click through to TODO for full n
 - **#11** — Hyperparameter sweep tracker — `tbd` — `P2`
 - **#13** — Re-run `BM_SmallData.py` and dump JSON for tighter head-to-head — `brian` — `P2`
 - **#15** — Build a real PDE-residual PINN over BM governing equations — `brian` — `P3`
-- **#16** — N=20 panel in BM bootstrap boxplot — `brian` — `P2` _(2026-05-12 advisor follow-up, plan pending approval)_
-- **#17** — Cross-domain GP/TabPFN: TBCM + Female BCM — `brian` — `P1` _(2026-05-12 advisor follow-up, plan pending approval)_
-- **#17b** — Dump TBCM small-N transfer to JSON — `brian` — `P1` _(Sub-task of #17, plan Task 5.5)_
-- **#18** — Muscle-activation x F0 heatmaps — `brian` — `P1` _(2026-05-12 advisor follow-up, plan pending approval)_
-- **#19** — Group email draft — `brian` — `P1` _(2026-05-12 advisor follow-up, plan pending approval)_
+- **#17b** — TBCM cross-domain work (TBCM_GP, TBCM_TabPFN, TBCM_SmallData JSON dump) — `brian` — `P1` _(data-gated on `dataset_TBCM.csv`)_
+- **#18b** — TBCM F0 heatmap — `brian` — `P1` _(data-gated, no new code)_
 
 ## In Progress
 
-_(empty — pick up #2, #5, or #13/#14 follow-ups)_
+_(empty)_
 
 ## In Review
 
-_(empty)_
+- **#17** — Cross-domain GP/TabPFN: TBCM + Female BCM — `brian` — `P1` _(Female portion done; TBCM in #17b)_
+- **#18** — Muscle-activation x F0 heatmaps — `brian` — `P1` _(BM + Female done; TBCM in #18b)_
 
 ## Recently Done
+
+- **2026-05-12 (later 3)** — Implemented 2026-05-12 advisor follow-up: N=20 boxplot panel (`4d5b747`), Female_GP (`50837fa`) and Female_TabPFN (`23351e7`) on female BCM, cross-domain figure (`fe6b642`), BM + Female F0 heatmaps (`38bfe81`), group email draft (`1fdd6e7`). TBCM portions remain queued (#17b, #18b) pending dataset arrival. Refined story finding: TabPFN catches Male→Female RF transfer at N≈75 and dominates from N=100, even though that transfer is well-aligned — `brian`
 
 - **2026-05-12 (later)** — Extended alternates to N=500 (was N≤100). `BM_GP.py` and `BM_TabPFN.py` now run at N ∈ {…, 150, 200, 300, 500}, with per-N JSON merge so existing N values are preserved. Showcase figures regenerated: sim-budget R²≥0.7 panel now resolves (TabPFN N=111, GP N=114 vs transfer N=396–463); bootstrap fig adds N=200, N=500 panels. Even at N=500 alternates lead transfer by +0.17 R² — `brian`
 - **2026-05-12** — Showcase figures for advisor / paper. New `Beam_Membrane/BM_Showcase.py` produces three figures: `bm_showcase_headline.png` (avg R² vs N with annotated +0.47 gap), `bm_showcase_sim_budget.png` (TabPFN N=32 vs transfer N=165 to hit R²=0.5), `bm_showcase_bootstrap.png` (10-replicate boxplots beating transfer at N≥20). README + MILESTONES updated — `brian`

@@ -193,3 +193,38 @@ df.rename(columns={'Ps': 'PS'}, inplace=True)
 **Decision:** Keep both. `PROJECT_GUIDE.md` is preserved as Callum's hands-on guide for `Beam_Membrane/` and `TBCM/`. `README.md` and `docs/` are the canonical entry points.
 **Why:** The two docs serve subtly different purposes (Callum's is method-focused with empirical tables; ours is repo-wide with conventions). Folding them risks losing his framing. Better to cross-link.
 **Where it shows up:** `README.md` nav table, `CLAUDE.md` repo map.
+
+## 2026-05-12 — Per-domain self-contained alternates scripts
+
+**Context:** Cross-domain extension (BM → TBCM + Female BCM) needed two new GP/TabPFN script pairs.
+**Decision:** Per-domain copies of `BM_GP.py` / `BM_TabPFN.py` (~80 lines duplicated per domain) rather than a shared `alternates_engine.py` imported by thin domain wrappers. New scripts live next to their data: `TBCM/TBCM_{GP,TabPFN}.py` and `VocalFoldRegression/BCM Model/Alternates/Female_{GP,TabPFN}.py`.
+**Why:** Matches Callum's existing convention (each domain folder is self-contained). Cost of duplication is small; benefit is each script is independently runnable and readable without chasing imports across the tree. A shared engine would also entangle the per-domain quality filters (Female has `ACFL > 30`, the others don't) and the per-domain test-pool caps (Female 500, BM/TBCM 1000).
+**Where it shows up:** `TBCM/TBCM_GP.py`, `TBCM/TBCM_TabPFN.py`, `VocalFoldRegression/BCM Model/Alternates/Female_GP.py`, `Female_TabPFN.py`.
+
+## 2026-05-12 — Heatmap "ground truth" strategy: scattered-point overlay, no FEM grid
+
+**Context:** Jesus asked at the 2026-05-12 advisor meeting for muscle-activation × F0 heatmaps that validate nonlinear-trend replication, not just R². A literal "ground truth" surface would require evaluating the FEM solver on a regular `(a_CT, a_TA)` grid at fixed PS — ~50 × 50 = 2500 cells × ~8 min per BM cell = infeasible.
+**Decision:** No FEM grid. Each method-panel renders its own predicted F0 surface on a 50×50 (a_CT, a_TA) grid at `PS = dataset median`, and the 50 training points used to fit that method are scattered on top, colored by true F0 on the same colormap. Color match between scatter and surface = the method captured the trend; mismatch = visible distortion.
+**Why:** Scatter overlay is sufficient for the nonlinear-trend check Jesus asked for and avoids 4+ hours of BM simulator runtime per heatmap. Tradeoff: visual inspection rather than a global error metric on the surface — but global error is already covered by R² in the cross-domain figure. The two views are complementary.
+**Where it shows up:** `Beam_Membrane/BM_Heatmaps.py`.
+
+## 2026-05-12 — Refined cross-domain story: TabPFN catches transfer by N≈75 when alignment is good
+
+**Context:** Original 2026-05-05 finding was "alternates beat transfer at small N (BCM→BM)." Re-running on Female BCM (Male→Female, much smaller domain gap) was expected to either replicate or weaken that finding.
+**Decision:** Adopt the refined thesis "**alternates are competitive with or dominant over transfer in the small-N regime that matters for expensive simulators, across diverse source-target pairs.**" For poorly-aligned pairs (BCM→BM, Ps range mismatch + different physics families) alternates dominate from N=10. For well-aligned pairs (Male→Female BCM, same physics, gender-specific anatomy only) the existing RF transfer at r²_avg ≈ 0.72 across N=25..843 is genuinely strong, but TabPFN catches it by N≈75 and dominates from N=100 (0.79 vs 0.73; 0.97 vs 0.75 at N=500). GP alone does _not_ catch in this case — TabPFN's pretrained prior is the load-bearing component.
+**Why:** This refines the paper framing from "alternates always win at small N" to "alternates win unconditionally when transfer is misaligned; TabPFN catches well-aligned transfer by N≈75." Stronger thesis because it gives a falsifiable boundary and explains _when_ each approach is preferred. Matches Sean's read at the 2026-05-12 meeting.
+**Where it shows up:** `VocalFoldRegression/BCM Model/Alternates/results/alternates_results.json`, `Beam_Membrane/figs/cross_domain_alternates.png`, the email draft, `docs/MILESTONES.md` 2026-05-12 entry.
+
+## 2026-05-12 — N=20 boxplot panel: figure-only change
+
+**Context:** Brian flagged at the 2026-05-12 advisor meeting that the bootstrap figure needed an N=20 panel for completeness.
+**Decision:** Add `20` to the `candidates = [...]` list in `BM_Showcase.fig_bootstrap` and regenerate. No re-running of GP/TabPFN.
+**Why:** N=20 data was already in `alternates_results.json` (GP/TabPFN's `N_TARGETS` has always included 20); only the showcase script's panel selection excluded it. One-line edit, zero compute cost. At N=20 GP/TabPFN medians ≈ 0.38 vs best-transfer (Feature Aug) at 0.054 — sits cleanly between N=10 (modest lead) and N=50 (large lead).
+**Where it shows up:** `Beam_Membrane/BM_Showcase.py:298`, `figs/bm_showcase_bootstrap.png`.
+
+## 2026-05-12 — Female BCM quality filter `ACFL > 30`
+
+**Context:** Female BCM dataset has 1331 rows; ~10% have low ACFL (acoustic flow) values that indicate failed/non-converged simulations. SPL distribution mass is at 113-126 dB with a tail down to −14 dB driven by these bad rows.
+**Decision:** Apply `df = df[df['ACFL'] > 30]` in `Female_GP.py` and `Female_TabPFN.py`, mirroring the convention from `FemaleRFTransfer.py:24`. Reduces to 1195 rows; SPL distribution tightens to 94-133 dB.
+**Why:** Consistency with the existing Female-domain pipeline. The bad rows are simulation failures, not informative outliers — including them would penalize all methods on noise. The fact that Brian's prior RF/PR/NN transfer scripts all use this filter means our alternates are comparing on the same underlying data distribution.
+**Where it shows up:** `Female_GP.py:ACFL_THRESHOLD`, `Female_TabPFN.py:ACFL_THRESHOLD`, `alternates_results.json` `_meta.quality_filter` field.

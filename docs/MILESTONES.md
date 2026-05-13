@@ -2,6 +2,89 @@
 
 Append-only history. Newest first. Dates from `git log` unless noted.
 
+## 2026-05-12 — Cross-domain alternates + heatmaps + advisor email (Brian)
+
+Implementation of 2026-05-12 advisor-meeting follow-up items (Vocal Fold ML
+Update, Fathom 145795554). Plan: `docs/superpowers/plans/2026-05-12-cross-domain-alternates.md`.
+
+### Cross-domain runs
+
+GP and TabPFN trained directly on Female BCM data (no transfer), 10 bootstrap
+replicates per N ∈ {5, 10, 20, 30, 50, 75, 100, 150, 200, 300, 500}. Female
+dataset: 1195 rows post `ACFL > 30` filter. Test pool capped at 500.
+
+Head-to-head (avg R² of F0+SPL) on Female BCM:
+
+| N | GP | TabPFN | Male→Female RF transfer (existing) |
+|---|---|---|---|
+| 10 | 0.11 | 0.22 | ~0.72 |
+| 30 | 0.41 | 0.53 | ~0.72 |
+| 50 | 0.50 | 0.63 | 0.72 |
+| **75** | 0.55 | **0.72** | 0.73 _(TabPFN catches)_ |
+| **100** | 0.61 | **0.79** | 0.73 _(TabPFN takes the lead)_ |
+| 200 | 0.73 | 0.92 | ~0.74 |
+| 500 | 0.89 | 0.97 | 0.75 |
+
+**Refined cross-domain thesis:** alternates win when source-target alignment
+is poor (BCM→BM, from N=10); when alignment is good (Male BCM↔Female BCM),
+TabPFN catches transfer by N≈75 and dominates from N=100. GP alone doesn't
+catch — TabPFN's pretrained prior is the load-bearing component for the
+well-aligned case.
+
+### Cross-domain figure
+
+`Beam_Membrane/BM_CrossDomain.py` produces `figs/cross_domain_alternates.png` —
+3 panels side-by-side (BM | TBCM | Female BCM). Reads alternates JSON from each
+domain + a per-domain transfer comparator:
+
+- BM: hardcoded `SMALL_N_TRANSFER` from `BM_Showcase.py`
+- TBCM: new `rf_transfer_small_n.json` (Task 5.5, pending)
+- Female: `ResgressorAnalysis/figs/all_regressors_transfer_comparison.csv`,
+  filtered to `regressor == 'RF'`, `r2_avg` column
+
+TBCM panel renders a "(no data yet)" placeholder until dataset arrives.
+
+### N=20 panel in BM bootstrap boxplot
+
+`Beam_Membrane/BM_Showcase.py:298` candidates list extended from
+`[10, 50, 100, 200, 500]` to `[10, 20, 50, 100, 200, 500]`. One-line edit —
+N=20 data was already in `alternates_results.json`. At N=20: GP/TabPFN
+medians ≈ 0.38 vs best-transfer (Feature Aug) at 0.054.
+
+### Muscle-activation × F0 heatmaps
+
+`Beam_Membrane/BM_Heatmaps.py` — per Jesus's nonlinear-trend check. For each
+domain, trains GP, TabPFN, and a lightweight inline TransRF at N=50, sweeps
+(a_CT, a_TA) on a 50×50 grid at `PS = median`, predicts F0, renders as a
+3-panel heatmap with the 50 training points scattered on top colored by their
+true F0. Color match between scatter and surface = method captures the
+nonlinear trend; mismatch = distortion. Outputs: `heatmap_BM_F0.png`,
+`heatmap_FemaleBCM_F0.png`. TBCM deferred to #18b. Used `matplotlib.use('Agg')`
+to dodge a tkinter thread crash on Windows during the second figure write.
+
+### Group email draft
+
+`docs/superpowers/email-draft-2026-05-12-vocal-fold-update.md` — markdown draft
+for Sean, Jesus, Emiro, Matias. Includes the refined story, per-domain R²
+table, references to the TabPFN Nature paper + GP textbook + sklearn docs,
+attached-figures list, and the publication-framing question for Matias.
+Brian to send after sanity-check and once TBCM lands.
+
+### Commits
+
+- `4a81b9c` — plan + team doc updates (1462 insertions)
+- `4d5b747` — Task 1: N=20 boxplot panel
+- `50837fa` — Task 4: Female_GP
+- `23351e7` — Task 5: Female_TabPFN
+- `fe6b642` — Task 6: cross-domain figure
+- `38bfe81` — Task 7: F0 heatmaps
+- `1fdd6e7` — Task 8: email draft
+
+### Outstanding (data-gated on `dataset_TBCM.csv`)
+
+TBCM components — `TBCM/TBCM_GP.py`, `TBCM/TBCM_TabPFN.py`, JSON dump for
+`TBCM/TBCM_SmallData.py`, TBCM heatmap. All tracked as TODO #17b + #18b.
+
 ## 2026-05-12 — Showcase figures + extended alternates to N=500 (Brian)
 
 ### Showcase script

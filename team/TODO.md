@@ -19,11 +19,12 @@ When a row reaches `done` and survives a sync cycle, migrate it to `../docs/MILE
 | 5 | Verify reproducibility of Callum's BM/TBCM results | brian | backlog | P1 | Run `BM_Summary.py` and `TBCM_Summary.py` locally; compare against `results/*.json` |
 | 6 | Paper write-up draft — domain gap & transfer story | shared | backlog | P2 | Combine BCM→TBCM (easy case) and BCM→BM (hard case) into a "transfer for expensive simulators" narrative |
 | 7 | Decide fate of `VocalFoldRegression/Beam+Membrane_ForSean/` (Sean's MATLAB) | brian | backlog | P2 | Currently untracked locally. Either get Sean's consent to vendor, or document as required-external-dep |
-| 16 | N=20 panel in BM bootstrap boxplot | brian | backlog | P2 | Plan: `docs/superpowers/plans/2026-05-12-cross-domain-alternates.md` — awaiting approval. N=20 already in JSON; figure-only change |
-| 17 | Cross-domain GP/TabPFN: TBCM + Female BCM (2026-05-12 advisor ask) | brian | backlog | P1 | Plan: `docs/superpowers/plans/2026-05-12-cross-domain-alternates.md` — awaiting approval. Mirrors `BM_GP/BM_TabPFN`; pre-flight: locate TBCM dataset. 3-way per-panel comparison (alternates vs RF transfer) |
-| 17b | Dump TBCM small-N transfer to JSON (`TBCM_SmallData.py` enhancement) | brian | backlog | P1 | Sub-task of #17. Plan Task 5.5. Existing `rf_transfer_results.json` is fraction-based (smallest n=1379), unusable at small N. Needed so cross-domain TBCM panel has a transfer comparator |
-| 18 | Muscle-activation x F0 heatmaps (Jesus 2026-05-12 ask) | brian | backlog | P1 | Plan: `docs/superpowers/plans/2026-05-12-cross-domain-alternates.md` — awaiting approval. Per-domain F0 surface + scattered training overlay |
-| 19 | Group email draft — Sean/Jesus/Emiro/Matias follow-up | brian | backlog | P1 | Plan: `docs/superpowers/plans/2026-05-12-cross-domain-alternates.md` — awaiting approval. Markdown draft, not auto-sent |
+| 16 | N=20 panel in BM bootstrap boxplot | brian | done | P2 | Done 2026-05-12. Commit `4d5b747`. At N=20 GP/TabPFN medians ≈ 0.38 vs best-transfer (Feature Aug) at 0.054 |
+| 17 | Cross-domain GP/TabPFN: TBCM + Female BCM (2026-05-12 advisor ask) | brian | review | P1 | Female portion DONE (commits `50837fa` Female_GP, `23351e7` Female_TabPFN, `fe6b642` cross-domain figure). TBCM portion gated → #17b. Surprise finding: TabPFN catches transfer at N≈75 for well-aligned Male→Female, vs N=10 for misaligned BCM→BM |
+| 17b | TBCM cross-domain work (data-gated): TBCM_GP, TBCM_TabPFN, TBCM_SmallData JSON dump | brian | backlog | P1 | Plan Tasks 2, 3, 5.5. All three gated on `dataset_TBCM.csv` not being on this clone. Ask Callum at next 1pm sync. Once unblocked, also regenerate cross-domain figure (`Beam_Membrane/BM_CrossDomain.py`) — TBCM panel currently shows "no data yet" |
+| 18 | Muscle-activation x F0 heatmaps (Jesus 2026-05-12 ask) | brian | review | P1 | BM + Female DONE (commit `38bfe81`). TBCM heatmap deferred → #18b. Used matplotlib.use('Agg') after tkinter crash on Windows |
+| 18b | TBCM F0 heatmap (data-gated) | brian | backlog | P1 | Mirror of BM/Female panels in `Beam_Membrane/BM_Heatmaps.py`; script already handles TBCM if `dataset_TBCM.csv` exists. Pure data-gated, no new code needed |
+| 19 | Group email draft — Sean/Jesus/Emiro/Matias follow-up | brian | done | P1 | Done 2026-05-12. Commit `1fdd6e7`. Draft at `docs/superpowers/email-draft-2026-05-12-vocal-fold-update.md`. Strip "Draft notes" block before sending. Awaiting TBCM numbers before final send |
 
 ## Maybe-later
 
