@@ -159,18 +159,17 @@ def fig_headline():
 
     fig, ax = plt.subplots(figsize=(11, 6.8))
 
-    # Plot each transfer variant as its OWN labeled line.
-    for label in ['Target Only', 'Residual', 'Feature Aug', 'TransRF']:
-        if label not in small_mean or not small_mean[label]:
-            continue
-        ns = sorted(small_mean[label])
-        ys = [small_mean[label][n] for n in ns]
-        s = METHOD_STYLE[label]
+    # Best of Callum's transfer (TransRF only). Other variants are visible
+    # in the bootstrap and sim-budget figures.
+    if small_mean.get('TransRF'):
+        ns = sorted(small_mean['TransRF'])
+        ys = [small_mean['TransRF'][n] for n in ns]
+        s = METHOD_STYLE['TransRF']
         ax.plot(ns, ys, color=s['color'], marker=s['marker'], ls=s['ls'],
                 lw=s['lw'], ms=s['ms'], alpha=s['alpha'], label=s['label'],
-                zorder=3 if label == 'TransRF' else 2)
+                zorder=3)
 
-    # TransRF at full N (dashed continuation)
+    # TransRF at full N (dashed continuation, same transfer method, larger N)
     if full.get('TransRF'):
         full_tr = sorted(full['TransRF'])
         s = METHOD_STYLE['TransRF_fullN']
@@ -190,34 +189,6 @@ def fig_headline():
         ax.fill_between(ns, means - stds, means + stds, color=s['color'], alpha=0.15, zorder=3)
         ax.plot(ns, means, color=s['color'], marker=s['marker'], ls=s['ls'],
                 lw=s['lw'], ms=s['ms'], label=s['label'], zorder=5)
-
-    # Small-N gap callout at N=50
-    if 50 in alt['TabPFN']:
-        tab_50 = alt['TabPFN'][50].mean()
-        best_transfer_50 = max(small_mean[m].get(50, -np.inf) for m in small_mean)
-        gap = tab_50 - best_transfer_50
-        ax.annotate(
-            f'+{gap:.2f} R² at N=50\nTabPFN {tab_50:.2f}  vs  best transfer {best_transfer_50:.2f}',
-            xy=(50, tab_50), xytext=(6, 0.05),
-            fontsize=10, fontweight='bold', color='#111',
-            ha='left', va='center',
-            bbox=dict(boxstyle='round,pad=0.4', fc='#fef3c7', ec='#92400e', lw=1),
-            arrowprops=dict(arrowstyle='->', color='#92400e', lw=1.2,
-                            connectionstyle='arc3,rad=0.15'))
-
-    # Convergence callout at N=500
-    if 500 in alt['TabPFN']:
-        tab_500 = alt['TabPFN'][500].mean()
-        best_transfer_500 = max(small_mean[m].get(500, -np.inf) for m in small_mean)
-        gap = tab_500 - best_transfer_500
-        ax.annotate(
-            f'gap +{gap:.3f} at N=500\nTabPFN {tab_500:.3f}  ≈  TransRF {best_transfer_500:.3f}',
-            xy=(500, tab_500), xytext=(120, 0.55),
-            fontsize=10, fontweight='bold', color='#111',
-            ha='left', va='center',
-            bbox=dict(boxstyle='round,pad=0.4', fc='#d1fae5', ec='#065f46', lw=1),
-            arrowprops=dict(arrowstyle='->', color='#065f46', lw=1.2,
-                            connectionstyle='arc3,rad=-0.2'))
 
     ax.set_xscale('log')
     ax.set_xlabel('Number of TBCM training samples (log scale)')

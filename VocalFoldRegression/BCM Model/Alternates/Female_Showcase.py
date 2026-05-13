@@ -120,16 +120,15 @@ def fig_headline():
 
     fig, ax = plt.subplots(figsize=(11, 6.8))
 
-    # Each transfer regressor as its OWN labeled line
-    for reg in ['NN', 'PR', 'RF']:
-        if reg not in xfer:
-            continue
-        ns = sorted(xfer[reg])
-        ys = [xfer[reg][n] for n in ns]
-        s = METHOD_STYLE[reg]
+    # RF Male->Female transfer only (best of Brian's transfer regressors).
+    # NN/PR comparison is visible in the sim-budget figure.
+    if 'RF' in xfer:
+        ns = sorted(xfer['RF'])
+        ys = [xfer['RF'][n] for n in ns]
+        s = METHOD_STYLE['RF']
         ax.plot(ns, ys, color=s['color'], marker=s['marker'], ls=s['ls'],
                 lw=s['lw'], ms=s['ms'], alpha=s['alpha'], label=s['label'],
-                zorder=3 if reg == 'RF' else 2)
+                zorder=3)
 
     # GP + TabPFN with std bands
     for method in ('GP', 'TabPFN'):
@@ -142,38 +141,6 @@ def fig_headline():
         ax.fill_between(ns, means - stds, means + stds, color=s['color'], alpha=0.15, zorder=3)
         ax.plot(ns, means, color=s['color'], marker=s['marker'], ls=s['ls'],
                 lw=s['lw'], ms=s['ms'], label=s['label'], zorder=5)
-
-    rf = xfer.get('RF', {})
-
-    # Catch-up callout at N=75
-    if 75 in alt['TabPFN']:
-        tab_75 = alt['TabPFN'][75].mean()
-        if 50 in rf and 100 in rf:
-            rf_75 = 0.5 * (rf[50] + rf[100])
-        else:
-            rf_75 = rf.get(100, np.nan)
-        ax.annotate(
-            f'catch-up at N≈75\nTabPFN {tab_75:.2f}  ≈  RF transfer {rf_75:.2f}',
-            xy=(75, tab_75), xytext=(6, 0.92),
-            fontsize=10, fontweight='bold', color='#111',
-            ha='left', va='center',
-            bbox=dict(boxstyle='round,pad=0.4', fc='#fef3c7', ec='#92400e', lw=1),
-            arrowprops=dict(arrowstyle='->', color='#92400e', lw=1.2,
-                            connectionstyle='arc3,rad=0.15'))
-
-    # Divergence callout at N=500
-    if 500 in alt['TabPFN'] and 500 in rf:
-        tab_500 = alt['TabPFN'][500].mean()
-        rf_500 = rf[500]
-        gap = tab_500 - rf_500
-        ax.annotate(
-            f'+{gap:.2f} R² at N=500\nTabPFN {tab_500:.2f}  vs  RF transfer {rf_500:.2f}',
-            xy=(500, tab_500), xytext=(110, 0.42),
-            fontsize=10, fontweight='bold', color='#111',
-            ha='left', va='center',
-            bbox=dict(boxstyle='round,pad=0.4', fc='#d1fae5', ec='#065f46', lw=1),
-            arrowprops=dict(arrowstyle='->', color='#065f46', lw=1.2,
-                            connectionstyle='arc3,rad=-0.2'))
 
     ax.set_xscale('log')
     ax.set_xlabel('Number of Female BCM training samples (log scale)')
