@@ -16,6 +16,57 @@ Format per entry:
 
 ---
 
+## 2026-05-12 (later 2) — Brian solo (plan for 2026-05-12 advisor follow-ups)
+**Attendees:** brian
+**Decisions:**
+- 2026-05-12 advisor sync ("Vocal Fold ML Update", Fathom recording 145795554)
+  generated four Ben-Gladney follow-ups. Plan written to
+  `docs/superpowers/plans/2026-05-12-cross-domain-alternates.md`, pending Brian's approval.
+- Execution order (Brian's call): N=20 boxplot panel → cross-domain runs
+  (TBCM + Female BCM) → muscle-activation × F0 heatmaps → group email draft.
+  Rationale: N=20 already exists in alternates JSON (verified), so adding the
+  panel is a one-line fix that lets later cross-domain plots share the data
+  point without recomputation.
+- **Pre-flight blocker:** TBCM dataset CSV is not in the repo and not in
+  `TBCM/`. Need to locate via Callum or `~/Downloads/` before Tasks 2/3 run.
+  Female BCM CSV is committed at `VocalFoldRegression/BCM Model/FemaleBCM.csv` —
+  unblocked.
+- **3-way comparison locked per panel** (Brian's 2026-05-12 clarification): each
+  cross-domain panel plots GP, TabPFN, AND the existing best transfer method
+  for that target. Alternates scripts only produce the GP/TabPFN side; the
+  transfer comparator is read from existing repo artifacts. Sources:
+    - **BM:** existing `SMALL_N_TRANSFER` dict + `rf_transfer_results.json`
+    - **TBCM:** NEW `rf_transfer_small_n.json` produced by Task 5.5
+      (`TBCM_SmallData.py` already runs RF transfer at the right N grid;
+      just needs a JSON dump appended). The existing
+      `rf_transfer_results.json` is fraction-based (smallest n=1379) — no
+      overlap with N=5..500 alternates regime, unusable here.
+    - **Female BCM:** `ResgressorAnalysis/figs/all_regressors_transfer_comparison.csv`
+      filtered to `regressor == 'RF'`, `r2_avg` column. RF-only per Brian's
+      2026-05-12 decision (not NN, not PR — keeps the comparator clean).
+- **Heatmap design lock:** scatter the 50 training points (true F0) over each
+  method's predicted F0 surface at fixed `PS = median`. No FEM-on-grid
+  "ground truth" — would take ~8 min × 2500 cells per domain. Misalignment of
+  dot color vs surface color is the nonlinear-trend check.
+- **Per-domain script convention:** new TBCM_GP/TBCM_TabPFN and
+  Female_GP/Female_TabPFN scripts are self-contained copies of the BM
+  originals (~80 lines duplicated per domain), matching Callum's existing
+  per-domain pattern rather than introducing a shared engine module.
+- Email is a markdown draft committed to the repo, not auto-sent. Brian sends
+  from his client after sanity-checking attachments and replacing the
+  `<FILL>` placeholders with real cross-domain R² gaps.
+
+**Action items:**
+- Brian approves plan, then implementation proceeds task-by-task per the plan doc — `brian`
+- Pre-flight: locate TBCM dataset CSV (ask Callum at next sync or check `~/Downloads/`) — `brian`
+- Plan execution will produce TODO #16/#17/#18/#19; rows added to `team/TODO.md`
+  + `team/BOARD.md` as `backlog` for now — `brian`
+
+**Blockers:**
+- TBCM dataset (resolution gated on locating local copy or asking Callum at 1pm sync).
+
+---
+
 ## 2026-05-12 (later) — Brian solo (extended alternates to N=500)
 **Attendees:** brian
 **Decisions:**

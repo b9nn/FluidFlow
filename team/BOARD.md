@@ -20,6 +20,11 @@ Format per row: `#N — Task — owner — Pn`. Click through to TODO for full n
 - **#11** — Hyperparameter sweep tracker — `tbd` — `P2`
 - **#13** — Re-run `BM_SmallData.py` and dump JSON for tighter head-to-head — `brian` — `P2`
 - **#15** — Build a real PDE-residual PINN over BM governing equations — `brian` — `P3`
+- **#16** — N=20 panel in BM bootstrap boxplot — `brian` — `P2` _(2026-05-12 advisor follow-up, plan pending approval)_
+- **#17** — Cross-domain GP/TabPFN: TBCM + Female BCM — `brian` — `P1` _(2026-05-12 advisor follow-up, plan pending approval)_
+- **#17b** — Dump TBCM small-N transfer to JSON — `brian` — `P1` _(Sub-task of #17, plan Task 5.5)_
+- **#18** — Muscle-activation x F0 heatmaps — `brian` — `P1` _(2026-05-12 advisor follow-up, plan pending approval)_
+- **#19** — Group email draft — `brian` — `P1` _(2026-05-12 advisor follow-up, plan pending approval)_
 
 ## In Progress
 
