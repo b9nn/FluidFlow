@@ -16,6 +16,66 @@ Format per entry:
 
 ---
 
+## 2026-05-13 — Brian solo (TBCM cross-domain unblock — #17b + #18b)
+
+**Attendees:** brian
+
+**Decisions:**
+- TBCM dataset (`TBCM/dataset_TBCM.csv`, 43,102 rows, gitignored per CSV
+  convention) arrived locally between 2026-05-12 night and 2026-05-13
+  morning. GP commit `0d40466` landed late 2026-05-12 (after the advisor
+  follow-up tier). TabPFN run that night was interrupted at N=100 because
+  the local `tabpfn_client/.tabpfn/dataset_cache` file got truncated to 0
+  bytes during the user-machine reset, raising `JSONDecodeError` on next
+  import. Resolution: delete the 0-byte cache (auth `config` untouched);
+  the idempotent `_existing_complete_ns` skip logic in TBCM_TabPFN.py
+  picked up exactly at N=150 and filled {150, 200, 300, 500} cleanly.
+- Plan Task 5.5 (TBCM_SmallData JSON dump) executed in parallel and
+  produced `TBCM/results/rf_transfer_small_n.json` — per-N replicate RF
+  transfer scores schema-matched to `alternates_results.json` for
+  `BM_CrossDomain.py` to consume.
+- Cross-domain figure regenerated. TBCM panel now real (was "no data
+  yet"). Heatmap pipeline re-run end-to-end; `heatmap_TBCM_F0.png`
+  produced for the first time. `heatmap_FemaleBCM_F0.png` regen is pixel
+  jitter, kept for consistency.
+- **Refined cross-domain story (the actual deliverable for Matias):**
+  alignment quality of source→target is the load-bearing variable.
+    * **BCM→BM (poor alignment, Ps 10-2010 vs 600-1000):** alternates
+      dominate by +0.47 R² at N=50; TabPFN still leads by +0.17 at N=500.
+    * **Male→Female BCM (good alignment, same physics, demographic shift):**
+      TabPFN catches transfer at N≈75; dominates from N=100.
+    * **BCM→TBCM (same physics family, geometry difference):** TransRF at
+      N=500 hits 0.972 — within 0.001 of TabPFN. At N=100 the gap is
+      only +0.07 in TabPFN's favor. Transfer competes and at large N
+      essentially ties the alternates.
+  Headline framing: "alternates win at small N when alignment is poor;
+  transfer wins or ties at large N when alignment is good." Cleaner
+  thesis than "alternates always win at small N."
+
+**Commits landed (in order, all on `feature/fem`):**
+- `0d40466` — TBCM_GP (landed late 2026-05-12 23:15 EDT; carried into
+  this entry because cross-domain panel only completed today)
+- `5c45242` — TBCM_TabPFN (filled missing N values 150/200/300/500
+  after cache fix)
+- `31c118f` — TBCM_SmallData JSON dump + regenerated small_data plot
+- `94fe23d` — cross_domain_alternates regen + TBCM F0 heatmap +
+  FemaleBCM heatmap re-write
+
+**Action items:**
+- Fill `<FILL>` placeholders in the group-email draft with TBCM cross-
+  domain R² numbers (now have them: TransRF 0.86 vs TabPFN 0.93 at
+  N=100; TransRF 0.972 ≈ TabPFN 0.972 at N=500). Strip "Draft notes"
+  block. Attach `cross_domain_alternates.png` and the three F0 heatmaps.
+  Send to Sean/Jesus/Emiro/Matias — `brian`
+- At next 1pm: walk Callum through the refined three-domain story.
+  The "transfer ties at large N when aligned" finding partially vindicates
+  his original framing (transfer helps for expensive simulators) while
+  preserving the alternates-win-at-small-N finding from BM — `shared`
+
+**Blockers:** none. All four 2026-05-12 advisor follow-ups now fully landed.
+
+---
+
 ## 2026-05-12 (later 3) — Brian solo (advisor follow-up implementation)
 
 **Attendees:** brian

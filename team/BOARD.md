@@ -20,8 +20,6 @@ Format per row: `#N — Task — owner — Pn`. Click through to TODO for full n
 - **#11** — Hyperparameter sweep tracker — `tbd` — `P2`
 - **#13** — Re-run `BM_SmallData.py` and dump JSON for tighter head-to-head — `brian` — `P2`
 - **#15** — Build a real PDE-residual PINN over BM governing equations — `brian` — `P3`
-- **#17b** — TBCM cross-domain work (TBCM_GP, TBCM_TabPFN, TBCM_SmallData JSON dump) — `brian` — `P1` _(data-gated on `dataset_TBCM.csv`)_
-- **#18b** — TBCM F0 heatmap — `brian` — `P1` _(data-gated, no new code)_
 
 ## In Progress
 
@@ -29,10 +27,13 @@ _(empty)_
 
 ## In Review
 
-- **#17** — Cross-domain GP/TabPFN: TBCM + Female BCM — `brian` — `P1` _(Female portion done; TBCM in #17b)_
-- **#18** — Muscle-activation x F0 heatmaps — `brian` — `P1` _(BM + Female done; TBCM in #18b)_
+- **#17** — Cross-domain GP/TabPFN: TBCM + Female BCM — `brian` — `P1` _(all three panels real; cross-domain headline refined)_
+- **#18** — Muscle-activation x F0 heatmaps — `brian` — `P1` _(BM + Female + TBCM all done)_
+- **#19** — Group email draft — `brian` — `P1` _(draft done; awaits Brian filling TBCM numbers, attachments, send)_
 
 ## Recently Done
+
+- **2026-05-13** — TBCM cross-domain unblock. Dataset arrived locally (43,102 rows, gitignored). Three commits: `0d40466` TBCM_GP (mirrors BM_GP.py), `5c45242` TBCM_TabPFN (mirrors BM_TabPFN.py — included one-off fix to a 0-byte tabpfn-client cache corrupted by overnight computer reset), `31c118f` TBCM_SmallData JSON dump (Plan Task 5.5). Cross-domain figure regenerated `94fe23d` with TBCM F0 heatmap. Refined cross-domain story: TBCM TransRF at N=500 hits 0.972 — within 0.001 of TabPFN; gap at N=100 only +0.07. Confirms thesis "alternates dominate when source-target alignment is poor (BCM→BM gap +0.40 at N=50); transfer competes and at large N matches when alignment is good (BCM→TBCM, Male→Female)". Closes #17b, #18b — `brian`
 
 - **2026-05-12 (later 3)** — Implemented 2026-05-12 advisor follow-up: N=20 boxplot panel (`4d5b747`), Female_GP (`50837fa`) and Female_TabPFN (`23351e7`) on female BCM, cross-domain figure (`fe6b642`), BM + Female F0 heatmaps (`38bfe81`), group email draft (`1fdd6e7`). TBCM portions remain queued (#17b, #18b) pending dataset arrival. Refined story finding: TabPFN catches Male→Female RF transfer at N≈75 and dominates from N=100, even though that transfer is well-aligned — `brian`
 
