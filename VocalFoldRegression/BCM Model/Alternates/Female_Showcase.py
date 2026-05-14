@@ -145,7 +145,7 @@ def fig_headline():
     ax.set_xscale('log')
     ax.set_xlabel('Number of Female BCM training samples (log scale)')
     ax.set_ylabel('Average R²  (F0 + SPL) / 2')
-    ax.set_title('Male->Female BCM: TabPFN catches RF transfer at N≈75, dominates from N=100',
+    ax.set_title('Male->Female BCM: RF transfer leads through N=75; TabPFN catches at N=100, dominates after',
                  fontweight='bold')
     ax.axhline(0, color='#000', lw=0.6, alpha=0.4)
     ax.axhline(0.5, color='#000', lw=0.4, alpha=0.15, ls=':')
@@ -278,28 +278,12 @@ def fig_bootstrap():
             ax.scatter(np.full_like(vals, i) + jitter, vals,
                        color='black', s=14, alpha=0.55, zorder=4)
 
-        # RF transfer reference line — interpolate if N not directly in CSV
+        # RF transfer reference line (real evaluated point, no interpolation)
         rf_val = rf.get(n)
-        if rf_val is None and rf:
-            # nearest-neighbor on log-N
-            ns_avail = sorted(rf)
-            below = [m for m in ns_avail if m <= n]
-            above = [m for m in ns_avail if m >= n]
-            if below and above and below[-1] != above[0]:
-                n_lo, n_hi = below[-1], above[0]
-                v_lo, v_hi = rf[n_lo], rf[n_hi]
-                t = (np.log10(n) - np.log10(n_lo)) / (np.log10(n_hi) - np.log10(n_lo))
-                rf_val = v_lo + t * (v_hi - v_lo)
-                label_suffix = ' (interp)'
-            else:
-                rf_val = rf[below[-1] if below else above[0]]
-                label_suffix = ' (nearest)'
-        else:
-            label_suffix = ''
         if rf_val is not None:
             s = METHOD_STYLE['RF']
             ax.axhline(rf_val, color=s['color'], ls='--', lw=1.8, alpha=0.9, zorder=2,
-                       label=f'RF transfer{label_suffix}: {rf_val:.2f}')
+                       label=f'RF transfer: {rf_val:.2f}')
             ax.legend(loc='lower right', fontsize=8, framealpha=0.95)
 
         ax.set_title(f'N = {n}', fontweight='bold')
@@ -342,16 +326,6 @@ def fig_table():
     def fmt_rf(n):
         if n in rf:
             return f'{rf[n]:+.3f}', rf[n]
-        # interpolate if both neighbours exist
-        ns_avail = sorted(rf)
-        below = [m for m in ns_avail if m <= n]
-        above = [m for m in ns_avail if m >= n]
-        if below and above and below[-1] != above[0]:
-            n_lo, n_hi = below[-1], above[0]
-            v_lo, v_hi = rf[n_lo], rf[n_hi]
-            t = (np.log10(n) - np.log10(n_lo)) / (np.log10(n_hi) - np.log10(n_lo))
-            v = v_lo + t * (v_hi - v_lo)
-            return f'{v:+.3f}  (interp)', v
         return '—', None
 
     cell_text, cell_colors = [], []
@@ -407,8 +381,8 @@ def fig_table():
         fontweight='bold', fontsize=13, pad=14)
     fig.text(0.5, 0.02,
              'GP & TabPFN: mean ± std over 10 bootstrap replicates.  '
-             'RF transfer: mean only (per-replicate not committed).  '
-             '"interp" = log-N interpolation between adjacent CSV rows.',
+             'RF transfer: mean over 10 bootstrap test-sample shuffles '
+             '(per-N evaluation of pre-trained transfer model).',
              ha='center', fontsize=8.5, style='italic', color='#475569')
     fig.tight_layout(rect=(0, 0.03, 1, 1))
 

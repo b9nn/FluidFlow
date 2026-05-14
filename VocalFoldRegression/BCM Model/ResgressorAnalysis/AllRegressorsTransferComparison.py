@@ -77,7 +77,10 @@ Y_full = df[['F0', 'SPL']]
 print(f"full dataset size: {len(df)} samples\n")
 
 # define sample sizes up to full dataset
-sample_sizes = [25, 50, 100, 250, 500, len(df)]
+# extended 2026-05-14 to match the alternates N grid in Female_Showcase
+# (N=[5,10,20,30,50,75,100,150,200,300,500]) for direct head-to-head.
+# Don't interpolate.
+sample_sizes = [5, 10, 20, 25, 30, 50, 75, 100, 150, 200, 250, 300, 500, len(df)]
 n_bootstrap = 10  # number of random shuffles to average over
 results_list = []
 
