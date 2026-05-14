@@ -113,45 +113,31 @@ def best_transfer_at(n_target, small=True):
 # Figure 1: Headline — Average R^2 vs N
 # ============================================================================
 def fig_headline():
+    """Aligned with TBCM_Showcase / Female_Showcase: only TabPFN, GP, best
+    transfer (TransRF), and the dashed full-N TransRF reference. No
+    annotation text boxes — figures speak for themselves; numbers live in
+    the head-to-head table figure."""
     alt = load_alternates()
     xfer_full = load_full_n_transfer()
 
-    fig, ax = plt.subplots(figsize=(10, 6.5))
+    fig, ax = plt.subplots(figsize=(11, 6.8))
 
-    # Transfer "envelope" at small N: draw each method faintly, then the
-    # per-N best in a heavier slate.
-    method_order = ['Target Only', 'Feature Aug', 'TransRF']
+    # Best of Callum's transfer at small N (TransRF only)
     small_ns = sorted(SMALL_N_TRANSFER.keys())
-    small_ns_in_alt_range = [n for n in small_ns if n <= 100]
+    transrf_small = [SMALL_N_TRANSFER[n]['TransRF'] for n in small_ns]
+    ax.plot(small_ns, transrf_small, color='#1e293b',
+            marker='s', ls='-', lw=2.2, ms=7, alpha=0.95,
+            label="TransRF (best of Callum's BCM->BM transfer)", zorder=3)
 
-    # Faint per-method lines (gray spaghetti) — individual transfer methods
-    for i, m in enumerate(method_order):
-        ys = [SMALL_N_TRANSFER[n].get(m, np.nan) for n in small_ns]
-        ax.plot(small_ns, ys, color=COLORS['transfer'], lw=1.4,
-                alpha=0.75, marker='o', markersize=4, zorder=2,
-                label='Individual transfer methods' if i == 0 else None)
-
-    # Best-transfer-per-N line
-    best_xs, best_ys, best_labels = [], [], []
-    for n in small_ns:
-        m, v = best_transfer_at(n)
-        if m is not None:
-            best_xs.append(n)
-            best_ys.append(v)
-            best_labels.append(m)
-    ax.plot(best_xs, best_ys, color=COLORS['best_xfer'],
-            lw=2.2, marker='s', markersize=6,
-            label='Best BCM->BM transfer (Callum)', zorder=3)
-
-    # Full-N transfer reference (TransRF only, dashed continuation)
+    # Full-N TransRF dashed continuation
     xfer_tr = sorted(xfer_full['TransRF'])
     ns_tr = [n for n, _ in xfer_tr]
     vs_tr = [v for _, v in xfer_tr]
-    ax.plot(ns_tr, vs_tr, color=COLORS['best_xfer'], lw=1.6,
-            ls=(0, (4, 3)), alpha=0.65, marker='s', markersize=4,
-            label='TransRF at full N (reference)', zorder=2)
+    ax.plot(ns_tr, vs_tr, color='#1e293b',
+            marker='s', ls=(0, (4, 3)), lw=1.4, ms=4, alpha=0.55,
+            label="TransRF at full N (Callum's larger-N runs)", zorder=2)
 
-    # GP and TabPFN: bold lines + 1-sigma bands
+    # GP + TabPFN bold with std bands
     for method, color in [('GP', COLORS['GP']), ('TabPFN', COLORS['TabPFN'])]:
         if method not in alt:
             continue
@@ -160,36 +146,32 @@ def fig_headline():
         stds = np.array([alt[method][n].std() for n in ns])
         ax.fill_between(ns, means - stds, means + stds,
                         color=color, alpha=0.15, zorder=3)
-        ax.plot(ns, means, color=color, lw=2.8,
-                marker='o', markersize=7,
+        ax.plot(ns, means, color=color, marker='o', ls='-',
+                lw=2.8, ms=8,
                 label=f'{method} (non-transfer, ours)', zorder=5)
-
-    # Annotate headline gap at N=50
-    gp_at_50 = alt['GP'][50].mean()
-    tab_at_50 = alt['TabPFN'][50].mean()
-    best_xfer_at_50 = SMALL_N_TRANSFER[50]
-    best_xfer_val_50 = max(best_xfer_at_50.values())
-    gap = tab_at_50 - best_xfer_val_50
-
-    ax.annotate(
-        f'+{gap:.2f} R² at N=50\nTabPFN {tab_at_50:.2f}  vs  best transfer {best_xfer_val_50:.2f}',
-        xy=(50, tab_at_50), xytext=(120, 0.30),
-        fontsize=10, fontweight='bold', color='#111',
-        ha='left', va='center',
-        bbox=dict(boxstyle='round,pad=0.4', fc='#fef3c7', ec='#92400e', lw=1),
-        arrowprops=dict(arrowstyle='->', color='#92400e', lw=1.2,
-                        connectionstyle='arc3,rad=0.15'))
 
     ax.set_xscale('log')
     ax.set_xlabel('Number of BM training samples (log scale)')
     ax.set_ylabel('Average R²  (F0 + SPL) / 2')
-    ax.set_title('Headline: non-transfer baselines beat BCM->BM transfer at small N',
+    ax.set_title('BCM->BM: alternates dominate at every N; transfer never catches within tested range',
                  fontweight='bold')
     ax.axhline(0, color='#000', lw=0.6, alpha=0.4)
     ax.axhline(0.5, color='#000', lw=0.4, alpha=0.15, ls=':')
-    ax.set_ylim(-0.15, 1.0)
+    ax.set_ylim(-0.3, 1.05)
     ax.grid(True, which='both', alpha=0.25)
-    ax.legend(loc='lower right', framealpha=0.95)
+
+    # Reorder legend to match TBCM/Female: alternates first, then transfer
+    handles, labels = ax.get_legend_handles_labels()
+    order_keys = [
+        'TabPFN (non-transfer, ours)',
+        'GP (non-transfer, ours)',
+        "TransRF (best of Callum's BCM->BM transfer)",
+        "TransRF at full N (Callum's larger-N runs)",
+    ]
+    label_to_handle = dict(zip(labels, handles))
+    ordered = [(label_to_handle[k], k) for k in order_keys if k in label_to_handle]
+    ax.legend([h for h, _ in ordered], [l for _, l in ordered],
+              loc='lower right', framealpha=0.95, fontsize=9)
 
     fig.tight_layout()
     path = os.path.join(figs_dir, 'bm_showcase_headline.png')
