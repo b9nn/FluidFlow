@@ -1,7 +1,7 @@
 # Non-Transfer Alternate Methods for BM — Design
 
 **Date:** 2026-05-04
-**Author:** Brian (with Claude)
+**Author:** Ben (with Claude)
 **Branch:** feature/fem
 **Tracks:** `team/TODO.md` #1
 **Status:** Implemented; spec frozen as historical record
@@ -91,7 +91,7 @@ Beam_Membrane/
 ## Phasing
 
 1. **Phase 1** — Scaffold `BM_Alternates.py` with experiment harness, GP method, run on 5/10/20/50/100, commit.
-2. **Phase 2** — Add PINN. Confirm monotonicity priors with Brian. Tune λ. Commit.
+2. **Phase 2** — Add PINN. Confirm monotonicity priors with Ben. Tune λ. Commit.
 3. **Phase 3** — Add TabPFN. Document new dep in DECISIONS. Commit.
 4. **Phase 4** — Extend `BM_Summary.py` to read alternates. Regenerate comparison figure. Commit.
 5. **Phase 5** — DECISIONS entries (kernel choice, physics priors, TabPFN cap), MILESTONES update, mark TODO #1 → `done`, migrate to MILESTONES, mention in MEETING_NOTES. Commit.

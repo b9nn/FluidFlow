@@ -16,10 +16,10 @@ Action items from the 2026-05-12 advisor sync ("Vocal Fold ML Update", Fathom re
 
 1. Jesus: replicate the GP/TabPFN-vs-transfer plot for TBCM (and by extension BCM); add N=20 to the boxplots.
 2. Jesus + Emiro: produce muscle-activation × F0 heatmaps comparing methods to verify nonlinear-trend replication, not just R².
-3. Brian (commitment): re-run the male→female BCM experiment with GP/TabPFN, verify they outperform transfer there too.
+3. Ben (commitment): re-run the male→female BCM experiment with GP/TabPFN, verify they outperform transfer there too.
 4. Sean: email the group with summary + plots + TabPFN Nature paper + GP/TabPFN references + male-female + heatmaps.
 
-Order per Brian (2026-05-12 conversation): #3 first (N=20 already exists in alternates JSON; cross-domain runs will share that data point), then #1, then #2, then #4.
+Order per Ben (2026-05-12 conversation): #3 first (N=20 already exists in alternates JSON; cross-domain runs will share that data point), then #1, then #2, then #4.
 
 ## Scope Decisions Locked Here
 
@@ -32,7 +32,7 @@ These are the judgment calls made up front; they become entries in `docs/DECISIO
   - **TBCM:** new small-N JSON dump from `TBCM_SmallData.py` (added in Task 5.5). The existing `rf_transfer_results.json` is fraction-based (smallest n≈1379), too coarse for small-N comparison.
   - **Female BCM:** `VocalFoldRegression/BCM Model/ResgressorAnalysis/figs/all_regressors_transfer_comparison.csv` filtered to `regressor == 'RF'`, using the precomputed `r2_avg` column. Sample sizes already at [25, 50, 100, 250, 500, 843]. **RF-only** comparator per 2026-05-12 decision — not NN, not PR.
 - **N values:** `[5, 10, 20, 30, 50, 75, 100, 150, 200, 300, 500]` (matches existing BM alternates). 10 bootstrap replicates per N.
-- **Email is a draft markdown file**, not auto-sent. Brian sends from his client after review.
+- **Email is a draft markdown file**, not auto-sent. Ben sends from his client after review.
 
 ## File Structure
 
@@ -655,7 +655,7 @@ Reads three alternates JSONs and produces a 3-panel figure (one panel per domain
 For the transfer baseline per domain:
 - BM: `Beam_Membrane/BM_Showcase.py`'s `SMALL_N_TRANSFER` dict — copy it (or import it)
 - TBCM: read `TBCM/results/rf_transfer_results.json` directly (the TransRF mean per N)
-- Female: read `VocalFoldRegression/BCM Model/NeuralNetwork/transfer-figs/sample_size_sensitivity.csv` if it has per-N R²; else hardcode the small-N numbers from Brian's existing FemaleNNTransfer experiments. If unavailable, plot alternates only and note in the caption.
+- Female: read `VocalFoldRegression/BCM Model/NeuralNetwork/transfer-figs/sample_size_sensitivity.csv` if it has per-N R²; else hardcode the small-N numbers from Ben's existing FemaleNNTransfer experiments. If unavailable, plot alternates only and note in the caption.
 
 - [ ] **Step 1: Create BM_CrossDomain.py**
 
@@ -1123,7 +1123,7 @@ git commit -m "feat(BM): muscle-activation x F0 heatmaps for nonlinear-trend che
 **Files:**
 - Create: `docs/superpowers/email-draft-2026-05-12-vocal-fold-update.md`
 
-Draft, not auto-sent. Brian copies into his email client after review.
+Draft, not auto-sent. Ben copies into his email client after review.
 
 - [ ] **Step 1: Write the draft**
 
@@ -1243,10 +1243,10 @@ After implementation lands, update the tracking + docs files.
 Add to the Active table (or "Done" block once complete):
 
 ```markdown
-| 16 | N=20 panel in BM bootstrap boxplot | brian | done | P2 | 2026-05-12. Pure figure update — N=20 data already in alternates JSON |
-| 17 | Cross-domain GP/TabPFN: TBCM + Female BCM | brian | done | P1 | 2026-05-12. Mirrors BM_GP/BM_TabPFN. Result: alternates dominate in all 3 domains |
-| 18 | Muscle-activation x F0 heatmaps (Jesus 2026-05-12 ask) | brian | done | P1 | 2026-05-12. `BM_Heatmaps.py` produces per-domain F0 surfaces with training-point overlay |
-| 19 | Group email draft (Sean/Jesus/Emiro/Matias follow-up) | brian | done | P1 | 2026-05-12. Draft in docs/superpowers/email-draft-...md; Brian sends from client |
+| 16 | N=20 panel in BM bootstrap boxplot | ben | done | P2 | 2026-05-12. Pure figure update — N=20 data already in alternates JSON |
+| 17 | Cross-domain GP/TabPFN: TBCM + Female BCM | ben | done | P1 | 2026-05-12. Mirrors BM_GP/BM_TabPFN. Result: alternates dominate in all 3 domains |
+| 18 | Muscle-activation x F0 heatmaps (Jesus 2026-05-12 ask) | ben | done | P1 | 2026-05-12. `BM_Heatmaps.py` produces per-domain F0 surfaces with training-point overlay |
+| 19 | Group email draft (Sean/Jesus/Emiro/Matias follow-up) | ben | done | P1 | 2026-05-12. Draft in docs/superpowers/email-draft-...md; Ben sends from client |
 ```
 
 - [ ] **Step 2: BOARD.md — move to Recently Done**
@@ -1254,14 +1254,14 @@ Add to the Active table (or "Done" block once complete):
 Add four entries to `## Recently Done`:
 
 ```markdown
-- **2026-05-12 (later 2)** — Cross-domain alternates (TBCM + Female BCM), N=20 boxplot panel, F0 heatmaps, and group-email draft. `cross_domain_alternates.png`, `heatmap_{BM,TBCM,FemaleBCM}_F0.png`, `bm_showcase_bootstrap.png` regenerated. Email draft at `docs/superpowers/email-draft-2026-05-12-vocal-fold-update.md` — `brian`
+- **2026-05-12 (later 2)** — Cross-domain alternates (TBCM + Female BCM), N=20 boxplot panel, F0 heatmaps, and group-email draft. `cross_domain_alternates.png`, `heatmap_{BM,TBCM,FemaleBCM}_F0.png`, `bm_showcase_bootstrap.png` regenerated. Email draft at `docs/superpowers/email-draft-2026-05-12-vocal-fold-update.md` — `ben`
 ```
 
 - [ ] **Step 3: MEETING_NOTES.md — completion entry**
 
 ```markdown
-## 2026-05-12 (later 2) — Brian solo (advisor follow-up deliverables)
-**Attendees:** brian
+## 2026-05-12 (later 2) — Ben solo (advisor follow-up deliverables)
+**Attendees:** ben
 **Decisions:**
 - Implemented all four 2026-05-12 advisor-meeting follow-up items in plan order:
   N=20 boxplot → cross-domain runs (TBCM + Female BCM) → heatmaps → email draft.
@@ -1271,8 +1271,8 @@ Add four entries to `## Recently Done`:
   fake "ground truth" grid. Documented in DECISIONS.
 
 **Action items:**
-- Brian sends the email after sanity-checking attachments — `brian`
-- Wait for Matias's reply re: publication framing — `brian`
+- Ben sends the email after sanity-checking attachments — `ben`
+- Wait for Matias's reply re: publication framing — `ben`
 
 **Blockers:**
 - TBCM data required for Task 2/3 — resolved at pre-flight step (Callum / ~/Downloads)
@@ -1337,15 +1337,15 @@ git commit -m "docs: update TODO/BOARD/MEETING_NOTES/MILESTONES/DECISIONS for cr
 
 ## Pre-Approval Doc Updates (this turn)
 
-Before Brian approves the plan, lay groundwork in the tracking files so future-Claude can see what's queued:
+Before Ben approves the plan, lay groundwork in the tracking files so future-Claude can see what's queued:
 
 - [ ] **Step A: Append plan-pending rows to `team/TODO.md` Active table**
 
 ```markdown
-| 16 | N=20 panel in BM bootstrap boxplot | brian | backlog | P2 | Plan: docs/superpowers/plans/2026-05-12-cross-domain-alternates.md — awaiting approval |
-| 17 | Cross-domain GP/TabPFN: TBCM + Female BCM | brian | backlog | P1 | Plan: docs/superpowers/plans/2026-05-12-cross-domain-alternates.md — awaiting approval |
-| 18 | Muscle-activation x F0 heatmaps (Jesus 2026-05-12) | brian | backlog | P1 | Plan: docs/superpowers/plans/2026-05-12-cross-domain-alternates.md — awaiting approval |
-| 19 | Group email draft (Sean/Jesus/Emiro/Matias follow-up) | brian | backlog | P1 | Plan: docs/superpowers/plans/2026-05-12-cross-domain-alternates.md — awaiting approval |
+| 16 | N=20 panel in BM bootstrap boxplot | ben | backlog | P2 | Plan: docs/superpowers/plans/2026-05-12-cross-domain-alternates.md — awaiting approval |
+| 17 | Cross-domain GP/TabPFN: TBCM + Female BCM | ben | backlog | P1 | Plan: docs/superpowers/plans/2026-05-12-cross-domain-alternates.md — awaiting approval |
+| 18 | Muscle-activation x F0 heatmaps (Jesus 2026-05-12) | ben | backlog | P1 | Plan: docs/superpowers/plans/2026-05-12-cross-domain-alternates.md — awaiting approval |
+| 19 | Group email draft (Sean/Jesus/Emiro/Matias follow-up) | ben | backlog | P1 | Plan: docs/superpowers/plans/2026-05-12-cross-domain-alternates.md — awaiting approval |
 ```
 
 - [ ] **Step B: Mirror to `team/BOARD.md` Backlog block**
@@ -1353,20 +1353,20 @@ Before Brian approves the plan, lay groundwork in the tracking files so future-C
 - [ ] **Step C: Add 2026-05-12 (later) planning entry to `team/MEETING_NOTES.md`**
 
 ```markdown
-## 2026-05-12 (later) — Brian solo (plan for advisor follow-ups)
-**Attendees:** brian
+## 2026-05-12 (later) — Ben solo (plan for advisor follow-ups)
+**Attendees:** ben
 **Decisions:**
 - 2026-05-12 advisor sync (Fathom 145795554) generated four Ben-Gladney follow-ups.
   Plan written to docs/superpowers/plans/2026-05-12-cross-domain-alternates.md.
   Order: N=20 boxplot → cross-domain runs → heatmaps → email draft.
 - TBCM data is a pre-flight blocker — needs to be located (Callum or ~/Downloads)
   before Task 2/3. Female BCM CSV is committed (VocalFoldRegression/BCM Model/).
-- Email lands as markdown draft (not auto-sent); Brian sends from client after review.
+- Email lands as markdown draft (not auto-sent); Ben sends from client after review.
 - Heatmap reference strategy locked: scattered training-point overlay, no FEM grid.
 
 **Action items:**
-- Brian approves plan, then implementation proceeds task-by-task — `brian`
-- Resolve TBCM data availability at pre-flight — `brian` (or ask Callum)
+- Ben approves plan, then implementation proceeds task-by-task — `ben`
+- Resolve TBCM data availability at pre-flight — `ben` (or ask Callum)
 
 **Blockers:**
 - TBCM dataset CSV (resolution gated on Callum / local copy)

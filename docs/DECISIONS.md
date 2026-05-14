@@ -51,7 +51,7 @@ Format:
 
 ## 2025-11 — TransRF data efficiency sweet spot: 200–500 target samples
 
-**Context:** Brian's earlier data efficiency experiment for the advanced RF transfer method on female BCM.
+**Context:** Ben's earlier data efficiency experiment for the advanced RF transfer method on female BCM.
 **Decision:** Best transfer benefit observed at 200–500 target samples.
 **Why:** Below 200, target-only is too noisy; above 500, target-only alone is already strong.
 **Where it shows up:** `BCM Model/RandomForest/DataEfficiencyExperiment.py`.
@@ -61,7 +61,7 @@ Format:
 **Context:** Plan for B+M PR transfer (~500 samples).
 **Decision:** Drop polynomial degree from 12 to 4–5 and use `Ridge` instead of plain `LinearRegression`.
 **Why:** Degree 12 with 500 samples will overfit catastrophically.
-**Where it shows up:** Planned for `BeamMembranePRTransfer.py` (Brian's local stub, not yet committed; superseded by the RF/AE-only direction Callum took).
+**Where it shows up:** Planned for `BeamMembranePRTransfer.py` (Ben's local stub, not yet committed; superseded by the RF/AE-only direction Callum took).
 
 ## 2026-05-02 — Adaptive RF complexity, replacing fixed `n_estimators=300`
 
@@ -111,9 +111,9 @@ df.rename(columns={'Ps': 'PS'}, inplace=True)
 
 ## 2026-02 — Active branch: `feature/fem`
 
-**Context:** Brian and Callum worked on parallel branches (`feature/fem` and `cc-dev`) from common ancestor `fc24567`.
+**Context:** Ben and Callum worked on parallel branches (`feature/fem` and `cc-dev`) from common ancestor `fc24567`.
 **Decision:** Continue work on `feature/fem`.
-**Why:** Brian's docs commits live there; `cc-dev` was Callum's PR feeder branch and is merged to `main`.
+**Why:** Ben's docs commits live there; `cc-dev` was Callum's PR feeder branch and is merged to `main`.
 **Where it shows up:** repo state. Note: as of 2026-05-03, `main` is no longer stale — Callum's PR landed and `feature/fem` has been merged with `origin/main`.
 
 ## 2026-05-02 — Documentation lives at repo root, not under `VocalFoldRegression/`
@@ -177,13 +177,13 @@ df.rename(columns={'Ps': 'PS'}, inplace=True)
 
 **Context:** Phase 3 of TODO #1. Adding a pretrained tabular foundation model. Initial install of the local `tabpfn` package hit a license-acceptance gate that required interactive browser login + `TABPFN_TOKEN` to download model weights, which broke headless smoke testing.
 **Decision:** Switch to `tabpfn-client` (cloud-API; no local model-weight download, no license dance — just an account login). The code prefers `tabpfn-client` and falls back to local `tabpfn` if only that is installed. One regressor per target. Train cap of 1000 samples (matches our N ≤ 100 regime anyway). Auth either via interactive `tabpfn_client.init()` (browser, one-time, cached) or via `TABPFN_TOKEN` env var. Wrap the run loop in try/except so auth/network errors skip TabPFN without breaking GP and MonoMLP.
-**Why:** Cloud client removes a friction step (license + token download) and keeps TabPFN reachable from headless or fresh-clone environments. The dual-import dance (`tabpfn-client` first, `tabpfn` fallback) means whichever Brian or Callum has installed will work.
+**Why:** Cloud client removes a friction step (license + token download) and keeps TabPFN reachable from headless or fresh-clone environments. The dual-import dance (`tabpfn-client` first, `tabpfn` fallback) means whichever Ben or Callum has installed will work.
 **Where it shows up:** `Beam_Membrane/BM_Alternates.py:fit_predict_tabpfn`, `_TABPFN_BACKEND` selection at import time, `_ensure_tabpfn_auth` helper.
 
 ## 2026-05-04 — Shared agile workspace at `/team/`, per-task ownership
 
-**Context:** Brian and Callum sync at ~1pm a few times a week. Need a single place both Claude workflows can read for current state — what's in flight, who owns what, recent decisions.
-**Decision:** Add `/team/` folder with `TODO.md`, `BOARD.md`, `MEETING_NOTES.md`, `README.md`. Track ownership per-task with an `owner` field (`brian`, `callum`, `shared`, `tbd`) rather than fixing it by codebase area. Both contributors can pick up work in either codebase. Strategic research roadmap stays in `docs/ROADMAP.md`; `/team/` is operational (this week, this sprint).
+**Context:** Ben and Callum sync at ~1pm a few times a week. Need a single place both Claude workflows can read for current state — what's in flight, who owns what, recent decisions.
+**Decision:** Add `/team/` folder with `TODO.md`, `BOARD.md`, `MEETING_NOTES.md`, `README.md`. Track ownership per-task with an `owner` field (`ben`, `callum`, `shared`, `tbd`) rather than fixing it by codebase area. Both contributors can pick up work in either codebase. Strategic research roadmap stays in `docs/ROADMAP.md`; `/team/` is operational (this week, this sprint).
 **Why:** Splitting ownership by codebase area would freeze responsibilities and make cross-area contributions awkward. A per-task owner field scales as work moves and keeps both Claudes informed about who's doing what.
 **Where it shows up:** `team/*.md`; `CLAUDE.md` "Team workflow" section and "Where to look" list; "Contributors" reframed as authorship-only.
 
@@ -217,7 +217,7 @@ df.rename(columns={'Ps': 'PS'}, inplace=True)
 
 ## 2026-05-12 — N=20 boxplot panel: figure-only change
 
-**Context:** Brian flagged at the 2026-05-12 advisor meeting that the bootstrap figure needed an N=20 panel for completeness.
+**Context:** Ben flagged at the 2026-05-12 advisor meeting that the bootstrap figure needed an N=20 panel for completeness.
 **Decision:** Add `20` to the `candidates = [...]` list in `BM_Showcase.fig_bootstrap` and regenerate. No re-running of GP/TabPFN.
 **Why:** N=20 data was already in `alternates_results.json` (GP/TabPFN's `N_TARGETS` has always included 20); only the showcase script's panel selection excluded it. One-line edit, zero compute cost. At N=20 GP/TabPFN medians ≈ 0.38 vs best-transfer (Feature Aug) at 0.054 — sits cleanly between N=10 (modest lead) and N=50 (large lead).
 **Where it shows up:** `Beam_Membrane/BM_Showcase.py:298`, `figs/bm_showcase_bootstrap.png`.
@@ -226,7 +226,7 @@ df.rename(columns={'Ps': 'PS'}, inplace=True)
 
 **Context:** Female BCM dataset has 1331 rows; ~10% have low ACFL (acoustic flow) values that indicate failed/non-converged simulations. SPL distribution mass is at 113-126 dB with a tail down to −14 dB driven by these bad rows.
 **Decision:** Apply `df = df[df['ACFL'] > 30]` in `Female_GP.py` and `Female_TabPFN.py`, mirroring the convention from `FemaleRFTransfer.py:24`. Reduces to 1195 rows; SPL distribution tightens to 94-133 dB.
-**Why:** Consistency with the existing Female-domain pipeline. The bad rows are simulation failures, not informative outliers — including them would penalize all methods on noise. The fact that Brian's prior RF/PR/NN transfer scripts all use this filter means our alternates are comparing on the same underlying data distribution.
+**Why:** Consistency with the existing Female-domain pipeline. The bad rows are simulation failures, not informative outliers — including them would penalize all methods on noise. The fact that Ben's prior RF/PR/NN transfer scripts all use this filter means our alternates are comparing on the same underlying data distribution.
 **Where it shows up:** `Female_GP.py:ACFL_THRESHOLD`, `Female_TabPFN.py:ACFL_THRESHOLD`, `alternates_results.json` `_meta.quality_filter` field.
 
 ## 2026-05-13 — BCM→TBCM transfer ties TabPFN at large N (refines cross-domain thesis)

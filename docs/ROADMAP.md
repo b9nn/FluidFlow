@@ -15,7 +15,7 @@ No hard deadlines — phases are ordered, not dated. Each phase ends with a meas
 - Use BCM as a control source (run parallel)
 - Apply Callum's 6 RF methods + 3 AE methods with TBCM as source
 - Add TabPFN with TBCM features added (TabPFN-with-source-features as a baseline)
-- Compare against Brian's GP + TabPFN non-transfer baselines
+- Compare against Ben's GP + TabPFN non-transfer baselines
 
 **Effort:** ~1–2 weeks. Reuses existing harness; mostly data plumbing.
 

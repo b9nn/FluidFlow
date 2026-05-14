@@ -57,9 +57,9 @@ plt.rcParams.update({
 METHOD_STYLE = {
     'TabPFN':   dict(color='#d97706', marker='o', ls='-',  lw=2.8, ms=8, alpha=1.0, label='TabPFN (non-transfer, ours)'),
     'GP':       dict(color='#0f766e', marker='o', ls='-',  lw=2.8, ms=8, alpha=1.0, label='GP (non-transfer, ours)'),
-    'RF':       dict(color='#1e293b', marker='s', ls='-',  lw=2.4, ms=7, alpha=0.95, label='RF Male->Female transfer (Brian)'),
-    'NN':       dict(color='#64748b', marker='D', ls='--', lw=1.6, ms=5, alpha=0.85, label='NN Male->Female transfer (Brian)'),
-    'PR':       dict(color='#94a3b8', marker='^', ls=':',  lw=1.6, ms=5, alpha=0.85, label='PR Male->Female transfer (Brian)'),
+    'RF':       dict(color='#1e293b', marker='s', ls='-',  lw=2.4, ms=7, alpha=0.95, label='RF Male->Female transfer (Ben)'),
+    'NN':       dict(color='#64748b', marker='D', ls='--', lw=1.6, ms=5, alpha=0.85, label='NN Male->Female transfer (Ben)'),
+    'PR':       dict(color='#94a3b8', marker='^', ls=':',  lw=1.6, ms=5, alpha=0.85, label='PR Male->Female transfer (Ben)'),
 }
 
 LEGEND_ORDER = ['TabPFN', 'GP', 'RF', 'NN', 'PR']
@@ -120,7 +120,7 @@ def fig_headline():
 
     fig, ax = plt.subplots(figsize=(11, 6.8))
 
-    # RF Male->Female transfer only (best of Brian's transfer regressors).
+    # RF Male->Female transfer only (best of Ben's transfer regressors).
     # NN/PR comparison is visible in the sim-budget figure.
     if 'RF' in xfer:
         ns = sorted(xfer['RF'])
@@ -314,7 +314,7 @@ def fig_table():
     rows_n = sorted({n for m in ('GP', 'TabPFN') for n in alt.get(m, {})})
     rows_n = [n for n in rows_n if n >= 5]
 
-    headers = ['N', 'GP', 'RF transfer (Brian)', 'TabPFN']
+    headers = ['N', 'GP', 'RF transfer (Ben)', 'TabPFN']
 
     def fmt_alt(arr):
         if arr is None or len(arr) == 0:

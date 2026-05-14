@@ -2,7 +2,7 @@
 
 Append-only history. Newest first. Dates from `git log` unless noted.
 
-## 2026-05-12 — Cross-domain alternates + heatmaps + advisor email (Brian)
+## 2026-05-12 — Cross-domain alternates + heatmaps + advisor email (Ben)
 
 Implementation of 2026-05-12 advisor-meeting follow-up items (Vocal Fold ML
 Update, Fathom 145795554). Plan: `docs/superpowers/plans/2026-05-12-cross-domain-alternates.md`.
@@ -68,7 +68,7 @@ to dodge a tkinter thread crash on Windows during the second figure write.
 for Sean, Jesus, Emiro, Matias. Includes the refined story, per-domain R²
 table, references to the TabPFN Nature paper + GP textbook + sklearn docs,
 attached-figures list, and the publication-framing question for Matias.
-Brian to send after sanity-check and once TBCM lands.
+Ben to send after sanity-check and once TBCM lands.
 
 ### Commits
 
@@ -85,7 +85,7 @@ Brian to send after sanity-check and once TBCM lands.
 TBCM components — `TBCM/TBCM_GP.py`, `TBCM/TBCM_TabPFN.py`, JSON dump for
 `TBCM/TBCM_SmallData.py`, TBCM heatmap. All tracked as TODO #17b + #18b.
 
-## 2026-05-12 — Showcase figures + extended alternates to N=500 (Brian)
+## 2026-05-12 — Showcase figures + extended alternates to N=500 (Ben)
 
 ### Showcase script
 
@@ -142,9 +142,9 @@ Code: `Beam_Membrane/BM_Alternates.py` (~440 lines), `BM_Summary.py` extended. F
 
 ## 2026-05-03 — Merged Callum's PR #1 into `feature/fem`
 
-Pulled `origin/main` (commit `c8349ee`) into `feature/fem`. Doc tree updated to reflect the new top-level layout (`Beam_Membrane/`, `TBCM/`, `archive/`, `PROJECT_GUIDE.md`). No code changes from Brian — purely a merge + doc reconcile.
+Pulled `origin/main` (commit `c8349ee`) into `feature/fem`. Doc tree updated to reflect the new top-level layout (`Beam_Membrane/`, `TBCM/`, `archive/`, `PROJECT_GUIDE.md`). No code changes from Ben — purely a merge + doc reconcile.
 
-## 2026-05-02 — Documentation consolidation (Brian)
+## 2026-05-02 — Documentation consolidation (Ben)
 
 Replaced `VocalFoldRegression/PROJECT_CONTEXT.md` and `PLAN_OF_ACTION.md` with the `/docs/` tree plus root `CLAUDE.md` and `README.md`. Establishes a single source of truth for both Claude sessions and human collaborators. Commits `e690dd6`, `ebb78af`.
 
@@ -166,7 +166,7 @@ Key empirical findings from this PR:
 
 Co-authored with Claude Opus 4.6.
 
-## 2026-02-19 — Plan of action written for B+M transfer learning (Brian)
+## 2026-02-19 — Plan of action written for B+M transfer learning (Ben)
 
 5-phase plan: data gen → exploration → baselines → transfer → analysis. Folded into [`ROADMAP.md`](ROADMAP.md) on 2026-05-02. Commit `1d6b348`. (Plan was largely realized by Callum's PR a couple months later.)
 
@@ -174,7 +174,7 @@ Co-authored with Claude Opus 4.6.
 
 `Beam_Membrane/PhysicsInformedTransfer.py` — 681-line first pass at BM transfer using physics-informed RF. Later moved to `archive/` in PR #1. Commit `4115763`.
 
-## 2026-02-12 — Transfer learning repairs + physics-based experiments (Brian)
+## 2026-02-12 — Transfer learning repairs + physics-based experiments (Ben)
 
 Repaired prior transfer methods; added experimental physics-informed RF transfer (`PhysicsInformedTransfer.py`). Commit `fc24567`. This is the common ancestor of `feature/fem` and `cc-dev`.
 
@@ -182,34 +182,34 @@ Repaired prior transfer methods; added experimental physics-informed RF transfer
 
 Bulk code dump in preparation for Callum picking up transfer-learning experiments per advisors Jesus and Emiro. Commit `c718828`.
 
-## 2025-11-20 — Bulk experimental dump (Brian)
+## 2025-11-20 — Bulk experimental dump (Ben)
 
 Multiple alternative transfer methods committed (`AlternativeTransferMethods.py`, `ImprovedTransferLearning.py`, `TransferLearningExperiment.py`, `FemaleRFEnsambleLearning.py`, etc.). Commit `9ecc1ab`.
 
-## 2025-11-06 — Neural Network transfer learning baseline (Brian)
+## 2025-11-06 — Neural Network transfer learning baseline (Ben)
 
 Partial layer freezing implementation (`FemaleNNTransfer.py`). Commit `1913f35`.
 
-## 2025-11-05 — RF + PR transfer learning for female BCM (Brian)
+## 2025-11-05 — RF + PR transfer learning for female BCM (Ben)
 
 Weighted-ensemble transfer for both regressors (`FemaleRFTransfer.py`, `FemalePRTransfer.py`). Commit `56a313e`.
 
-## 2025-10-24 — Female BCM compatibility (Brian)
+## 2025-10-24 — Female BCM compatibility (Ben)
 
 Initial female-domain support across regressors. Commit `fe03dc4`.
 
-## 2025-10-24 — Polynomial Regression baseline (Brian, male BCM)
+## 2025-10-24 — Polynomial Regression baseline (Ben, male BCM)
 
 Degree-12 PR with `MultiOutputRegressor(LinearRegression)` over `PolynomialFeatures` (`MalePR.py`). Commit `6e224f9`.
 
-## 2025-10-23/24 — Neural Network baseline (Brian, male BCM)
+## 2025-10-23/24 — Neural Network baseline (Ben, male BCM)
 
 Sequential `[512, 256, 128, 64, 2]` with L2 + Dropout; saved as `standard_model.keras`. Commits `0ff9d8a`, `9b027df`, `6328398`.
 
-## 2025-10-16 — Random Forest baseline (Brian, male BCM)
+## 2025-10-16 — Random Forest baseline (Ben, male BCM)
 
 `MultiOutputRegressor(RandomForest)`, `n_estimators=300`, hyperparam search via `GridSearchCV`. Saved as `RF_BCM.pkl`. Commit `1a3af93`.
 
-## 2025-10-16 — Glottal area extraction script (Brian)
+## 2025-10-16 — Glottal area extraction script (Ben)
 
 `glottal_area/` scripts for processing `VF_Left_data.csv` / `VF_Right_data.csv`. Commit `def15e2`. (`integrate.py` later moved to `archive/top_level/glottal_area/`.)

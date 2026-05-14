@@ -14,8 +14,8 @@ Active branch: `feature/fem`. Last synced with `origin/main` on 2026-05-03 (comm
 |---|---|---|
 | `Beam_Membrane/` | **primary (Callum)** | BCM → BM transfer experiments. RF + autoencoder methods, MATLAB data gen, results JSON, figures |
 | `TBCM/` | **primary (Callum)** | BCM → TBCM transfer experiments. RF + autoencoder + waveform features |
-| `VocalFoldRegression/` | **primary (Brian)** | Original male/female BCM transfer (RF, NN, polynomial regressor) |
-| `team/` | **shared coordination** | Agile workspace for Brian + Callum: TODO, BOARD, MEETING_NOTES — both Claude workflows read this |
+| `VocalFoldRegression/` | **primary (Ben)** | Original male/female BCM transfer (RF, NN, polynomial regressor) |
+| `team/` | **shared coordination** | Agile workspace for Ben + Callum: TODO, BOARD, MEETING_NOTES — both Claude workflows read this |
 | `archive/` | reference | Old experimental scripts and figures Callum moved aside in PR #1 |
 | `docs/` | docs | Architecture, milestones, roadmap, glossary, decisions |
 | `PROJECT_GUIDE.md` | docs (Callum) | Callum's standalone onboarding doc — kept alongside `/docs/`, focused on his transfer-learning methods |
@@ -45,9 +45,9 @@ Active branch: `feature/fem`. Last synced with `origin/main` on 2026-05-03 (comm
 6. **Don't blob-commit binaries.** `.pkl`, `.keras`, `.parquet` are committed selectively. `.csv`, `*.txt`, `*.mat`, `*.ipynb` are gitignored — use `git add -f` only when needed and you'll see why in `.gitignore`.
 7. **Append a line to `docs/DECISIONS.md`** whenever you make a non-obvious judgment call (hyperparam choice, weighting, transfer strategy variant, scope change).
 
-## Team workflow — `/team/` is shared between Brian and Callum
+## Team workflow — `/team/` is shared between Ben and Callum
 
-Brian and Callum coordinate via the `/team/` folder. **Both Claude workflows read it**, so updating it here updates context for both of us. Sync cadence is a few times a week at 1pm. Responsibilities are split per-task via an owner field, not by domain — both contributors can pick up work in either codebase area.
+Ben and Callum coordinate via the `/team/` folder. **Both Claude workflows read it**, so updating it here updates context for both of us. Sync cadence is a few times a week at 1pm. Responsibilities are split per-task via an owner field, not by domain — both contributors can pick up work in either codebase area.
 
 When you (Claude) start a non-trivial task:
 
@@ -61,7 +61,7 @@ See `team/README.md` for full conventions (owner values, status values, priority
 
 ## Interaction conventions
 
-- When you need to ask Brian multiple-choice or preference questions, use the `AskUserQuestion` tool ("planning format" — rendered as chips). Don't ask A/B/C/D in plain text. Inline prose questions are fine only for genuinely open-ended prompts.
+- When you need to ask Ben multiple-choice or preference questions, use the `AskUserQuestion` tool ("planning format" — rendered as chips). Don't ask A/B/C/D in plain text. Inline prose questions are fine only for genuinely open-ended prompts.
 
 ## Where to look
 
@@ -78,5 +78,5 @@ See `team/README.md` for full conventions (owner values, status values, priority
 
 Equal collaborators. Per-task ownership tracked in [`team/TODO.md`](team/TODO.md), not by codebase area — either of us may pick up work in either part of the repo. Author-of-the-original-code listed below for context only.
 
-- **Brian Gladney** — author of `VocalFoldRegression/` (male/female BCM, RF/NN/PR baselines and transfer).
+- **Ben Gladney** — author of `VocalFoldRegression/` (male/female BCM, RF/NN/PR baselines and transfer).
 - **Callum Camazzola** — author of `Beam_Membrane/` and `TBCM/` (BCM → BM and BCM → TBCM transfer; RF and autoencoder methods). Joined 2026-01.

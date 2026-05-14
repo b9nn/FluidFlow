@@ -1,4 +1,4 @@
-# /team — Shared agile workspace for Brian & Callum
+# /team — Shared agile workspace for Ben & Callum
 
 This folder is the operational coordination layer for the project. Both of our Claude sessions read it via the root `CLAUDE.md` pointer, so updates here propagate to both AI workflows automatically.
 
@@ -17,7 +17,7 @@ We sync **a few times a week** at 1pm. The board doesn't need daily churn — up
 ## Conventions
 
 ### Owner field
-- `brian` — Brian Gladney
+- `ben` — Ben Gladney
 - `callum` — Callum Camazzola
 - `shared` — both contributing actively
 - `tbd` — not yet assigned
@@ -38,7 +38,7 @@ We sync **a few times a week** at 1pm. The board doesn't need daily churn — up
 1. **At the start of any non-trivial task**, the agent should read `TODO.md` and `BOARD.md` to know what's already in flight, who owns what, and avoid duplicating work.
 2. **When picking up a new task**, set its `status` to `in-progress` in `TODO.md` and move the row to the In Progress column in `BOARD.md`. Mention it briefly in the next meeting notes entry.
 3. **When finishing a task**, set status to `review` (so the other person can ack) or `done` if it's been acked. Items marked `done` get migrated to `docs/MILESTONES.md` periodically.
-4. **Don't edit work owned by the other person** without flagging it. If Brian's Claude needs to touch something owned `callum`, write a note in `MEETING_NOTES.md` for the next sync rather than acting unilaterally.
+4. **Don't edit work owned by the other person** without flagging it. If Ben's Claude needs to touch something owned `callum`, write a note in `MEETING_NOTES.md` for the next sync rather than acting unilaterally.
 5. **Never delete TODO rows** — change status to `done` and let them migrate. We want a record of what was done, not just what's left.
 
 ## Where the strategic roadmap lives

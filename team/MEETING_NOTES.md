@@ -5,7 +5,7 @@ Append-only. Newest at the top. Cadence: a few times a week.
 Format per entry:
 ```
 ## YYYY-MM-DD
-**Attendees:** brian, callum
+**Attendees:** ben, callum
 **Decisions:**
 - ...
 **Action items:** (with owner)
@@ -16,9 +16,9 @@ Format per entry:
 
 ---
 
-## 2026-05-13 — Brian solo (TBCM cross-domain unblock — #17b + #18b)
+## 2026-05-13 — Ben solo (TBCM cross-domain unblock — #17b + #18b)
 
-**Attendees:** brian
+**Attendees:** ben
 
 **Decisions:**
 - TBCM dataset (`TBCM/dataset_TBCM.csv`, 43,102 rows, gitignored per CSV
@@ -66,7 +66,7 @@ Format per entry:
   domain R² numbers (now have them: TransRF 0.86 vs TabPFN 0.93 at
   N=100; TransRF 0.972 ≈ TabPFN 0.972 at N=500). Strip "Draft notes"
   block. Attach `cross_domain_alternates.png` and the three F0 heatmaps.
-  Send to Sean/Jesus/Emiro/Matias — `brian`
+  Send to Sean/Jesus/Emiro/Matias — `ben`
 - At next 1pm: walk Callum through the refined three-domain story.
   The "transfer ties at large N when aligned" finding partially vindicates
   his original framing (transfer helps for expensive simulators) while
@@ -76,9 +76,9 @@ Format per entry:
 
 ---
 
-## 2026-05-12 (later 3) — Brian solo (advisor follow-up implementation)
+## 2026-05-12 (later 3) — Ben solo (advisor follow-up implementation)
 
-**Attendees:** brian
+**Attendees:** ben
 
 **Decisions:**
 - Implemented all four 2026-05-12 advisor-meeting follow-ups except the TBCM
@@ -98,7 +98,7 @@ Format per entry:
   Different framing than "alternates always win at small N." Documented in
   the email draft as the leading question for Matias.
 - Female BCM convention: applied `ACFL > 30` quality filter (matches
-  Brian's existing `FemaleRFTransfer.py:24`) and capped `TEST_POOL_SIZE = 500`
+  Ben's existing `FemaleRFTransfer.py:24`) and capped `TEST_POOL_SIZE = 500`
   (dataset is 1195 rows post-filter; needed to keep ≥700 for the test pool
   at N=500).
 - Heatmap: had to set `matplotlib.use('Agg')` explicitly before pyplot
@@ -117,9 +117,9 @@ Format per entry:
 
 **Action items:**
 - Send email after sanity-checking attachments and once TBCM portion lands
-  (or send now noting TBCM as a separate follow-up) — `brian`
-- Ask Callum for `dataset_TBCM.csv` at next 1pm sync to unblock #17b + #18b — `brian`
-- Wait for Matias's reply on publication framing — `brian`
+  (or send now noting TBCM as a separate follow-up) — `ben`
+- Ask Callum for `dataset_TBCM.csv` at next 1pm sync to unblock #17b + #18b — `ben`
+- Wait for Matias's reply on publication framing — `ben`
 
 **Blockers:**
 - TBCM dataset for #17b and #18b. Female BCM (1195 rows post-filter) and
@@ -127,13 +127,13 @@ Format per entry:
 
 ---
 
-## 2026-05-12 (later 2) — Brian solo (plan for 2026-05-12 advisor follow-ups)
-**Attendees:** brian
+## 2026-05-12 (later 2) — Ben solo (plan for 2026-05-12 advisor follow-ups)
+**Attendees:** ben
 **Decisions:**
 - 2026-05-12 advisor sync ("Vocal Fold ML Update", Fathom recording 145795554)
   generated four Ben-Gladney follow-ups. Plan written to
-  `docs/superpowers/plans/2026-05-12-cross-domain-alternates.md`, pending Brian's approval.
-- Execution order (Brian's call): N=20 boxplot panel → cross-domain runs
+  `docs/superpowers/plans/2026-05-12-cross-domain-alternates.md`, pending Ben's approval.
+- Execution order (Ben's call): N=20 boxplot panel → cross-domain runs
   (TBCM + Female BCM) → muscle-activation × F0 heatmaps → group email draft.
   Rationale: N=20 already exists in alternates JSON (verified), so adding the
   panel is a one-line fix that lets later cross-domain plots share the data
@@ -142,7 +142,7 @@ Format per entry:
   `TBCM/`. Need to locate via Callum or `~/Downloads/` before Tasks 2/3 run.
   Female BCM CSV is committed at `VocalFoldRegression/BCM Model/FemaleBCM.csv` —
   unblocked.
-- **3-way comparison locked per panel** (Brian's 2026-05-12 clarification): each
+- **3-way comparison locked per panel** (Ben's 2026-05-12 clarification): each
   cross-domain panel plots GP, TabPFN, AND the existing best transfer method
   for that target. Alternates scripts only produce the GP/TabPFN side; the
   transfer comparator is read from existing repo artifacts. Sources:
@@ -153,7 +153,7 @@ Format per entry:
       `rf_transfer_results.json` is fraction-based (smallest n=1379) — no
       overlap with N=5..500 alternates regime, unusable here.
     - **Female BCM:** `ResgressorAnalysis/figs/all_regressors_transfer_comparison.csv`
-      filtered to `regressor == 'RF'`, `r2_avg` column. RF-only per Brian's
+      filtered to `regressor == 'RF'`, `r2_avg` column. RF-only per Ben's
       2026-05-12 decision (not NN, not PR — keeps the comparator clean).
 - **Heatmap design lock:** scatter the 50 training points (true F0) over each
   method's predicted F0 surface at fixed `PS = median`. No FEM-on-grid
@@ -163,23 +163,23 @@ Format per entry:
   Female_GP/Female_TabPFN scripts are self-contained copies of the BM
   originals (~80 lines duplicated per domain), matching Callum's existing
   per-domain pattern rather than introducing a shared engine module.
-- Email is a markdown draft committed to the repo, not auto-sent. Brian sends
+- Email is a markdown draft committed to the repo, not auto-sent. Ben sends
   from his client after sanity-checking attachments and replacing the
   `<FILL>` placeholders with real cross-domain R² gaps.
 
 **Action items:**
-- Brian approves plan, then implementation proceeds task-by-task per the plan doc — `brian`
-- Pre-flight: locate TBCM dataset CSV (ask Callum at next sync or check `~/Downloads/`) — `brian`
+- Ben approves plan, then implementation proceeds task-by-task per the plan doc — `ben`
+- Pre-flight: locate TBCM dataset CSV (ask Callum at next sync or check `~/Downloads/`) — `ben`
 - Plan execution will produce TODO #16/#17/#18/#19; rows added to `team/TODO.md`
-  + `team/BOARD.md` as `backlog` for now — `brian`
+  + `team/BOARD.md` as `backlog` for now — `ben`
 
 **Blockers:**
 - TBCM dataset (resolution gated on locating local copy or asking Callum at 1pm sync).
 
 ---
 
-## 2026-05-12 (later) — Brian solo (extended alternates to N=500)
-**Attendees:** brian
+## 2026-05-12 (later) — Ben solo (extended alternates to N=500)
+**Attendees:** ben
 **Decisions:**
 - Extended `BM_GP.py` and `BM_TabPFN.py` from `N ≤ 100` to `N ∈ {…, 150, 200, 300, 500}`. Changed merge logic in both scripts to per-N: existing JSON entries are preserved, only new N values are fit. Added a `_existing_complete_ns` guard that skips N values already at full `N_RUNS` replicates — re-running is now idempotent and cheap.
 - Result: alternates lead transfer by **+0.17 R²** even at N=500 (TabPFN 0.91 vs TransRF 0.74). At N=200 the gap is +0.26 R². The small-N dominance is not a small-N artifact — it persists through the regime where Callum's transfer was supposed to start winning.
@@ -187,22 +187,22 @@ Format per entry:
 - Bootstrap figure extended to 5 panels (N=10/50/100/200/500). Visible tightening of distributions at large N gives a clean robustness story — the gain over transfer is monotonic and the variance shrinks as expected.
 
 **Action items:**
-- Share regenerated figures with Callum at next 1pm — `brian`
-- TODO #13 is even more valuable now that we have alternates across the full N=200/500 range — needed for like-for-like boxplot comparison vs transfer — `brian`
+- Share regenerated figures with Callum at next 1pm — `ben`
+- TODO #13 is even more valuable now that we have alternates across the full N=200/500 range — needed for like-for-like boxplot comparison vs transfer — `ben`
 - New question to raise with Callum: where (if anywhere) does transfer actually win? `rf_transfer_results.json` has transfer up to N=3200 (frac=1.0). Worth checking whether the curves ever cross — if not, "transfer doesn't help for BCM→BM at any N" becomes a stronger thesis than "transfer doesn't help at small N." — `shared`
 
 **Blockers:** none.
 
-## 2026-05-12 — Brian solo (showcase figures)
-**Attendees:** brian
+## 2026-05-12 — Ben solo (showcase figures)
+**Attendees:** ben
 **Decisions:**
 - Built presentation-quality showcase figures for the alternates-vs-transfer headline: `Beam_Membrane/BM_Showcase.py` produces three figures (`bm_showcase_headline.png`, `bm_showcase_sim_budget.png`, `bm_showcase_bootstrap.png`). Intended for advisor briefings and paper draft. Standalone from `BM_Summary.py` — different audience, different framing.
 - Sim-budget framing: cast the small-N win as "BM simulations required to hit accuracy thresholds." TabPFN/GP need ~5× fewer expensive sims than transfer methods to reach R²≥0.5. Strongest single number for non-ML audiences (every expensive sim costs ~8 min).
 - Bootstrap fig uses all 10 replicates per N for GP/TabPFN (we have per-replicate data) and a dashed reference line for Callum's best transfer mean at each N (we only have means in `PROJECT_GUIDE.md`). Carries the same TODO #13 caveat as the 2026-05-05 result.
 
 **Action items:**
-- Share figures at next 1pm with Callum — `brian`
-- TODO #13 (dump `BM_SmallData.py` to JSON) gets more valuable now — would let the showcase boxplot fig include transfer distributions, not just means — `brian`
+- Share figures at next 1pm with Callum — `ben`
+- TODO #13 (dump `BM_SmallData.py` to JSON) gets more valuable now — would let the showcase boxplot fig include transfer distributions, not just means — `ben`
 
 **Blockers:** none.
 
@@ -220,7 +220,7 @@ Prior state (Callum's PR, 2026-05-02): six transfer-learning methods that pretra
 
 ### What we did this round
 
-Brian asked: does transfer learning actually help here, or could a simpler non-transfer method match or beat it? Tested two non-transfer baselines on the same data:
+Ben asked: does transfer learning actually help here, or could a simpler non-transfer method match or beat it? Tested two non-transfer baselines on the same data:
 
 1. **Gaussian Process (GP)** — classical Bayesian method that fits a smooth function to BM data alone, no BCM involved
 2. **TabPFN** — pretrained foundation model (a transformer, similar in spirit to a language model but for tables); makes predictions in one forward pass without per-task fitting
@@ -282,7 +282,7 @@ See bottom of this entry for full Q&A. Twelve questions covering: result robustn
 
 **Q: Why do GPs work at small N?** Bayesian model fitting a probability distribution over smooth functions. Only ~3 hyperparameters; can't really overfit. Textbook small-N method.
 
-**Q: Could we use polynomial regression / small neural networks instead?** Tested earlier in Brian's female-BCM work. Polynomials overfit catastrophically at small N; small NNs need more data. GP and TabPFN are specifically designed for the small-N regime.
+**Q: Could we use polynomial regression / small neural networks instead?** Tested earlier in Ben's female-BCM work. Polynomials overfit catastrophically at small N; small NNs need more data. GP and TabPFN are specifically designed for the small-N regime.
 
 **Q: Should we abandon transfer learning?** No. (a) TBCM→BM might work since it's physics-aligned. (b) At larger N transfer's benefit grows. (c) Callum's transfer infrastructure is the test bed. We're augmenting, not replacing.
 
@@ -296,8 +296,8 @@ See bottom of this entry for full Q&A. Twelve questions covering: result robustn
 
 **Q: Do we need more BM simulations from Sean?** For regression: probably not — TabPFN at N=50 is already strong. For PINN: yes, ideally with broader sampling of input space. Open question.
 
-## 2026-05-06 (later) — Brian solo (file split)
-**Attendees:** brian
+## 2026-05-06 (later) — Ben solo (file split)
+**Attendees:** ben
 **Decisions:**
 - Split `BM_Alternates.py` into `BM_GP.py` and `BM_TabPFN.py`. Self-contained per-method-family files matching Callum's existing convention. Both still write to the same `alternates_results.json` so `BM_Summary.py` is unchanged.
 
@@ -305,21 +305,21 @@ See bottom of this entry for full Q&A. Twelve questions covering: result robustn
 
 **Blockers:** none.
 
-## 2026-05-06 — Brian solo (cleanup, BM equations extracted)
-**Attendees:** brian
+## 2026-05-06 — Ben solo (cleanup, BM equations extracted)
+**Attendees:** ben
 **Decisions:**
 - **Removed MonoMLP** (formerly "PINN") from active alternates code. Mid-tier result, didn't add to the GP/TabPFN story; kept the torch dep around for one second-rate baseline. JSON key dropped, figure regenerated, TODO #14 closed.
 - **Extracted BM governing equations** from Sean's MATLAB into `docs/BM_GOVERNING_EQUATIONS.md`. Two coupled PDEs (membrane + beam) with full BC/IC, plus the constitutive algebra, aerodynamic Bernoulli model, WRA acoustic propagation, and post-hoc F0/SPL extraction. ~Citations to MATLAB line numbers throughout.
 - **Real PINN scoped as TODO #15.** Different deliverable than GP/TabPFN — a PDE-residual physics surrogate that generalizes OOD and gives gradients for inverse problems. Multi-week project.
 
 **Action items:**
-- Decide whether to actually pursue #15 vs other research threads — `brian` (and discuss with Callum at next 1pm)
+- Decide whether to actually pursue #15 vs other research threads — `ben` (and discuss with Callum at next 1pm)
 - Pick up another P1 item: #2 (TBCM→BM transfer), #5 (verify Callum's results), or #13 (BM_SmallData JSON dump)
 
 **Blockers:** none.
 
-## 2026-05-05 (later, again) — Brian solo (real-data run; TODO #1 + #12 closed)
-**Attendees:** brian
+## 2026-05-05 (later, again) — Ben solo (real-data run; TODO #1 + #12 closed)
+**Attendees:** ben
 **Decisions:**
 - BM data extracted from `~/Downloads/dataset_BM.zip` to `Beam_Membrane/dataset_BM.csv`. 5,000 rows, no NaN, ranges match Callum's spec.
 - `BM_Alternates.py` ran end-to-end (~3 min total). `BM_Summary.py` regenerated all three figures.
@@ -330,12 +330,12 @@ See bottom of this entry for full Q&A. Twelve questions covering: result robustn
 
 **Action items:**
 - Discuss TBCM→BM ownership (#2) at next 1pm with Callum given the new framing — `shared`
-- Pick up #13 or #14 next, or pivot to #2 — `brian`
+- Pick up #13 or #14 next, or pivot to #2 — `ben`
 
 **Blockers:** none.
 
-## 2026-05-05 (later) — Brian solo (TabPFN backend swap, BM data inbound)
-**Attendees:** brian
+## 2026-05-05 (later) — Ben solo (TabPFN backend swap, BM data inbound)
+**Attendees:** ben
 **Decisions:**
 - TabPFN backend swap from `tabpfn` (local, license-gated) to `tabpfn-client` (cloud, account-gated). Code now imports `tabpfn-client` first and falls back to `tabpfn` if only that is installed. Logged to DECISIONS.
 - Auth helper added: reads `TABPFN_TOKEN` env var if set, else relies on cached interactive login from `tabpfn_client.init()`.
@@ -343,62 +343,62 @@ See bottom of this entry for full Q&A. Twelve questions covering: result robustn
 - TODO #12 status moves from `backlog` → `in-progress` since BM data is being copied locally.
 
 **Action items:**
-- Run `python -c "from tabpfn_client import init; init()"` once to do browser login — `brian`
-- Drop `dataset_BM.csv` into `Beam_Membrane/` and run `python Beam_Membrane/BM_Alternates.py` — `brian`
-- Then run `python Beam_Membrane/BM_Summary.py` to regenerate `bm_alternates.png` with real numbers — `brian`
-- After numbers land: migrate TODO #1 + #12 to MILESTONES — `brian`
+- Run `python -c "from tabpfn_client import init; init()"` once to do browser login — `ben`
+- Drop `dataset_BM.csv` into `Beam_Membrane/` and run `python Beam_Membrane/BM_Alternates.py` — `ben`
+- Then run `python Beam_Membrane/BM_Summary.py` to regenerate `bm_alternates.png` with real numbers — `ben`
+- After numbers land: migrate TODO #1 + #12 to MILESTONES — `ben`
 
 **Blockers:** none — data inbound, code unblocked.
 
-## 2026-05-05 — Brian solo (phases 2–5 of #1, code complete)
-**Attendees:** brian
+## 2026-05-05 — Ben solo (phases 2–5 of #1, code complete)
+**Attendees:** ben
 **Decisions:**
 - MonoMLP encodes 3 monotonicity priors: `∂F0/∂a_CT`, `∂SPL/∂PS`, and `∂F0/∂PS` (chest-voice physiology). λ = 0.1 default. Logged to DECISIONS.
 - TabPFN ≥ 7.x license + token requirement turned out to be a setup blocker — handled with graceful skip; documented in code and in TODO #12.
 - TODO #1 status moves from `in-progress` to `review` since the implementation work is complete; the actual real-data run is split out as a new TODO #12 that's the prerequisite for migrating both rows to MILESTONES.
 
 **Action items:**
-- Phase 5 (DECISIONS, MILESTONES, BOARD/TODO migration) — done — `brian`
-- TODO #12 (real-data run) — backlog — `brian` — needs `dataset_BM.csv` on local machine + `TABPFN_TOKEN`
+- Phase 5 (DECISIONS, MILESTONES, BOARD/TODO migration) — done — `ben`
+- TODO #12 (real-data run) — backlog — `ben` — needs `dataset_BM.csv` on local machine + `TABPFN_TOKEN`
 - At next 1pm with Callum: walk through `bm_alternates.png` once #12 has actual numbers, decide whether the alternates change his transfer story
 
 **Blockers:**
 - BM data + TabPFN license/token (both deferred to #12).
 
-## 2026-05-04 (later) — Brian solo (planning + phase 1 of #1)
-**Attendees:** brian
+## 2026-05-04 (later) — Ben solo (planning + phase 1 of #1)
+**Attendees:** ben
 **Decisions:**
 - Locked in scope of TODO #1 ("alternate methods"): three methods — GP, physics-informed MLP, TabPFN — at N ∈ [5, 10, 20, 30, 50, 75, 100], head-to-head with Callum's TransRF / Feature Aug on the same test split.
 - Output lands as new rows in `BM_Summary.py`'s comparison.
 - Spec written: `docs/superpowers/specs/2026-05-04-bm-alternates-design.md`.
 
 **Action items:**
-- Phase 1 (GP scaffold) — done — `brian`
-- Phase 2 (MonoMLP with 3 monotonicity priors: `∂F0/∂a_CT`, `∂SPL/∂PS`, `∂F0/∂PS`) — done — `brian`
-- Phase 3 (TabPFN integration) — done — `brian`
-- Phase 4 (BM_Summary integration) — next — `brian`
-- Phase 5 (DECISIONS + MILESTONES + close TODO #1) — pending — `brian`
-- One-time: accept TabPFN license at https://ux.priorlabs.ai, set `TABPFN_TOKEN` env var — `brian`
-- Run BM_Alternates.py against real `dataset_BM.csv` to land actual R² numbers — `brian` (blocked on having data on this machine)
+- Phase 1 (GP scaffold) — done — `ben`
+- Phase 2 (MonoMLP with 3 monotonicity priors: `∂F0/∂a_CT`, `∂SPL/∂PS`, `∂F0/∂PS`) — done — `ben`
+- Phase 3 (TabPFN integration) — done — `ben`
+- Phase 4 (BM_Summary integration) — next — `ben`
+- Phase 5 (DECISIONS + MILESTONES + close TODO #1) — pending — `ben`
+- One-time: accept TabPFN license at https://ux.priorlabs.ai, set `TABPFN_TOKEN` env var — `ben`
+- Run BM_Alternates.py against real `dataset_BM.csv` to land actual R² numbers — `ben` (blocked on having data on this machine)
 
 **Blockers:**
 - BM dataset not on this clone. GP+MonoMLP smoke-tested on synthetic data; TabPFN couldn't be smoke-tested (needs license + token). Real numbers pending data + license.
 
-## 2026-05-04 — Brian solo (post-hiatus catch-up)
-**Attendees:** brian
+## 2026-05-04 — Ben solo (post-hiatus catch-up)
+**Attendees:** ben
 **Decisions:**
-- Adopt `/team/` folder as shared agile coordination layer. Both Claude workflows (Brian's and Callum's) will read it via root `CLAUDE.md`.
+- Adopt `/team/` folder as shared agile coordination layer. Both Claude workflows (Ben's and Callum's) will read it via root `CLAUDE.md`.
 - Cadence: a few times a week, no fixed schedule.
-- Track ownership per-task (`brian`, `callum`, `shared`, `tbd`) rather than by domain.
-- Brian's main thread coming off hiatus: explore alternate methods to BM that don't go through the BCM→BM transfer first (TODO #1).
+- Track ownership per-task (`ben`, `callum`, `shared`, `tbd`) rather than by domain.
+- Ben's main thread coming off hiatus: explore alternate methods to BM that don't go through the BCM→BM transfer first (TODO #1).
 - TBCM→BM two-stage transfer is on the radar as a separate experiment (TODO #2). Owner to be picked at next 1pm.
 - Keep Callum's `PROJECT_GUIDE.md` as his hands-on guide for `Beam_Membrane/` and `TBCM/`. Don't fold into `/docs/` — separate purpose.
 
 **Action items:**
-- Verify reproducibility of Callum's BM/TBCM results locally before extending — `brian` (TODO #5)
-- Pick up TODO #1 (alternate methods) — `brian`
+- Verify reproducibility of Callum's BM/TBCM results locally before extending — `ben` (TODO #5)
+- Pick up TODO #1 (alternate methods) — `ben`
 - Discuss TBCM→BM ownership and scope at next 1pm — `shared`
 
 **Blockers:** none.
 
-**Notes for Callum's next session:** Brian merged `origin/main` into `feature/fem` (clean fast-forward, no force) and pushed `main` up with the doc reconcile commits. No code touched — only `/docs/`, `/CLAUDE.md`, and the new `/team/` folder. Please skim `/team/` in your next Claude session; the root `CLAUDE.md` now points there as the shared coordination layer.
+**Notes for Callum's next session:** Ben merged `origin/main` into `feature/fem` (clean fast-forward, no force) and pushed `main` up with the doc reconcile commits. No code touched — only `/docs/`, `/CLAUDE.md`, and the new `/team/` folder. Please skim `/team/` in your next Claude session; the root `CLAUDE.md` now points there as the shared coordination layer.

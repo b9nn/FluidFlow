@@ -39,12 +39,12 @@
 - **Feature Augmentation** — RF transfer method 4. Input is `[x; BCM_pred(x)]` — concatenate the source-model prediction onto the feature vector. Wins at 20–75 BM samples.
 - **Gradient reversal** — Backprop trick used in DAAE. Multiplies gradients by `−1` between encoder and discriminator so optimizing the discriminator's loss makes the encoder produce domain-invariant features.
 - **K-fold CV** — K-fold cross-validation. Used to learn TransRF ensemble weights.
-- **Partial layer freezing** — NN transfer method (Brian's): clone source model, set `trainable=False` on the first N layers, fine-tune the rest. Sweep `N ∈ {2, 4, 5, 6}`.
+- **Partial layer freezing** — NN transfer method (Ben's): clone source model, set `trainable=False` on the first N layers, fine-tune the rest. Sweep `N ∈ {2, 4, 5, 6}`.
 - **Polynomial regression (PR)** — Linear regression over polynomial features. Degree 12 for male BCM; degree 4–5 + Ridge for small-data targets.
 - **Random Forest (RF)** — `MultiOutputRegressor(RandomForestRegressor)`. With adaptive complexity in newer scripts.
 - **Residual Correction** — RF transfer method 3. RF predicts `y_target − BCM_pred(x)`. Hurts on BM at small sample sizes (trusts raw BCM predictions despite scale mismatch).
 - **Ridge regularization** — L2-penalized linear regression.
-- **Simple Ensemble** — RF transfer method 5. Fixed `0.3·source + 0.7·target`. Same idea as Brian's male→female RF transfer.
+- **Simple Ensemble** — RF transfer method 5. Fixed `0.3·source + 0.7·target`. Same idea as Ben's male→female RF transfer.
 - **Source Only** — RF transfer method 1. Apply BCM model directly to target inputs (zero-shot, no adaptation).
 - **StandardScaler** — Zero-mean unit-variance scaler. Always per-domain.
 - **Target Only** — RF transfer method 2. Train RF on target alone — the no-transfer baseline.
@@ -52,7 +52,7 @@
 - **TransRF Ensemble** — RF transfer method 6. Learned per-output convex combination of methods 2/3/4 via `LinearRegression(positive=True)`. Wins at 100+ BM samples.
 - **Vanilla AE** — Autoencoder method A. Train encoder + decoder + predictor on BCM, fine-tune predictor on target.
 - **Waveform features** — Per-cycle features extracted from time-domain waveforms in `.mat` files. TBCM-specific. Pipeline in `TBCM/TBCM_WaveformFeatures.py` → enriched dataset `TBCM/dataset_TBCM_enriched.csv`.
-- **Weighted ensemble** — `α · source.predict(x) + (1-α) · target.predict(x)`. Used in Brian's RF (α=0.3) and PR (α=0.05) female transfer.
+- **Weighted ensemble** — `α · source.predict(x) + (1-α) · target.predict(x)`. Used in Ben's RF (α=0.3) and PR (α=0.05) female transfer.
 
 ## Datasets / files
 
@@ -73,7 +73,7 @@
 
 ## People
 
-- **Brian Gladney** — Lead. Owns `VocalFoldRegression/` (male/female BCM, RF/NN/PR baselines and transfer).
+- **Ben Gladney** — Lead. Owns `VocalFoldRegression/` (male/female BCM, RF/NN/PR baselines and transfer).
 - **Callum Camazzola** — Joined 2026-01. Owns `Beam_Membrane/` and `TBCM/` (BCM → BM and BCM → TBCM transfer; RF + AE methods).
 - **Sean** — Authored the original `Beam+Membrane_ForSean/` MATLAB FE solver.
 - **Jesus, Emiro** — Advisors who directed the transfer-learning push that started 2026-01.

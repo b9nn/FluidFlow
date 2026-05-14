@@ -1,7 +1,7 @@
 # Claude + Human Context Docs — Design
 
 **Date:** 2026-05-03
-**Author:** Brian (with Claude)
+**Author:** Ben (with Claude)
 **Branch:** feature/fem
 **Status:** Approved — ready for implementation plan
 
@@ -28,7 +28,7 @@ Scope is `VocalFoldRegression/` only. `glottal_area/`, `OpenIFEM/`, and `Beam+Me
 | Milestones | Both completed log + forward roadmap | Captures momentum and direction |
 | Decision log | Single `DECISIONS.md` (append-only) | Lighter than ADR-per-file; promote later if it grows past ~20 entries |
 | Deadlines | None | No paper, defense, or sprint pressure |
-| Team | Brian + Callum named | Only contributors |
+| Team | Ben + Callum named | Only contributors |
 | Sensitivity | Nothing redacted | Repo treated as share-safe |
 | State assumption | B+M Phase 1 (data gen) is done | Per user instruction "pretend we have the data" |
 
@@ -76,7 +76,7 @@ Sections:
 - **What this is**: 3 sentences — vocal-fold regression project, what we predict, why it matters (replaces a slow lookup table; supports transfer to physiologically realistic models).
 - **Quick start**: clone, Python env hint (`pip install scikit-learn tensorflow pandas numpy matplotlib`), where data lives (`VocalFoldRegression/BCM Model/MaleBCM.csv`, etc.), how to run a baseline (e.g. `python "VocalFoldRegression/BCM Model/RandomForest/MaleRF.py"`).
 - **Nav**: table linking ARCHITECTURE, MILESTONES, ROADMAP, GLOSSARY, DECISIONS, CLAUDE.md.
-- **Contributors**: Brian Gladney, Callum.
+- **Contributors**: Ben Gladney, Callum.
 
 ### 4.3 `/docs/ARCHITECTURE.md`
 
@@ -158,7 +158,7 @@ Sections:
 - **Inputs / activations**: a_CT, a_IA, a_LCA, a_PCA, a_TA, PS.
 - **Methods**: K-fold CV, partial layer freezing, polynomial regression, random forest, residual correction, Ridge regularization, StandardScaler, TransRF, weighted ensemble.
 - **Datasets / files**: `MaleBCM.csv`, `FemaleBCM.csv`, `Data_Membrane_Beam_Model.txt`, `BCMlookuptable.mat`, `data_binary.parquet`.
-- **People**: Brian Gladney (lead), Callum (collaborator on transfer learning).
+- **People**: Ben Gladney (lead), Callum (collaborator on transfer learning).
 
 Each entry: term — one-sentence definition — optional pointer to where it appears in code.
 

@@ -22,8 +22,8 @@ Inputs and outputs are scaled separately per domain. **Three scalers per domain:
 
 ```
 /
-├── VocalFoldRegression/   ← Brian's male/female BCM work (RF, NN, PR)
-├── Beam_Membrane/         ← BCM→BM transfer (Callum) + non-transfer alternates (Brian: GP, TabPFN)
+├── VocalFoldRegression/   ← Ben's male/female BCM work (RF, NN, PR)
+├── Beam_Membrane/         ← BCM→BM transfer (Callum) + non-transfer alternates (Ben: GP, TabPFN)
 ├── TBCM/                  ← Callum: BCM→TBCM transfer (RF + AE + waveform)
 ├── archive/               ← Old experiments parked here in PR #1
 ├── team/                  ← Shared agile workspace (TODO, BOARD, MEETING_NOTES)
@@ -32,7 +32,7 @@ Inputs and outputs are scaled separately per domain. **Three scalers per domain:
 
 ## Regressors and methods, by era
 
-### Era 1 — Brian's `VocalFoldRegression/` (male → female BCM)
+### Era 1 — Ben's `VocalFoldRegression/` (male → female BCM)
 
 | Regressor | Source script | Source artifact | Target script | Transfer |
 |---|---|---|---|---|
@@ -76,7 +76,7 @@ Architecture: Encoder `3 → 64 → 32 → 16` → Decoder `16 → 32 → 64 →
 
 `TBCM_WaveformFeatures.py` extracts per-cycle waveform features from `.mat` files; `TBCM_WaveformTransfer.py` evaluates whether richer features close the BCM→TBCM gap. Result enriched dataset: `TBCM/dataset_TBCM_enriched.csv`.
 
-### Era 3 — Brian's non-transfer alternates (BM only)
+### Era 3 — Ben's non-transfer alternates (BM only)
 
 Two methods that **don't use BCM source data at all** — the question they answer is "do strong generic priors beat domain-specific transfer at small N?" Per file, matching Callum's per-method-family convention:
 
@@ -104,7 +104,7 @@ Both files:
 
 Average R² over F0+SPL on a 1,000-row held-out BM test pool, 10 bootstrap runs each:
 
-| N | Best transfer (Callum) | GP (Brian) | TabPFN (Brian) | Best-alternate gain |
+| N | Best transfer (Callum) | GP (Ben) | TabPFN (Ben) | Best-alternate gain |
 |---|---|---|---|---|
 | 10  | TransRF 0.08 | 0.19 | **0.27** | +0.20 |
 | 20  | Feature Aug 0.05 | 0.38 | 0.38 | +0.33 |

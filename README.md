@@ -8,7 +8,7 @@ Fast ML regressors that predict vocal-fold acoustic outputs (fundamental frequen
 # Python deps
 pip install scikit-learn torch tensorflow pandas numpy matplotlib joblib scipy
 
-# --- Original female-BCM transfer (Brian) ---
+# --- Original female-BCM transfer (Ben) ---
 python "VocalFoldRegression/BCM Model/RandomForest/MaleRF.py"
 python "VocalFoldRegression/BCM Model/RandomForest/FemaleRFTransfer.py"
 
@@ -17,7 +17,7 @@ MPLBACKEND=Agg python Beam_Membrane/BM_TransferRF.py     # 6 RF methods (Callum)
 MPLBACKEND=Agg python Beam_Membrane/BM_TransferAE.py     # 3 autoencoder methods (Callum)
 MPLBACKEND=Agg python Beam_Membrane/BM_SmallData.py      # 10–500 sample sweep (Callum)
 
-# --- Non-transfer alternates (Brian) ---
+# --- Non-transfer alternates (Ben) ---
 MPLBACKEND=Agg python Beam_Membrane/BM_GP.py             # Gaussian Process baseline
 MPLBACKEND=Agg python Beam_Membrane/BM_TabPFN.py         # Pretrained tabular foundation model
 
@@ -43,7 +43,7 @@ CSVs are gitignored; rebuild from MATLAB or pull from your local data location.
 
 ## Documentation
 
-### Operational (what we're doing right now — Brian + Callum + both Claudes)
+### Operational (what we're doing right now — Ben + Callum + both Claudes)
 
 | Doc | Purpose |
 |---|---|
@@ -72,5 +72,5 @@ CSVs are gitignored; rebuild from MATLAB or pull from your local data location.
 
 Equal collaborators; per-task ownership tracked in [`team/TODO.md`](team/TODO.md). Original authorship of code areas:
 
-- **Brian Gladney** — `VocalFoldRegression/` (male/female BCM, RF/NN/PR baselines and transfer)
+- **Ben Gladney** — `VocalFoldRegression/` (male/female BCM, RF/NN/PR baselines and transfer)
 - **Callum Camazzola** — `Beam_Membrane/`, `TBCM/` (BCM → BM and BCM → TBCM transfer; RF and autoencoder methods)
