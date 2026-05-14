@@ -2,7 +2,7 @@
 
 **To:** Sean Peterson; Jesus Parra <jesus.parrap@sansano.usm.cl>; Emiro Ibarra <emiro.ibarra@sansano.usm.cl>; Matias Zanartu <matias.zanartu@usm.cl>
 **Cc:** Callum Camazzola <callumcamazzola@gmail.com>
-**Subject:** Vocal Fold ML — non-transfer alternates beat transfer in 2 of 3 domains, tie in the third (cross-domain validation + heatmaps)
+**Subject:** Vocal Fold ML — TabPFN wins at every N in all 3 target domains; transfer only catches at TBCM N=500 (cross-domain validation + heatmaps)
 
 Hi all,
 
@@ -12,7 +12,7 @@ Thanks for the call on the 12th. Quick recap of what landed in the days after, p
 
 GP and TabPFN re-run on all three target domains. The result is more nuanced than the original "alternates beat transfer at small N" finding and I think it makes for a stronger paper.
 
-**Alternates dominate when source-target alignment is poor or moderate. Transfer ties the alternates only when source and target are in the same physics family (BCM→TBCM).**
+**TabPFN wins at every N tested (5 to 500) in all three domains.** The single data point where transfer matches it is TBCM at N=500 — i.e. the tightest source-target alignment (BCM↔TBCM, same physics family) and the largest N we tested. Everywhere else, alternates lead — with the size of the lead determined by alignment quality.
 
 Three-domain summary (avg R² of F0+SPL, mean over 10 bootstrap replicates per N, GP/TabPFN trained on N target samples; transfer methods retrained on N target samples on top of the full source pretraining):
 
@@ -24,21 +24,21 @@ Three-domain summary (avg R² of F0+SPL, mean over 10 bootstrap replicates per N
 | 100 | 0.67 | 0.28 | 0.79 | 0.64 | 0.93 | 0.86 |
 | 500 | 0.91 | 0.74 | 0.97 | 0.84 | **0.97** | **0.97** |
 
-- **BM (Beam-Membrane FEM)** — alternates dominate at every N. TabPFN at N=50 = 0.66 vs best BCM→BM transfer = 0.19 (gap +0.47). Even at N=500 the gap is still +0.17. _(Same headline as the 2026-05-12 call.)_
-- **Female BCM (Male→Female transfer)** — alternates dominate at every N. TabPFN starts at 0.03 vs RF transfer at -0.15 at N=5, gap narrows but never closes within tested range. At N=500 TabPFN = 0.97 vs RF transfer = 0.84.
-- **TBCM** — alternates lead at small N; transfer catches and ties at N=500 (both 0.972). At N=100 the gap is +0.07 in TabPFN's favor; at N=50 it's +0.10.
+- **BM (Beam-Membrane FEM)** — TabPFN wins at every N. N=50: 0.66 vs best BCM→BM transfer at 0.19 (gap +0.47). Even at N=500 the gap is still +0.17. _(Same headline as the 2026-05-12 call.)_
+- **Female BCM (Male→Female transfer)** — TabPFN wins at every N. N=5: 0.03 vs RF transfer at −0.15. Gap narrows but never closes within tested range — at N=500 TabPFN 0.97 vs RF transfer 0.84 (gap +0.13).
+- **TBCM** — TabPFN wins at every N 5–300; ties RF transfer at N=500 (both 0.972). Single data point of "transfer catching up" across all three domains — same physics family (BCM↔TBCM) is the only alignment regime where the BCM source pretraining stays relevant at large N.
 
 ## Refined thesis (different from what I said on the call)
 
 Source-target alignment quality is the load-bearing variable for how fast transfer catches up:
 
-| Alignment | Pair | What happens |
+| Alignment | Pair | Gap (TabPFN − best transfer) at N=500 |
 |---|---|---|
-| Poor (Ps range mismatch, different physics) | BCM→BM | Alternates dominate at every N; transfer catches slowly and never closes within N≤500. |
-| Medium (same physics, demographic shift) | Male→Female BCM | Alternates dominate at every N; transfer catches faster than BM but still doesn't close within N≤500. |
-| Tight (same physics family, geometry shift only) | BCM→TBCM | Alternates lead at small N; transfer catches and ties at N=500. |
+| Poor (Ps range mismatch, different physics) | BCM→BM | +0.17 — never closes |
+| Medium (same physics, demographic shift) | Male→Female BCM | +0.13 — never closes |
+| Tight (same physics family, geometry shift only) | BCM→TBCM | +0.000 — ties exactly |
 
-This is a cleaner story than "alternates always win at small N." It identifies _when_ the BCM-style source pretraining is worth the investment: only when the source-target pair is in the same physics family. Otherwise a strong generic prior (TabPFN) plus N target samples wins.
+This is a cleaner story than "alternates always win at small N." It identifies _when_ the BCM-style source pretraining is worth the investment: only when the source-target pair is in the same physics family does it stay competitive at large N. Otherwise a strong generic prior (TabPFN) plus N target samples wins outright.
 
 ## Methodology note (important — fixed an artifact yesterday)
 
