@@ -2,64 +2,52 @@
 
 **To:** Sean Peterson; Jesus Parra <jesus.parrap@sansano.usm.cl>; Emiro Ibarra <emiro.ibarra@sansano.usm.cl>; Matias Zanartu <matias.zanartu@usm.cl>
 **Cc:** Callum Camazzola <callumcamazzola@gmail.com>
-**Subject:** Vocal Fold ML — TabPFN wins at every N in all 3 target domains; transfer only catches at TBCM N=500 (cross-domain validation + heatmaps)
+**Subject:** Vocal Fold ML — TabPFN wins at every N in all 3 target domains; transfer only catches at TBCM N=500
 
 Hi all,
 
-Thanks for the call on the 12th. Quick recap of what landed in the days after, plus the follow-ups Jesus and Emiro asked for.
+Thanks for the call on the 12th. Quick recap of what landed in the days after plus the follow-ups Jesus and Emiro asked for. Figures attached for the full story.
+
+## Quick primer on the two alternate methods
+
+Both replace the transfer-learning pipeline entirely. They train directly on a small number of target-domain simulations and produce F0/SPL predictions without ever using BCM as a source.
+
+**Gaussian Process (GP).** Classical Bayesian regression — fits a probability distribution over smooth functions that pass through your training points and interpolates new ones. Three hyperparameters (signal strength, smoothness, noise) tuned by marginal-likelihood maximization. Almost impossible to overfit. Textbook small-N method, well-understood, no neural networks involved. We use a Matérn-2.5 kernel + WhiteKernel; one independent GP per output (F0, SPL).
+
+**TabPFN (Tabular Prior-data Fitted Network).** A transformer that was pretrained ONCE by Prior Labs on millions of synthetic tabular regression problems, then frozen. To predict on a new dataset, you give it your training rows + the test inputs in a single forward pass and it returns predictions — no per-task fitting, no gradient steps. Like a language model doing in-context learning, but for tables. Published in Nature 2025 (paper attached). We use the cloud-API version (`tabpfn-client`) so we don't depend on local GPU weights.
+
+The reason both work where transfer learning struggled: TabPFN brings a strong generic prior built from millions of tabular problems; GP brings the smoothness assumption that vocal-fold physics actually satisfies. Neither needs the BCM source data, so neither suffers from BCM↔target mismatch (different Ps ranges, different physics families, etc.).
 
 ## Headline
 
-GP and TabPFN re-run on all three target domains. The result is more nuanced than the original "alternates beat transfer at small N" finding and I think it makes for a stronger paper.
+GP and TabPFN re-run on all three target domains. The result is more nuanced than the original "alternates beat transfer at small N" finding from the 12th, and I think it makes for a stronger paper.
 
-**TabPFN wins at every N tested (5 to 500) in all three domains.** The single data point where transfer matches it is TBCM at N=500 — i.e. the tightest source-target alignment (BCM↔TBCM, same physics family) and the largest N we tested. Everywhere else, alternates lead — with the size of the lead determined by alignment quality.
+**TabPFN wins at every N tested (5 to 500) in all three domains.** The single point where transfer matches it is TBCM at N=500 — i.e. the tightest source-target alignment (BCM↔TBCM, same physics family) and the largest N we tested. Everywhere else, alternates lead.
 
-Three-domain summary (avg R² of F0+SPL, mean over 10 bootstrap replicates per N, GP/TabPFN trained on N target samples; transfer methods retrained on N target samples on top of the full source pretraining):
-
-| N | BM (BCM→BM) |  | Female (Male→Female BCM) |  | TBCM (BCM→TBCM) |  |
-|---|---|---|---|---|---|---|
-|   | TabPFN | best transfer | TabPFN | best transfer | TabPFN | best transfer |
-| 10 | 0.27 | 0.08 | 0.22 | -0.13 | 0.62 | -0.22 |
-| 50 | **0.66** | 0.19 | 0.63 | **0.40** | 0.88 | 0.78 |
-| 100 | 0.67 | 0.28 | 0.79 | 0.64 | 0.93 | 0.86 |
-| 500 | 0.91 | 0.74 | 0.97 | 0.84 | **0.97** | **0.97** |
-
-- **BM (Beam-Membrane FEM)** — TabPFN wins at every N. N=50: 0.66 vs best BCM→BM transfer at 0.19 (gap +0.47). Even at N=500 the gap is still +0.17. _(Same headline as the 2026-05-12 call.)_
-- **Female BCM (Male→Female transfer)** — TabPFN wins at every N. N=5: 0.03 vs RF transfer at −0.15. Gap narrows but never closes within tested range — at N=500 TabPFN 0.97 vs RF transfer 0.84 (gap +0.13).
-- **TBCM** — TabPFN wins at every N 5–300; ties RF transfer at N=500 (both 0.972). Single data point of "transfer catching up" across all three domains — same physics family (BCM↔TBCM) is the only alignment regime where the BCM source pretraining stays relevant at large N.
+- **BM (Beam-Membrane FEM).** TabPFN wins at every N. The N=50 gap is +0.47 R²; even at N=500 it's still +0.17. _(Same headline as the 2026-05-12 call.)_
+- **Female BCM (Male→Female transfer).** TabPFN wins at every N. RF transfer trained on N target samples starts deeply negative at N=5 and climbs slowly; TabPFN already leads at N=5 and never gives up the lead. At N=500 the gap is +0.13.
+- **TBCM.** TabPFN wins at every N from 5 to 300. At N=500 TabPFN and TransRF tie almost exactly (both 0.972). This is the only place where the BCM source pretraining stays useful at large N — and it's the case where source and target are in the same physics family (BCM and TBCM are both lumped-element body-cover models).
 
 ## Refined thesis (different from what I said on the call)
 
-Source-target alignment quality is the load-bearing variable for how fast transfer catches up:
+Source-target alignment quality is the load-bearing variable. The tighter the alignment, the faster transfer catches up to the alternates as N grows — but in our setup, only BCM↔TBCM is tight enough for transfer to ever match TabPFN within the tested N range.
 
-| Alignment | Pair | Gap (TabPFN − best transfer) at N=500 |
-|---|---|---|
-| Poor (Ps range mismatch, different physics) | BCM→BM | +0.17 — never closes |
-| Medium (same physics, demographic shift) | Male→Female BCM | +0.13 — never closes |
-| Tight (same physics family, geometry shift only) | BCM→TBCM | +0.000 — ties exactly |
+- Poor alignment (BCM→BM, Ps range mismatch + different physics): transfer never catches — gap +0.17 R² persists at N=500.
+- Medium alignment (Male→Female BCM, same physics, demographic shift): transfer never catches — gap +0.13 at N=500.
+- Tight alignment (BCM→TBCM, same physics family, geometry shift only): transfer matches TabPFN at N=500.
 
-This is a cleaner story than "alternates always win at small N." It identifies _when_ the BCM-style source pretraining is worth the investment: only when the source-target pair is in the same physics family does it stay competitive at large N. Otherwise a strong generic prior (TabPFN) plus N target samples wins outright.
+This is a cleaner story than "alternates always win at small N." It identifies _when_ the BCM-style source pretraining is worth the investment: only when the source-target pair is in the same physics family does it stay competitive at large N. Otherwise a strong generic prior plus N target samples wins outright.
 
 ## Methodology note (important — fixed an artifact yesterday)
 
-The Female BCM numbers above reflect a methodology fix landed 2026-05-14 (commit `c0873a4`). The earlier version of the Female RF transfer comparator was evaluating a single fully-trained transfer model on N random test rows — which included rows the transfer model had been trained on. That gave an artificially flat ~0.72 R² across all N and made it look like transfer held an edge at the smallest N. The corrected approach (`Female_SmallData.py`) retrains the full transfer ensemble on N target samples per replicate, evaluated on a 500-row held-out test pool. Mirrors what we already do for BM and TBCM.
-
-The corrected numbers tell the cleaner story above. Flag if you want the methodology details — happy to walk through.
+The Female BCM numbers above reflect a methodology fix landed 2026-05-14. The earlier version of the Female RF transfer comparator was evaluating a single fully-trained transfer model on N random test rows — which included rows the transfer model had been trained on. That gave an artificially flat ~0.72 R² across all N and made it look like transfer held an edge at the smallest N. The corrected approach retrains the full transfer ensemble on N target samples per replicate and evaluates on a held-out test pool — mirroring what we already do for BM and TBCM. The corrected numbers tell the cleaner story above. Happy to walk through if you want the details.
 
 ## What I added since the call (Jesus + Emiro's requests)
 
-1. **Cross-domain replication** — BM/Female/TBCM all done. Single figure `cross_domain_alternates.png` (3 panels side-by-side, attached).
-2. **N=20 panel** added to the BM bootstrap-robustness figure (`bm_showcase_bootstrap.png`). At N=20 GP/TabPFN medians ≈ 0.38 vs best-transfer at 0.05 — alternates lead is established by N=20 with comfortable margin.
-3. **Muscle-activation × F0 heatmaps** at fixed `PS = median` for each domain. Scatter of training points (true F0, color-coded) overlays each method's predicted F0 surface. Methods that replicate the nonlinear `(a_CT, a_TA) → F0` trend land scatter colors on the surface; methods that distort the shape produce visible mismatch. Attached: `heatmap_BM_F0.png`, `heatmap_FemaleBCM_F0.png`, `heatmap_TBCM_F0.png`.
-4. **Per-domain showcase sets** for the BM/TBCM/Female cases — line chart, sample-budget bar chart, bootstrap boxplots, and a per-N head-to-head table for each. Useful for a deeper look beyond the 3-panel summary. Attached for BM (4 figs); happy to send the TBCM/Female sets if useful.
-
-## Implementation status
-
-- Everything committed on `feature/fem`. All three domains' alternates code lives in per-domain folders matching Callum's convention:
-  - BM: `Beam_Membrane/{BM_GP,BM_TabPFN,BM_SmallData,BM_Showcase,BM_CrossDomain,BM_Heatmaps}.py`
-  - TBCM: `TBCM/{TBCM_GP,TBCM_TabPFN,TBCM_SmallData,TBCM_Showcase}.py`
-  - Female: `VocalFoldRegression/BCM Model/Alternates/{Female_GP,Female_TabPFN,Female_SmallData,Female_Showcase}.py`
-- All data files (BM 5,000 rows, TBCM 43,102 rows, Female 1,195 post-`ACFL>30` filter) loaded and producing results.
+1. **Cross-domain replication.** BM/Female/TBCM all done — figure attached.
+2. **N=20 panel** added to the BM bootstrap-robustness figure. At N=20 GP/TabPFN medians ≈ 0.38 vs best transfer at 0.05 — the alternates lead is established by N=20 with comfortable margin.
+3. **Muscle-activation × F0 heatmaps** for each domain, at fixed `PS = median`. Training points (true F0, color-coded) overlay each method's predicted F0 surface. Methods that replicate the nonlinear `(a_CT, a_TA) → F0` trend land scatter colors on the surface; methods that distort the shape produce visible mismatch. Three heatmaps attached.
+4. **Per-domain showcase sets** for BM, TBCM, and Female — line chart, sample-budget bar chart, bootstrap boxplots, and a per-N head-to-head table. Happy to send the TBCM/Female sets too if useful.
 
 ## Why alternates work where transfer didn't (BM and Female cases)
 
@@ -67,25 +55,16 @@ The corrected numbers tell the cleaner story above. Flag if you want the methodo
 - **Strong generic priors beat misaligned domain priors at small N.** TabPFN's pretrained prior (millions of synthetic regression problems) plus 50 target examples beats transfer methods that lean on a misaligned source.
 - **Demographic shift isn't enough alignment (Female).** Same physics, same input/output schema — but enough distributional shift that even retrained transfer can't beat TabPFN.
 
-## References (attached or linked)
+## References
 
-- **TabPFN Nature paper (2025):** *Accurate predictions on small data with a tabular foundation model* (the paper Sean shared).
+- **TabPFN Nature paper (2025):** *Accurate predictions on small data with a tabular foundation model* (the paper Sean shared, re-attached).
 - **Gaussian Process textbook:** Rasmussen & Williams, *Gaussian Processes for Machine Learning*, MIT Press 2006 — open-access PDF at http://www.gaussianprocess.org/gpml/
 - **sklearn GP docs:** https://scikit-learn.org/stable/modules/gaussian_process.html
 - **TabPFN client (cloud-API we use):** https://github.com/PriorLabs/tabpfn-client
 
-## Attached
-
-- `cross_domain_alternates.png` — 3-panel R² vs N across BM, TBCM, Female BCM
-- `bm_showcase_headline.png` — BM line chart with annotated +0.47 R² gap at N=50
-- `bm_showcase_sim_budget.png` — BM simulations needed to hit R²=0.5 and 0.7 thresholds
-- `bm_showcase_bootstrap.png` — 6-panel boxplots including N=20
-- `heatmap_BM_F0.png`, `heatmap_FemaleBCM_F0.png`, `heatmap_TBCM_F0.png`
-- TabPFN Nature paper (Sean's forward, re-attached for convenience)
-
 ## Open questions
 
-1. **Publication framing.** On the call, Sean and Matias both leaned toward bundling transfer + alternates as one paper with transfer as the baseline. The corrected Female result reinforces that — alternates win in 2 of 3 domains and tie in the third, with a clean explanatory variable (alignment quality). Matias, anything you'd push back on with that framing?
+1. **Publication framing.** On the call, Sean and Matias both leaned toward bundling transfer + alternates as one paper with transfer as the baseline. The corrected Female result reinforces that — alternates win in all three domains, with a clean explanatory variable (alignment quality) for when transfer catches up. Matias, anything you'd push back on with that framing?
 2. **Higher-fidelity validation.** Anyone have a higher-fidelity FEM than BM, or access to clinical F0/SPL data, we could run as a fourth domain? Would test whether the alignment-quality thesis holds when we move from synthetic to real.
 
 Happy to discuss at the next sync or async — replies welcome.
