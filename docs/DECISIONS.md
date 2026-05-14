@@ -236,6 +236,27 @@ df.rename(columns={'Ps': 'PS'}, inplace=True)
 **Why:** Cleaner falsifiable boundary for the paper than "alternates always win at small N." Identifies when transfer is worth the source-data investment: same physics family with geometry shift is the sweet spot for transfer; physics-family change (BCM→BM) or scale mismatch is the regime where strong generic priors (TabPFN) dominate. Vindicates Callum's transfer infrastructure for the TBCM case while preserving the BM finding.
 **Where it shows up:** `TBCM/results/rf_transfer_small_n.json`, `TBCM/results/alternates_results.json`, `Beam_Membrane/figs/cross_domain_alternates.png`, `team/MEETING_NOTES.md` 2026-05-13 entry.
 
+## 2026-05-14 — Female RF transfer comparator: retrain at each N (methodology fix)
+
+**Context:** Through 2026-05-13 the Female BCM panel in `cross_domain_alternates.png` and the entire `female_showcase_*.png` set used `ResgressorAnalysis/figs/all_regressors_transfer_comparison.csv` (filtered to `regressor == 'RF'`) as the Male→Female transfer comparator. Ben flagged the numbers as suspicious after the 2026-05-13 commit `8135a9c` extended that CSV down to N=5. Investigation found two coupled methodological flaws:
+  (1) `AllRegressorsTransferComparison.py` does NOT retrain the transfer model at each `sample_size`. It loads ONE fully-trained RF transfer ensemble (`RF_BCM_transfer.pkl`, fit on ~64% of the 1195-row filtered female set) and evaluates it on `sample_size` randomly chosen rows from the full dataset. So `sample_size` is the test-set size, not the training-set size.
+  (2) Those random rows include ones the transfer model was trained on. At small N most picked rows are training rows the model has memorized — giving artificially high R^2 that's flat across N at ~0.72.
+Net effect: the prior "RF transfer leads through N=75; TabPFN catches at N=100" narrative was an artifact of methodology mismatch with the GP/TabPFN alternates (which DO retrain on N samples at each N).
+
+**Decision:** Add `VocalFoldRegression/BCM Model/Alternates/Female_SmallData.py` — a proper small-N transfer experiment that mirrors `TBCM_SmallData.py` and `BM_SmallData.py`. At each N ∈ [5, 10, 20, 30, 50, 75, 100, 150, 200, 300, 500], 10 replicates retrain the full RF transfer ensemble (source-only, target-only, residual, augmented, transrf) on N target samples and evaluate on a fixed 500-row held-out test pool. Schema-compatible with TBCM/results/rf_transfer_small_n.json. Rewrite `Female_Showcase.py` to read this JSON as the transfer source. Rewire `Beam_Membrane/BM_CrossDomain.py`'s Female panel to consume the same JSON (drop the CSV path).
+
+**Why:** Apples-to-apples comparison. The prior CSV was useful for its original purpose (showing how a fixed model's evaluation R^2 stabilizes as the test set grows) but not for the small-N alternates-vs-transfer story. The new script gives a methodologically valid head-to-head where N has the same meaning across all methods. The CSV and `AllRegressorsTransferComparison.py` are not deleted — they're still valid for the original eval-stability question and could be referenced if that comes up later.
+
+**Story refined:** With proper methodology, TabPFN dominates Female BCM at every N tested (5..500). TransRF starts at -0.145 (worse than baseline) at N=5, climbs slowly, reaches 0.843 at N=500 (TabPFN: 0.972). This is structurally similar to the BM panel — alternates dominate throughout, transfer slowly catches up but never crosses within tested range — and different from TBCM (where transfer DOES catch and tie at N=500 because BCM↔TBCM is the same physics family).
+
+**Refined three-tier cross-domain thesis (supersedes 2026-05-13 entry):**
+  - Poor alignment (BCM→BM, Ps range mismatch + different physics): alternates dominate at every N; gap stays at +0.17 R^2 even at N=500.
+  - Medium alignment (Male→Female BCM, same physics, demographic shift): alternates dominate at every N; gap narrows from +0.18 at N=5 to +0.13 at N=500.
+  - Tight alignment (BCM→TBCM, same physics family, geometry shift only): alternates lead at small N; transfer catches at N=500 (TransRF 0.972 ≈ TabPFN 0.972).
+The boundary now is "alignment quality vs how much it helps transfer keep up at large N" rather than "small-N alternates win / large-N transfer wins."
+
+**Where it shows up:** `VocalFoldRegression/BCM Model/Alternates/Female_SmallData.py` (NEW), `Female_Showcase.py` (rewritten), `Beam_Membrane/BM_CrossDomain.py:55-66` (Female panel transfer source), `Female_Showcase` figure set (regenerated), `cross_domain_alternates.png` (Female panel regenerated). Email draft and team docs reference the prior thesis — flagged for update.
+
 ## 2026-05-13 — TabPFN cache corruption recovery (operational)
 
 **Context:** Overnight TBCM_TabPFN run was interrupted mid-execution by an unrelated computer reset, leaving `tabpfn_client/.tabpfn/dataset_cache` truncated to 0 bytes. Next import of `tabpfn_client` crashes with `JSONDecodeError: Expecting value: line 1 column 1 (char 0)` because the package tries to `json.load` the empty file at module-load time (class-level instantiation of `DatasetUIDCacheManager` in `client.py:215`).

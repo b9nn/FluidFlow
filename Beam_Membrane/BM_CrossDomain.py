@@ -59,11 +59,11 @@ DOMAINS = [
         'alt_json': os.path.join(ROOT, 'VocalFoldRegression', 'BCM Model',
                                   'Alternates', 'results',
                                   'alternates_results.json'),
-        'transfer_label': 'Male->Female RF transfer',
-        'transfer_loader': 'female_rf_csv',
+        'transfer_label': 'best Male->Female RF transfer (TransRF, retrained at N)',
+        'transfer_loader': 'tbcm_small_n_json',  # same loader shape — JSON schema matches
         'transfer_path': os.path.join(ROOT, 'VocalFoldRegression', 'BCM Model',
-                                       'ResgressorAnalysis', 'figs',
-                                       'all_regressors_transfer_comparison.csv'),
+                                       'Alternates', 'results',
+                                       'rf_transfer_small_n.json'),
     },
 ]
 

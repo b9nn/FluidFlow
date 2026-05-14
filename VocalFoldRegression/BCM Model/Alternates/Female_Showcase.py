@@ -1,49 +1,36 @@
 """
 Female BCM Showcase — Male->Female BCM transfer vs non-transfer (GP, TabPFN).
-Mirrors Beam_Membrane/BM_Showcase.py (4-figure set).
+Mirrors TBCM/TBCM_Showcase.py exactly (which mirrors BM_Showcase.py).
 
-Female transfer comparator notes:
-  - Transfer CSV has 3 regressor families: RF, NN, PR. All plotted as
-    individually labeled lines (RF highlighted, NN/PR as variants).
-  - CSV has means only, no per-replicate data, so bootstrap fig shows
-    GP/TabPFN per-replicate boxes with RF transfer as a dashed reference
-    line (not a box).
-  - No "small N vs full N" split — transfer CSV covers N=[25..843] in
-    one sweep.
+Transfer comparator notes (2026-05-14 methodology fix):
+  - Reads RF transfer per-replicate data from results/rf_transfer_small_n.json
+    produced by Female_SmallData.py. Each N is a real retrain of the
+    Male->Female RF ensemble on N target samples, evaluated on a 500-row
+    held-out test pool.
+  - This REPLACES the prior CSV-based comparator
+    (all_regressors_transfer_comparison.csv) which fixed the transfer model
+    and varied only the test set size — creating train/test contamination
+    at small N. See docs/DECISIONS.md 2026-05-14 entry.
+  - NN/PR transfer dropped from this showcase set; their data still has
+    the same methodological issue. Could be reintroduced if NN_SmallData
+    / PR_SmallData scripts are written later.
 
-Story: Male->Female BCM is well aligned (same physics, demographic
-shift). RF transfer holds r²_avg ≈ 0.72 across N=25..843 — extremely
-strong baseline. TabPFN catches at N≈75 and dominates from N=100,
-reaching 0.97 at N=500. GP alone does NOT catch — TabPFN's pretrained
-prior is the load-bearing component.
-
-Inputs:
-  - VocalFoldRegression/BCM Model/Alternates/results/alternates_results.json
-  - VocalFoldRegression/BCM Model/ResgressorAnalysis/figs/
-    all_regressors_transfer_comparison.csv
-
-Outputs (VocalFoldRegression/BCM Model/Alternates/figs/):
+Outputs (figs/):
   - female_showcase_headline.png    line chart, per-method legend
   - female_showcase_sim_budget.png  bar chart, samples to hit R^2 thresholds
-  - female_showcase_bootstrap.png   boxplots per N (alternates only, transfer as ref)
+  - female_showcase_bootstrap.png   boxplots per N (alternates + transfer)
   - female_showcase_table.png       per-N table with winner highlighted
 """
 
 import json
 import os
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 figs_dir = os.path.join(script_dir, 'figs')
 results_dir = os.path.join(script_dir, 'results')
-
-TRANSFER_CSV = os.path.join(
-    os.path.dirname(script_dir),
-    'ResgressorAnalysis', 'figs', 'all_regressors_transfer_comparison.csv'
-)
 
 plt.rcParams.update({
     'font.size': 11,
@@ -55,14 +42,22 @@ plt.rcParams.update({
 })
 
 METHOD_STYLE = {
-    'TabPFN':   dict(color='#d97706', marker='o', ls='-',  lw=2.8, ms=8, alpha=1.0, label='TabPFN (non-transfer, ours)'),
-    'GP':       dict(color='#0f766e', marker='o', ls='-',  lw=2.8, ms=8, alpha=1.0, label='GP (non-transfer, ours)'),
-    'RF':       dict(color='#1e293b', marker='s', ls='-',  lw=2.4, ms=7, alpha=0.95, label='RF Male->Female transfer (Ben)'),
-    'NN':       dict(color='#64748b', marker='D', ls='--', lw=1.6, ms=5, alpha=0.85, label='NN Male->Female transfer (Ben)'),
-    'PR':       dict(color='#94a3b8', marker='^', ls=':',  lw=1.6, ms=5, alpha=0.85, label='PR Male->Female transfer (Ben)'),
+    'TabPFN':      dict(color='#d97706', marker='o', ls='-',  lw=2.8, ms=8, alpha=1.0, label='TabPFN (non-transfer, ours)'),
+    'GP':          dict(color='#0f766e', marker='o', ls='-',  lw=2.8, ms=8, alpha=1.0, label='GP (non-transfer, ours)'),
+    'TransRF':     dict(color='#1e293b', marker='s', ls='-',  lw=2.2, ms=7, alpha=0.95, label='TransRF (best of Ben\'s Male->Female RF transfer)'),
+    'Feature Aug': dict(color='#64748b', marker='D', ls='--', lw=1.6, ms=5, alpha=0.85, label='Feature Augmentation (transfer variant)'),
+    'Residual':    dict(color='#94a3b8', marker='^', ls='--', lw=1.6, ms=5, alpha=0.85, label='Residual Correction (transfer variant)'),
+    'Target Only': dict(color='#cbd5e1', marker='x', ls=':',  lw=1.6, ms=6, alpha=0.95, label='Target Only (no transfer baseline)'),
 }
 
-LEGEND_ORDER = ['TabPFN', 'GP', 'RF', 'NN', 'PR']
+JSON_TO_LABEL = {
+    'target':    'Target Only',
+    'residual':  'Residual',
+    'augmented': 'Feature Aug',
+    'transrf':   'TransRF',
+}
+
+LEGEND_ORDER = ['TabPFN', 'GP', 'TransRF', 'Feature Aug', 'Residual', 'Target Only']
 
 
 def load_alternates():
@@ -83,15 +78,32 @@ def load_alternates():
     return out
 
 
-def load_transfer():
-    """Returns {regressor: {N: r2_avg}}."""
-    df = pd.read_csv(TRANSFER_CSV)
-    out = {}
-    for reg in df['regressor'].unique():
-        sub = df[df['regressor'] == reg].sort_values('sample_size')
-        out[reg] = {int(n): float(v) for n, v in
-                    zip(sub['sample_size'], sub['r2_avg'])}
+def load_small_transfer_per_replicate():
+    """Per-N per-replicate avg-R^2 for each transfer method from the
+    proper retrain-at-each-N JSON produced by Female_SmallData.py."""
+    path = os.path.join(results_dir, 'rf_transfer_small_n.json')
+    if not os.path.exists(path):
+        raise FileNotFoundError(
+            f"rf_transfer_small_n.json not found at {path}. "
+            f"Run Female_SmallData.py first."
+        )
+    with open(path) as f:
+        raw = json.load(f)
+    out = {label: {} for label in JSON_TO_LABEL.values()}
+    for key, label in JSON_TO_LABEL.items():
+        block = raw.get(key, {})
+        for n_str, rec in block.items():
+            if not n_str.isdigit():
+                continue
+            f0 = np.asarray(rec['r2_f0'])
+            spl = np.asarray(rec['r2_spl'])
+            out[label][int(n_str)] = (f0 + spl) / 2.0
     return out
+
+
+def small_transfer_means(per_rep):
+    return {label: {n: float(arr.mean()) for n, arr in by_n.items()}
+            for label, by_n in per_rep.items()}
 
 
 def _ordered_legend(ax):
@@ -112,25 +124,24 @@ def _ordered_legend(ax):
 
 
 # ============================================================================
-# Figure 1: Headline
+# Figure 1: Headline (best of transfer only, no annotations)
 # ============================================================================
 def fig_headline():
     alt = load_alternates()
-    xfer = load_transfer()
+    small_mean = small_transfer_means(load_small_transfer_per_replicate())
 
     fig, ax = plt.subplots(figsize=(11, 6.8))
 
-    # RF Male->Female transfer only (best of Ben's transfer regressors).
-    # NN/PR comparison is visible in the sim-budget figure.
-    if 'RF' in xfer:
-        ns = sorted(xfer['RF'])
-        ys = [xfer['RF'][n] for n in ns]
-        s = METHOD_STYLE['RF']
+    # Best of Ben's transfer (TransRF only).
+    if small_mean.get('TransRF'):
+        ns = sorted(small_mean['TransRF'])
+        ys = [small_mean['TransRF'][n] for n in ns]
+        s = METHOD_STYLE['TransRF']
         ax.plot(ns, ys, color=s['color'], marker=s['marker'], ls=s['ls'],
                 lw=s['lw'], ms=s['ms'], alpha=s['alpha'], label=s['label'],
                 zorder=3)
 
-    # GP + TabPFN with std bands
+    # GP + TabPFN
     for method in ('GP', 'TabPFN'):
         if method not in alt:
             continue
@@ -145,11 +156,11 @@ def fig_headline():
     ax.set_xscale('log')
     ax.set_xlabel('Number of Female BCM training samples (log scale)')
     ax.set_ylabel('Average R²  (F0 + SPL) / 2')
-    ax.set_title('Male->Female BCM: RF transfer leads through N=75; TabPFN catches at N=100, dominates after',
+    ax.set_title('Male->Female BCM: TabPFN dominates at every N; RF transfer closes the gap but never catches',
                  fontweight='bold')
     ax.axhline(0, color='#000', lw=0.6, alpha=0.4)
     ax.axhline(0.5, color='#000', lw=0.4, alpha=0.15, ls=':')
-    ax.set_ylim(-0.1, 1.05)
+    ax.set_ylim(-0.3, 1.05)
     ax.grid(True, which='both', alpha=0.25)
     _ordered_legend(ax)
 
@@ -166,14 +177,15 @@ def fig_headline():
 # ============================================================================
 def fig_sim_budget():
     alt = load_alternates()
-    xfer = load_transfer()
+    small_mean = small_transfer_means(load_small_transfer_per_replicate())
 
     curves = {
-        'TabPFN': sorted((n, alt['TabPFN'][n].mean()) for n in alt['TabPFN']),
-        'GP':     sorted((n, alt['GP'][n].mean()) for n in alt['GP']),
-        'RF':     sorted(xfer.get('RF', {}).items()),
-        'NN':     sorted(xfer.get('NN', {}).items()),
-        'PR':     sorted(xfer.get('PR', {}).items()),
+        'TabPFN':      sorted((n, alt['TabPFN'][n].mean()) for n in alt['TabPFN']),
+        'GP':          sorted((n, alt['GP'][n].mean()) for n in alt['GP']),
+        'TransRF':     sorted(small_mean['TransRF'].items()),
+        'Feature Aug': sorted(small_mean['Feature Aug'].items()),
+        'Residual':    sorted(small_mean['Residual'].items()),
+        'Target Only': sorted(small_mean['Target Only'].items()),
     }
 
     def n_to_reach(curve, threshold):
@@ -191,13 +203,11 @@ def fig_sim_budget():
             prev = (n, v)
         return None
 
-    # Female RF transfer hovers at ~0.72-0.75 — choose thresholds that
-    # discriminate methods (0.75 RF can reach, 0.90 RF cannot).
-    thresholds = [0.75, 0.90]
-    method_order = ['TabPFN', 'GP', 'RF', 'NN', 'PR']
+    thresholds = [0.7, 0.9]
+    method_order = ['TabPFN', 'GP', 'TransRF', 'Feature Aug', 'Residual', 'Target Only']
 
-    fig, axes = plt.subplots(1, 2, figsize=(13.5, 5.5), sharey=True)
-    cap = 900
+    fig, axes = plt.subplots(1, 2, figsize=(13.5, 5.8), sharey=True)
+    cap = 700
     for ax, thr in zip(axes, thresholds):
         budgets, colors = [], []
         for m in method_order:
@@ -235,32 +245,39 @@ def fig_sim_budget():
 
 
 # ============================================================================
-# Figure 3: Bootstrap (alternates per-replicate; transfer as dashed reference)
+# Figure 3: Bootstrap (real per-replicate transfer + alternates)
 # ============================================================================
 def fig_bootstrap():
     alt = load_alternates()
-    xfer = load_transfer()
+    small_rep = load_small_transfer_per_replicate()
 
-    # Pick N values overlapping with the transfer CSV
-    rf = xfer.get('RF', {})
-    candidates = [10, 20, 50, 100, 500]  # add 10/20 even where transfer absent
+    candidates = [10, 20, 50, 100, 200, 500]
     key_ns = [n for n in candidates
-              if n in alt.get('GP', {}) and n in alt.get('TabPFN', {})]
+              if n in alt.get('GP', {})
+              and n in alt.get('TabPFN', {})
+              and n in small_rep.get('TransRF', {})]
     if not key_ns:
         print('  WARN: no overlapping N for bootstrap')
         return
 
-    fig, axes = plt.subplots(1, len(key_ns), figsize=(3.2 * len(key_ns) + 1, 5.5),
+    fig, axes = plt.subplots(1, len(key_ns), figsize=(3.4 * len(key_ns) + 1, 5.5),
                              sharey=True)
     if len(key_ns) == 1:
         axes = [axes]
 
+    box_methods = ['TabPFN', 'GP', 'TransRF', 'Feature Aug']
+
     for ax, n in zip(axes, key_ns):
         data, labels, face_colors = [], [], []
-        for m in ('TabPFN', 'GP'):
-            data.append(alt[m][n])
-            labels.append(m)
-            face_colors.append(METHOD_STYLE[m]['color'])
+        for m in box_methods:
+            if m in ('GP', 'TabPFN') and n in alt[m]:
+                data.append(alt[m][n])
+                labels.append(m)
+                face_colors.append(METHOD_STYLE[m]['color'])
+            elif m in small_rep and n in small_rep[m]:
+                data.append(small_rep[m][n])
+                labels.append(m)
+                face_colors.append(METHOD_STYLE[m]['color'])
 
         bp = ax.boxplot(data, tick_labels=labels, patch_artist=True, widths=0.55,
                         medianprops=dict(color='black', lw=1.5),
@@ -278,23 +295,16 @@ def fig_bootstrap():
             ax.scatter(np.full_like(vals, i) + jitter, vals,
                        color='black', s=14, alpha=0.55, zorder=4)
 
-        # RF transfer reference line (real evaluated point, no interpolation)
-        rf_val = rf.get(n)
-        if rf_val is not None:
-            s = METHOD_STYLE['RF']
-            ax.axhline(rf_val, color=s['color'], ls='--', lw=1.8, alpha=0.9, zorder=2,
-                       label=f'RF transfer: {rf_val:.2f}')
-            ax.legend(loc='lower right', fontsize=8, framealpha=0.95)
-
         ax.set_title(f'N = {n}', fontweight='bold')
         ax.set_ylim(-0.6, 1.05)
         ax.axhline(0, color='black', lw=0.6, alpha=0.4)
         ax.grid(True, axis='y', alpha=0.25)
+        ax.tick_params(axis='x', labelrotation=25)
         if n == key_ns[0]:
             ax.set_ylabel('Average R²  (F0 + SPL) / 2')
 
-    fig.suptitle('Bootstrap distributions per N — alternates (10 reps) with RF '
-                 'transfer reference line (CSV means only)',
+    fig.suptitle('Bootstrap distributions per N — alternates vs Male->Female RF transfer variants '
+                 '(retrained at each N)',
                  fontweight='bold', fontsize=12.5, y=1.02)
     fig.tight_layout()
     path = os.path.join(figs_dir, 'female_showcase_bootstrap.png')
@@ -308,25 +318,19 @@ def fig_bootstrap():
 # ============================================================================
 def fig_table():
     alt = load_alternates()
-    xfer = load_transfer()
-    rf = xfer.get('RF', {})
+    small_rep = load_small_transfer_per_replicate()
 
     rows_n = sorted({n for m in ('GP', 'TabPFN') for n in alt.get(m, {})})
     rows_n = [n for n in rows_n if n >= 5]
 
-    headers = ['N', 'GP', 'RF transfer (Ben)', 'TabPFN']
+    headers = ['N', 'GP', 'TransRF', 'TabPFN']
 
-    def fmt_alt(arr):
+    def fmt(arr):
         if arr is None or len(arr) == 0:
             return '—', None
         mean = float(np.mean(arr))
         std = float(np.std(arr))
         return f'{mean:+.3f} ± {std:.2f}', mean
-
-    def fmt_rf(n):
-        if n in rf:
-            return f'{rf[n]:+.3f}', rf[n]
-        return '—', None
 
     cell_text, cell_colors = [], []
     bg_default = '#ffffff'
@@ -334,15 +338,15 @@ def fig_table():
     bg_alt_row = '#f8fafc'
 
     for i, n in enumerate(rows_n):
-        gp_text, gp_mean = fmt_alt(alt.get('GP', {}).get(n))
-        tab_text, tab_mean = fmt_alt(alt.get('TabPFN', {}).get(n))
-        rf_text, rf_mean = fmt_rf(n)
+        gp_text, gp_mean = fmt(alt.get('GP', {}).get(n))
+        tab_text, tab_mean = fmt(alt.get('TabPFN', {}).get(n))
+        trf_text, trf_mean = fmt(small_rep.get('TransRF', {}).get(n))
 
-        candidates = [(gp_mean, 1), (rf_mean, 2), (tab_mean, 3)]
+        candidates = [(gp_mean, 1), (trf_mean, 2), (tab_mean, 3)]
         valid = [(v, idx) for v, idx in candidates if v is not None]
         winner_col = max(valid, key=lambda t: t[0])[1] if valid else None
 
-        cell_text.append([f'{n}', gp_text, rf_text, tab_text])
+        cell_text.append([f'{n}', gp_text, trf_text, tab_text])
         row_bg = bg_alt_row if i % 2 == 1 else bg_default
         row_colors = [row_bg] * 4
         if winner_col is not None:
@@ -351,7 +355,7 @@ def fig_table():
 
     n_rows = len(rows_n)
     fig_h = 0.55 + 0.40 * n_rows
-    fig, ax = plt.subplots(figsize=(11, fig_h))
+    fig, ax = plt.subplots(figsize=(10.5, fig_h))
     ax.axis('off')
 
     tbl = ax.table(
@@ -381,8 +385,8 @@ def fig_table():
         fontweight='bold', fontsize=13, pad=14)
     fig.text(0.5, 0.02,
              'GP & TabPFN: mean ± std over 10 bootstrap replicates.  '
-             'RF transfer: mean over 10 bootstrap test-sample shuffles '
-             '(per-N evaluation of pre-trained transfer model).',
+             'TransRF: mean ± std over 10 retrained replicates from '
+             'rf_transfer_small_n.json (proper retrain-at-each-N).',
              ha='center', fontsize=8.5, style='italic', color='#475569')
     fig.tight_layout(rect=(0, 0.03, 1, 1))
 

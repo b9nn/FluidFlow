@@ -16,6 +16,74 @@ Format per entry:
 
 ---
 
+## 2026-05-14 — Ben solo (Female RF transfer methodology fix; rename Brian→Ben)
+
+**Attendees:** ben
+
+**Decisions:**
+- **Rename in repo**: Ben goes by Ben, not Brian. 15 docs + 1 .py file
+  updated via sed. Memory updated. Git history (commit messages, author
+  name) left untouched — would need a destructive history rewrite.
+- **Female RF transfer methodology fix**: Ben flagged the per-N transfer
+  R² numbers from yesterday's commit `8135a9c` as suspicious. Investigation
+  confirmed the suspicion. `AllRegressorsTransferComparison.py` evaluates a
+  single pre-trained RF transfer model on `sample_size` random rows; it
+  does NOT retrain at each N. Worse, the random sample can include rows
+  the transfer model was trained on (1195 total rows; transfer model fit
+  on ~64% of them). At small N the result was train/test contamination
+  masquerading as a small-N learning curve — flat at R²≈0.72.
+- **Fix**: Wrote `VocalFoldRegression/BCM Model/Alternates/Female_SmallData.py`
+  which mirrors `TBCM_SmallData.py` / `BM_SmallData.py`. Properly retrains
+  the full RF ensemble (source/target/residual/augmented/transrf) on N
+  target samples per replicate, evaluates on a 500-row held-out test pool.
+  10 replicates per N, 11 N values from 5 to 500.
+- **New numbers (per-replicate TransRF mean R^2, F0+SPL average)**:
+    N=5:   -0.145   (artifact had +0.568)
+    N=10:  -0.128   (artifact had +0.686)
+    N=30:  +0.145   (artifact had +0.730)
+    N=75:  +0.491   (artifact had +0.731)
+    N=100: +0.635   (artifact had +0.732)
+    N=200: +0.691   (artifact had +0.742)
+    N=500: +0.843   (artifact had +0.751)
+  TabPFN dominates Female at every N. RF transfer never catches within
+  N≤500. This makes Female structurally similar to BM (alternates win
+  throughout) and different from TBCM (transfer ties at N=500).
+- **Refined three-tier cross-domain thesis**:
+    * BM (poor alignment, BCM→BM): alternates dominate; gap stays ~+0.17 at N=500
+    * Female (medium alignment, Male→Female BCM): alternates dominate;
+      gap narrows from +0.18 at N=5 to +0.13 at N=500 but never closes
+    * TBCM (tight alignment, BCM→TBCM same physics family): alternates
+      lead at small N; transfer ties at N=500 (both 0.972)
+  Boundary is now "how fast does transfer catch up at large N" rather
+  than "small-N alternates vs large-N transfer."
+
+**Commits landed:**
+- `242a2c7` — docs: rename Brian -> Ben across repo (15 files)
+- (about to land) — Female transfer methodology fix: new script, new JSON,
+  rewritten showcase, rewired cross-domain Female panel
+
+**Action items:**
+- Update group email draft (#19) with new Female numbers:
+  TabPFN at N=100 is 0.794 vs TransRF 0.635 (+0.16 gap, not the
+  near-tie I'd implied). At N=500 TabPFN 0.972 vs TransRF 0.843 (+0.13).
+  The Female "transfer holds an edge at very smallest N" claim is now
+  wrong — TabPFN wins from N=5 — ben
+- Revert the framing in the email draft about "Male→Female catches at
+  N≈75" — that was the artifact talking — ben
+- At next 1pm with Callum: walk through the methodology issue and what
+  it changes about the paper thesis (alternates win MORE broadly than
+  we'd realized; TBCM still the only "transfer catches" case) — shared
+
+**Blockers:** none.
+
+**Note on artifact commit**: `8135a9c` ("results(VFR): real per-N
+transfer evaluations for Female BCM, no interpolation") is wrong and
+its numbers should not be used. The current commit replaces the data
+source so Female_Showcase reads the proper JSON instead. The bad CSV
+itself is gitignored so it just lives locally on Ben's clone.
+
+---
+
 ## 2026-05-13 — Ben solo (TBCM cross-domain unblock — #17b + #18b)
 
 **Attendees:** ben
