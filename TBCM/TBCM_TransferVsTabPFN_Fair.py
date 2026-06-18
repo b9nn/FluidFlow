@@ -206,11 +206,19 @@ def main():
         if tok:
             _set_tabpfn_token(tok)
 
-    df_bcm = pd.read_csv(os.path.join(script_dir, 'dataset_BCM.csv'), index_col=0)
-    df_bcm = df_bcm.rename(columns={'Ps': 'PS'})
+    # BCM source: the 360,750-row measured male/AE lookup at repo root, loaded
+    # from the canonical binary (data_binary.parquet; content-identical to
+    # MaleBCM.csv). NOT TBCM/dataset_BCM.csv (a 54k synthetic grid sweep, F0 up
+    # to 862 Hz, SPL down to -4 dB) which was the wrong source and caused
+    # divergent results.
+    src_path = os.path.join(script_dir, '..', 'data_binary.parquet')
+    df_bcm = pd.read_parquet(src_path)
+    if 'Ps' in df_bcm.columns and 'PS' not in df_bcm.columns:
+        df_bcm = df_bcm.rename(columns={'Ps': 'PS'})
+    df_bcm = df_bcm.dropna(subset=TARGETS)[FEATURES + TARGETS]
     df_tbcm = pd.read_csv(os.path.join(script_dir, 'dataset_TBCM.csv'), index_col=0)
     df_tbcm = df_tbcm.rename(columns={'Ps': 'PS'}).drop(columns=['PL'])
-    print(f"  BCM source: {len(df_bcm)} rows;  TBCM target: {len(df_tbcm)} rows")
+    print(f"  BCM source: {len(df_bcm)} rows (data_binary.parquet);  TBCM target: {len(df_tbcm)} rows")
 
     print("  Training BCM source RF...")
     scaler_X_source = StandardScaler()
@@ -221,7 +229,7 @@ def main():
 
     results = {'_meta': {'n_grid': N_GRID, 'n_runs': N_RUNS,
                          'test_pool_size': TEST_POOL_SIZE,
-                         'target': 'dataset_TBCM.csv', 'source': 'dataset_BCM.csv',
+                         'target': 'dataset_TBCM.csv', 'source': 'data_binary.parquet',
                          'backend': _TABPFN_BACKEND},
                'fair': {}, 'old_transrf': {}}
 
