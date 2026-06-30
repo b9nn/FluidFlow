@@ -30,6 +30,9 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 figs_dir = os.path.join(script_dir, 'figs')
 results_dir = os.path.join(script_dir, 'results')
 
+# Match Callum's fair-comparison N grid so figures line up across collaborators.
+GRID_MATCH = (10, 20, 50, 100, 200, 500)
+
 plt.rcParams.update({
     'font.size': 11,
     'axes.titlesize': 13,
@@ -178,8 +181,8 @@ def fig_headline():
                 lw=s['lw'], ms=s['ms'], alpha=s['alpha'], label=s['label'],
                 zorder=2)
 
-    # GP + TabPFN bold with std bands
-    for method in ('GP', 'TabPFN'):
+    # TabPFN bold with std band
+    for method in ('TabPFN',):
         if method not in alt:
             continue
         ns = sorted(alt[method])
@@ -204,6 +207,83 @@ def fig_headline():
     fig.tight_layout()
     os.makedirs(figs_dir, exist_ok=True)
     path = os.path.join(figs_dir, 'tbcm_showcase_headline.png')
+    fig.savefig(path, dpi=180, bbox_inches='tight')
+    plt.close(fig)
+    print(f'  wrote {path}')
+
+
+# ============================================================================
+# Figure 1b: Small-N zoom — linear x-axis, N <= 100, F0 and SPL separately
+# ============================================================================
+def _alt_per_target():
+    """{method: {N: {'r2_f0': arr, 'r2_spl': arr}}} from alternates_results.json."""
+    with open(os.path.join(results_dir, 'alternates_results.json')) as f:
+        raw = json.load(f)
+    out = {}
+    for method in ('GP', 'TabPFN'):
+        if method not in raw:
+            continue
+        out[method] = {int(n): {'r2_f0': np.asarray(rec['r2_f0']),
+                                'r2_spl': np.asarray(rec['r2_spl'])}
+                       for n, rec in raw[method].items() if n.isdigit()}
+    return out
+
+
+def _transfer_per_target():
+    """{N: {'r2_f0': mean, 'r2_spl': mean}} for TransRF from rf_transfer_small_n.json."""
+    with open(os.path.join(results_dir, 'rf_transfer_small_n.json')) as f:
+        raw = json.load(f)
+    block = raw.get('transrf', {})
+    return {int(n): {'r2_f0': float(np.mean(rec['r2_f0'])),
+                     'r2_spl': float(np.mean(rec['r2_spl']))}
+            for n, rec in block.items() if n.isdigit()}
+
+
+def fig_headline_zoom(n_max=100):
+    """Zoom on the small-data regime (0..n_max samples), linear x-axis,
+    F0 and SPL in separate panels (no F0/SPL averaging)."""
+    alt = _alt_per_target()
+    trf = _transfer_per_target()
+
+    fig, axes = plt.subplots(1, 2, figsize=(15, 6.2), sharey=True)
+
+    for ax, tkey, tlabel in [(axes[0], 'r2_f0', 'F0'), (axes[1], 'r2_spl', 'SPL')]:
+        # TransRF (best of transfer)
+        if trf:
+            ns = [n for n in sorted(trf) if n <= n_max and n in GRID_MATCH]
+            ys = [trf[n][tkey] for n in ns]
+            s = METHOD_STYLE['TransRF']
+            ax.plot(ns, ys, color=s['color'], marker=s['marker'], ls=s['ls'],
+                    lw=s['lw'], ms=s['ms'], alpha=s['alpha'], label=s['label'], zorder=3)
+
+        # TabPFN bold with std band
+        for method in ('TabPFN',):
+            if method not in alt:
+                continue
+            ns = [n for n in sorted(alt[method]) if n <= n_max and n in GRID_MATCH]
+            means = np.array([alt[method][n][tkey].mean() for n in ns])
+            stds = np.array([alt[method][n][tkey].std() for n in ns])
+            s = METHOD_STYLE[method]
+            ax.fill_between(ns, means - stds, means + stds, color=s['color'],
+                            alpha=0.15, zorder=3)
+            ax.plot(ns, means, color=s['color'], marker=s['marker'], ls=s['ls'],
+                    lw=s['lw'], ms=s['ms'], label=s['label'], zorder=5)
+
+        ax.set_xlabel('Number of TBCM training samples (linear scale)')
+        ax.set_title(f'{tlabel}', fontweight='bold')
+        ax.axhline(0, color='#000', lw=0.6, alpha=0.4)
+        ax.axhline(0.5, color='#000', lw=0.4, alpha=0.15, ls=':')
+        ax.set_xlim(0, n_max + 2)
+        ax.set_ylim(-0.3, 1.05)
+        ax.grid(True, alpha=0.25)
+
+    axes[0].set_ylabel('R²')
+    _ordered_legend(axes[1])
+    fig.suptitle(f'BCM→TBCM small-data zoom (N ≤ {n_max}): the crossover up close',
+                 fontweight='bold', fontsize=14, y=1.0)
+    fig.tight_layout()
+    os.makedirs(figs_dir, exist_ok=True)
+    path = os.path.join(figs_dir, 'tbcm_showcase_headline_zoom.png')
     fig.savefig(path, dpi=180, bbox_inches='tight')
     plt.close(fig)
     print(f'  wrote {path}')
@@ -448,6 +528,7 @@ def main():
     print('=' * 70)
     os.makedirs(figs_dir, exist_ok=True)
     fig_headline()
+    fig_headline_zoom()
     fig_sim_budget()
     fig_bootstrap()
     fig_table()

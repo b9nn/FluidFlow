@@ -24,9 +24,15 @@ warnings.filterwarnings('ignore')
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
-# Absolute sample counts to test
-N_TARGETS = [10, 20, 30, 50, 75, 100, 200, 500]
+# Absolute sample counts to test. Matches the alternates (TabPFN/GP) N grid in
+# alternates_results.json so the transfer curve starts and overlaps exactly with
+# the TabPFN/GP curves in the showcase.
+N_TARGETS = [5, 10, 20, 30, 50, 75, 100, 150, 200, 300, 500]
 N_RUNS = 5
+# Held-out test pool size for R2 evaluation. Train uses all n_target rows; the
+# test set is drawn disjointly from the remaining ~43k TBCM rows. Matches the
+# TabPFN/GP harness (TBCM_TabPFN.py / TBCM_GP.py) so curves are comparable.
+TEST_POOL_SIZE = 1000
 DEVICE = torch.device('cpu')
 
 
@@ -47,15 +53,24 @@ def get_model_params(n_samples):
 
 
 def run_rf_experiment(df_tbcm, n_target, rf_source, scaler_X_source, random_state=42):
-    """Run RF transfer methods at a given absolute sample count."""
-    df = df_tbcm.sample(n=n_target, random_state=random_state)
-    X = df[['a_CT', 'a_TA', 'PS']]
-    Y = df[['F0', 'SPL']]
+    """Run RF transfer methods at a given absolute sample count.
 
-    # With tiny data, use leave-more-for-training split
-    test_size = max(0.2, min(0.4, 10 / len(df)))  # at least 10 test samples if possible
-    X_train, X_test, Y_train, Y_test = train_test_split(
-        X, Y, test_size=test_size, random_state=random_state)
+    Train on all n_target rows; evaluate on a large disjoint held-out pool (up to
+    TEST_POOL_SIZE rows) drawn from the rest of the TBCM data. This makes R2 a
+    stable estimate and the x-axis train count equal to n_target, matching the
+    TabPFN/GP harness. Previously the test set was carved out of the n_target rows
+    themselves (4-10 rows at small N), so small-N R2 was a noisy, negatively-biased
+    artifact rather than a real measurement -- which made transfer look far worse
+    than it is when plotted against TabPFN (tested on 1000 rows).
+    """
+    df_train = df_tbcm.sample(n=n_target, random_state=random_state)
+    pool = df_tbcm.drop(df_train.index)
+    df_test = pool.sample(n=min(TEST_POOL_SIZE, len(pool)), random_state=random_state)
+
+    X_train = df_train[['a_CT', 'a_TA', 'PS']]
+    Y_train = df_train[['F0', 'SPL']]
+    X_test = df_test[['a_CT', 'a_TA', 'PS']]
+    Y_test = df_test[['F0', 'SPL']]
 
     n_train = len(X_train)
     if n_train < 5:

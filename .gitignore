@@ -19,6 +19,9 @@ models/
 .claude/
 /figs/
 
+# --- PRIVATE / NON-PUBLIC NOTES (supervisor feedback, internal review) ---
+docs/feedback/
+
 # --- SECRETS / LOCAL ENV ---
 .env
 .env.*

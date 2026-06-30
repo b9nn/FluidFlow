@@ -25,6 +25,9 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 figs_dir = os.path.join(script_dir, 'figs')
 results_dir = os.path.join(script_dir, 'results')
 
+# Match Callum's fair-comparison N grid so figures line up across collaborators.
+GRID_MATCH = (10, 20, 50, 100, 200, 500)
+
 # --- Style ---
 plt.rcParams.update({
     'font.size': 11,
@@ -137,8 +140,8 @@ def fig_headline():
             marker='s', ls=(0, (4, 3)), lw=1.4, ms=4, alpha=0.55,
             label="TransRF at full N (Callum's larger-N runs)", zorder=2)
 
-    # GP + TabPFN bold with std bands
-    for method, color in [('GP', COLORS['GP']), ('TabPFN', COLORS['TabPFN'])]:
+    # TabPFN bold with std band
+    for method, color in [('TabPFN', COLORS['TabPFN'])]:
         if method not in alt:
             continue
         ns = sorted(alt[method])
@@ -164,7 +167,6 @@ def fig_headline():
     handles, labels = ax.get_legend_handles_labels()
     order_keys = [
         'TabPFN (non-transfer, ours)',
-        'GP (non-transfer, ours)',
         "TransRF (best of Callum's BCM->BM transfer)",
         "TransRF at full N (Callum's larger-N runs)",
     ]
@@ -438,12 +440,73 @@ def fig_table():
     print(f'  wrote {path}')
 
 
+def fig_headline_zoom(n_max=100, logx=False, fname='bm_showcase_headline_zoom.png'):
+    """F0 and SPL in separate panels, TabPFN vs TransRF.
+    logx=False: linear x-axis, zoomed to N<=n_max (small-data view).
+    logx=True : log x-axis, full N range (companion to the linear zoom).
+    TabPFN from alternates_results.json; TransRF from rf_transfer_small_n.json
+    (BCM->BM, generated with MaleBCM source). Self-contained styles."""
+    cap = 10 ** 9 if logx else n_max
+    STYLE = {'TabPFN': dict(color='#d97706', marker='o', ls='-', lw=2.8, ms=8, label='TabPFN (non-transfer, ours)'),
+             'GP': dict(color='#0f766e', marker='o', ls='-', lw=2.8, ms=8, label='GP (non-transfer, ours)'),
+             'TransRF': dict(color='#1e293b', marker='s', ls='-', lw=2.2, ms=7, label='TransRF (BCM->BM transfer)')}
+    with open(os.path.join(results_dir, 'alternates_results.json')) as f:
+        altraw = json.load(f)
+    alt = {m: {int(n): {'r2_f0': np.asarray(r['r2_f0']), 'r2_spl': np.asarray(r['r2_spl'])}
+               for n, r in altraw.get(m, {}).items() if n.isdigit()} for m in ('GP', 'TabPFN')}
+    trf = {}
+    trf_path = os.path.join(results_dir, 'rf_transfer_small_n.json')
+    if os.path.exists(trf_path):
+        with open(trf_path) as f:
+            block = json.load(f).get('transrf', {})
+        trf = {int(n): {'r2_f0': float(np.mean(r['r2_f0'])), 'r2_spl': float(np.mean(r['r2_spl']))}
+               for n, r in block.items() if n.isdigit()}
+
+    fig, axes = plt.subplots(1, 2, figsize=(15, 6.2), sharey=True)
+    for ax, tkey, tlabel in [(axes[0], 'r2_f0', 'F0'), (axes[1], 'r2_spl', 'SPL')]:
+        if trf:
+            ns = [n for n in sorted(trf) if n <= cap and n in GRID_MATCH]
+            s = STYLE['TransRF']
+            ax.plot(ns, [trf[n][tkey] for n in ns], color=s['color'], marker=s['marker'],
+                    ls=s['ls'], lw=s['lw'], ms=s['ms'], label=s['label'], zorder=3)
+        for m in ('TabPFN',):
+            ns = [n for n in sorted(alt[m]) if n <= cap and n in GRID_MATCH]
+            means = np.array([alt[m][n][tkey].mean() for n in ns])
+            stds = np.array([alt[m][n][tkey].std() for n in ns])
+            s = STYLE[m]
+            ax.fill_between(ns, means - stds, means + stds, color=s['color'], alpha=0.15, zorder=3)
+            ax.plot(ns, means, color=s['color'], marker=s['marker'], ls=s['ls'],
+                    lw=s['lw'], ms=s['ms'], label=s['label'], zorder=5)
+        if logx:
+            ax.set_xscale('log')
+            ax.set_xlabel('Number of BM training samples (log scale)')
+        else:
+            ax.set_xlabel('Number of BM training samples (linear scale)')
+            ax.set_xlim(0, n_max + 2)
+        ax.set_title(tlabel, fontweight='bold')
+        ax.axhline(0, color='#000', lw=0.6, alpha=0.4)
+        ax.set_ylim(-1.0, 1.05)
+        ax.grid(True, which='both', alpha=0.25)
+    axes[0].set_ylabel('R²')
+    axes[1].legend(loc='lower right', framealpha=0.95, fontsize=9)
+    title = ('BCM→BM (log scale, all N): weak source — TabPFN leads' if logx
+             else f'BCM→BM small-data zoom (N ≤ {n_max}): weak source — TabPFN leads')
+    fig.suptitle(title, fontweight='bold', fontsize=14, y=1.0)
+    fig.tight_layout()
+    path = os.path.join(figs_dir, fname)
+    fig.savefig(path, dpi=180, bbox_inches='tight')
+    plt.close(fig)
+    print(f'  wrote {path}')
+
+
 def main():
     print('=' * 70)
     print('BM SHOWCASE — generating presentation-quality figures')
     print('=' * 70)
     os.makedirs(figs_dir, exist_ok=True)
     fig_headline()
+    fig_headline_zoom()
+    fig_headline_zoom(logx=True, fname='bm_showcase_headline_log.png')
     fig_sim_budget()
     fig_bootstrap()
     fig_table()
