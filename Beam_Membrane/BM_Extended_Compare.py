@@ -63,8 +63,9 @@ def main():
     tr = load_transfer()
     tab = load_tabpfn()
 
-    plt.rcParams.update({'font.size': 10, 'axes.titlesize': 12, 'axes.labelsize': 10,
-                         'legend.fontsize': 8.5, 'axes.spines.top': False,
+    plt.rcParams.update({'font.size': 15, 'axes.titlesize': 18, 'axes.labelsize': 16,
+                         'xtick.labelsize': 13, 'ytick.labelsize': 13,
+                         'legend.fontsize': 13, 'axes.spines.top': False,
                          'axes.spines.right': False})
     fig, axes = plt.subplots(2, len(TARGETS), figsize=(4.0 * len(TARGETS), 8), sharex=True)
 
@@ -100,7 +101,7 @@ def main():
     axes[0, 0].legend(loc='lower right', framealpha=0.95)
     fig.suptitle('BCM→BM: TabPFN vs transfer — accuracy (R²) and error (nRMSE) vs training size\n'
                  '*ACFL provisional: BM ACFL ~2–4× BCM source, definition pending reconciliation',
-                 fontweight='bold', fontsize=13, y=1.0)
+                 fontweight='bold', fontsize=17, y=1.0)
     fig.tight_layout()
     os.makedirs(figs_dir, exist_ok=True)
     path = os.path.join(figs_dir, 'bm_ext_metrics_vs_n.png')
