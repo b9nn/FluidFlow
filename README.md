@@ -5,7 +5,7 @@ Fast ML regressors that predict vocal-fold acoustic outputs (fundamental frequen
 ## Quick start
 
 ```bash
-# Python deps
+# Python 3.13 is what we develop against; 3.10+ should work.
 pip install scikit-learn torch tensorflow pandas numpy matplotlib joblib scipy
 
 # TabPFN scripts additionally need the cloud client (free account + token):
