@@ -8,6 +8,11 @@ Fast ML regressors that predict vocal-fold acoustic outputs (fundamental frequen
 # Python deps
 pip install scikit-learn torch tensorflow pandas numpy matplotlib joblib scipy
 
+# TabPFN scripts additionally need the cloud client (free account + token):
+#   pip install tabpfn-client
+#   export TABPFN_TOKEN=<your token>     # PowerShell: $env:TABPFN_TOKEN = "<token>"
+# Set TABPFN_FORCE_LOCAL=1 to use the local `tabpfn` package instead.
+
 # --- Original female-BCM transfer (Ben) ---
 python "VocalFoldRegression/BCM Model/RandomForest/MaleRF.py"
 python "VocalFoldRegression/BCM Model/RandomForest/FemaleRFTransfer.py"
@@ -29,7 +34,24 @@ MPLBACKEND=Agg python Beam_Membrane/BM_Showcase.py       # presentation-quality 
 MPLBACKEND=Agg python TBCM/TBCM_TransferRF.py
 MPLBACKEND=Agg python TBCM/TBCM_Autoencoder.py
 MPLBACKEND=Agg python TBCM/TBCM_Summary.py
+
+# --- Extended BM outputs (adds ACFL and friends beyond F0/SPL) ---
+MPLBACKEND=Agg python Beam_Membrane/BM_Extended_TransferRF.py
+MPLBACKEND=Agg python Beam_Membrane/BM_Extended_TabPFN.py
+MPLBACKEND=Agg python Beam_Membrane/BM_Extended_Runtime.py
+MPLBACKEND=Agg python Beam_Membrane/BM_Extended_Compare.py   # reads the three above
+
+# --- JASA-target comparison (TabPFN vs TransferRF, multihead vs single) ---
+MPLBACKEND=Agg python JASA/JASA_TransferRF.py
+MPLBACKEND=Agg python JASA/JASA_TabPFN.py
+MPLBACKEND=Agg python JASA/JASA_Compare.py
+
+# --- TBCM motor-control maps (sparse-data replication of JASA Fig. 6) ---
+MPLBACKEND=Agg python TBCM/TBCM_MotorMaps.py
 ```
+
+Scripts resolve all paths relative to their own location, so they can be run
+from any working directory.
 
 Datasets:
 
