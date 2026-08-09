@@ -15,6 +15,8 @@ Active branch: `feature/fem`. Last synced with `origin/main` on 2026-05-03 (comm
 | `Beam_Membrane/` | **primary (Callum)** | BCM → BM transfer experiments. RF + autoencoder methods, MATLAB data gen, results JSON, figures |
 | `TBCM/` | **primary (Callum)** | BCM → TBCM transfer experiments. RF + autoencoder + waveform features |
 | `VocalFoldRegression/` | **primary (Ben)** | Original male/female BCM transfer (RF, NN, polynomial regressor) |
+| `JASA/` | results | JASA-target comparisons: TabPFN vs TransferRF, multihead vs single |
+| `paper/` | writeup | LaTeX manuscript (`main.tex`, `refs.bib`). Build output is gitignored |
 | `team/` | **shared coordination** | Agile workspace for Ben + Callum: TODO, BOARD, MEETING_NOTES — both Claude workflows read this |
 | `archive/` | reference | Old experimental scripts and figures Callum moved aside in PR #1 |
 | `docs/` | docs | Architecture, milestones, roadmap, glossary, decisions |
@@ -44,6 +46,7 @@ Active branch: `feature/fem`. Last synced with `origin/main` on 2026-05-03 (comm
    ```
 6. **Don't blob-commit binaries.** `.pkl`, `.keras`, `.parquet` are committed selectively. `.csv`, `*.txt`, `*.mat`, `*.ipynb` are gitignored — use `git add -f` only when needed and you'll see why in `.gitignore`.
 7. **Append a line to `docs/DECISIONS.md`** whenever you make a non-obvious judgment call (hyperparam choice, weighting, transfer strategy variant, scope change).
+8. **No absolute paths.** Resolve data and output paths relative to the script via `os.path.dirname(os.path.abspath(__file__))`. A hardcoded `C:/Users/...` breaks the repo for everyone else.
 
 ## Team workflow — `/team/` is shared between Ben and Callum
 
@@ -62,6 +65,53 @@ See `team/README.md` for full conventions (owner values, status values, priority
 ## Interaction conventions
 
 - When you need to ask Ben multiple-choice or preference questions, use the `AskUserQuestion` tool ("planning format" — rendered as chips). Don't ask A/B/C/D in plain text. Inline prose questions are fine only for genuinely open-ended prompts.
+
+## Working style — reduce common LLM coding mistakes
+
+**Tradeoff:** these bias toward caution over speed. For trivial tasks, use judgment.
+
+### 1. Think before coding
+
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
+
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them — don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
+### 2. Simplicity first
+
+**Minimum code that solves the problem. Nothing speculative.**
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
+
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+### 3. Surgical changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it — don't delete it.
+- Remove imports/variables/functions that YOUR changes made unused; leave pre-existing dead code alone unless asked.
+
+The test: every changed line should trace directly to the request.
+
+### 4. Goal-driven execution
+
+**Define success criteria. Loop until verified.**
+
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan with a verification check per step. Strong success criteria let you loop independently; weak criteria ("make it work") require constant clarification.
 
 ## Where to look
 
