@@ -18,8 +18,8 @@ import joblib
 
 from sklearn.metrics import r2_score, mean_absolute_error
 
-# use absolute paths
-BASE_DIR = 'C:/Users/bglad/OneDrive/Desktop/Job/Fluid Flow/VocalFoldRegression/BCM Model'
+# paths resolved relative to this script
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # VocalFoldRegression/BCM Model
 NN_DIR = f'{BASE_DIR}/NeuralNetwork'
 RF_DIR = f'{BASE_DIR}/RandomForest'
 PR_DIR = f'{BASE_DIR}/PolynomialRegressor'

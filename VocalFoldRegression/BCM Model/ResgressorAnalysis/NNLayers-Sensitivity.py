@@ -24,7 +24,7 @@ TRANSFER_FIGS_DIR = os.path.join(SCRIPT_DIR, "transfer-figs")
 NN_DIR = os.path.join(os.path.dirname(SCRIPT_DIR), "NeuralNetwork")
 TRANSFER_MODELS_DIR = os.path.join(NN_DIR, "transfer-models")
 
-df = pd.read_parquet('C:/Users/bglad/OneDrive/Desktop/Job/Fluid Flow/VocalFoldRegression/BCM Model/NeuralNetwork/FemaleNN_binary.parquet')
+df = pd.read_parquet(os.path.join(NN_DIR, 'FemaleNN_binary.parquet'))
 df = df.dropna()
 
 df = df.dropna()
