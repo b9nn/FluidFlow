@@ -8,15 +8,24 @@ from sklearn.model_selection import train_test_split, cross_validate, GridSearch
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, f1_score
 from sklearn.preprocessing import StandardScaler
 import joblib
+import os
+
+# paths resolved relative to this script, so the script runs from any cwd
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+BCM_DIR = os.path.dirname(SCRIPT_DIR)  # VocalFoldRegression/BCM Model
+FIGS_DIR = os.path.join(SCRIPT_DIR, 'figs')
+MODELS_DIR = os.path.join(SCRIPT_DIR, 'models')
+os.makedirs(FIGS_DIR, exist_ok=True)
+os.makedirs(MODELS_DIR, exist_ok=True)
 
 # full dataset
-# BEFORE: df = pd.read_csv('C:/Users/bglad/OneDrive/Desktop/Job/Fluid Flow/VocalFoldRegression/BCM Model/MaleBCM.csv')
-df = pd.read_csv('MaleBCM.csv')
+df = pd.read_csv(os.path.join(BCM_DIR, 'MaleBCM.csv'))
 
 # downsample for faster experimentation ~ 25000 rows
 df = df.sample(frac=1, random_state=42)
-df.to_parquet("./data_binary.parquet", compression="snappy") # convert to binary
-df = pd.read_parquet("./data_binary.parquet")
+cache_path = os.path.join(SCRIPT_DIR, 'data_binary.parquet')
+df.to_parquet(cache_path, compression="snappy") # convert to binary
+df = pd.read_parquet(cache_path)
 
 print(df.head())
 print(df.describe())
@@ -69,8 +78,8 @@ print("Overall R^2:", r2_score(y_test, y_pred, multioutput="uniform_average"))
 print("Overall MSE:", mean_squared_error(y_test, y_pred, multioutput="uniform_average"))
 
 # save the trained model and scaler
-joblib.dump(best_rf, 'models/RF_BCM.pkl')
-joblib.dump(x_scaler, 'models/x_scaler_BCM.pkl')
+joblib.dump(best_rf, os.path.join(MODELS_DIR, 'RF_BCM.pkl'))
+joblib.dump(x_scaler, os.path.join(MODELS_DIR, 'x_scaler_BCM.pkl'))
 print("saved!")
 
 # predicted vs actual
@@ -83,7 +92,7 @@ for i, target in enumerate(['F0', 'SPL']):
     plt.xlabel("Actual")
     plt.ylabel("Predicted")
     plt.title(f"Predicted vs Actual: {target}")
-    plt.savefig(f'Figs/pred_vs_actual_{target}.png', dpi=150, bbox_inches='tight')
+    plt.savefig(os.path.join(FIGS_DIR, f'pred_vs_actual_{target}.png'), dpi=150, bbox_inches='tight')
     plt.show()
 
 
@@ -109,7 +118,7 @@ for i, target in enumerate(['F0','SPL']):
     plt.xlabel("Predicted")
     plt.ylabel("Residual (Actual - Predicted)")
     plt.title(f"Residual Plot: {target}")
-    plt.savefig(f'Figs/residuals_{target}.png', dpi=150, bbox_inches='tight')
+    plt.savefig(os.path.join(FIGS_DIR, f'residuals_{target}.png'), dpi=150, bbox_inches='tight')
     plt.show()
 
 # ~~~ Predicted vs Actual ~~~
@@ -128,6 +137,6 @@ ax2.plot(lin,lin)
 ax2.set_ylabel('Predicted (dB)')
 ax2.set_xlabel('Real (dB)')
 ax2.set_title('SPL')
-plt.savefig('Figs/RF_prediction_comparison.png', dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(FIGS_DIR, 'RF_prediction_comparison.png'), dpi=150, bbox_inches='tight')
 plt.show()
 

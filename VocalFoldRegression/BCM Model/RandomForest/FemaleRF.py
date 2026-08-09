@@ -11,8 +11,10 @@ import joblib
 import os
 import h5py
 import mat73
-#Before: df = pd.read_parquet("C:/Users/bglad/OneDrive/Desktop/Job\Fluid Flow/FemaleNN_binary.parquet")
-df = pd.read_parquet("Female_binary.parquet")
+
+# paths resolved relative to this script, so the script runs from any cwd
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+df = pd.read_parquet(os.path.join(SCRIPT_DIR, "Female_binary.parquet"))
 
 # only drop NaN in columns we actually use
 df = df[['a_CT', 'a_TA', 'PS', 'F0', 'SPL', 'ACFL']].dropna()
@@ -73,9 +75,10 @@ r2spl = r2_score(y_test.iloc[:, 1], y_pred[:, 1])
 print(f"F0:  R²={r2f0:.4f}")
 print(f"SPL: R²={r2spl:.4f}")
 
-os.makedirs("./transfer-models", exist_ok=True)
-joblib.dump(rf, "./transfer-models/transfer_female_rf.pkl")
-joblib.dump(x_scaler, "./transfer-models/x_scaler.pkl")
-joblib.dump(f0_scaler, "./transfer-models/f0_scaler.pkl")
-joblib.dump(spl_scaler, "./transfer-models/spl_scaler.pkl")
+TRANSFER_MODELS_DIR = os.path.join(SCRIPT_DIR, "transfer-models")
+os.makedirs(TRANSFER_MODELS_DIR, exist_ok=True)
+joblib.dump(rf, os.path.join(TRANSFER_MODELS_DIR, "transfer_female_rf.pkl"))
+joblib.dump(x_scaler, os.path.join(TRANSFER_MODELS_DIR, "x_scaler.pkl"))
+joblib.dump(f0_scaler, os.path.join(TRANSFER_MODELS_DIR, "f0_scaler.pkl"))
+joblib.dump(spl_scaler, os.path.join(TRANSFER_MODELS_DIR, "spl_scaler.pkl"))
 
