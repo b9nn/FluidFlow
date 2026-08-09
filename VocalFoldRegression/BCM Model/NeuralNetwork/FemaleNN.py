@@ -16,6 +16,9 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler, PolynomialFeatur
 from sklearn.model_selection import train_test_split, cross_validate, GridSearchCV, RandomizedSearchCV, LeaveOneOut, cross_val_score
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, f1_score
 
+# resolve ./ paths below against this script's folder, not the caller's cwd
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 np.random.seed(42)
 tf.random.set_seed(42)
 

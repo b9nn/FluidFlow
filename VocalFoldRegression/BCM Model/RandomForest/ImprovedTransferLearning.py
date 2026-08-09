@@ -20,6 +20,9 @@ from sklearn.linear_model import Ridge, LinearRegression
 import joblib
 import os
 import warnings
+
+# resolve ./ paths below against this script's folder, not the caller's cwd
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 warnings.filterwarnings('ignore')
 
 

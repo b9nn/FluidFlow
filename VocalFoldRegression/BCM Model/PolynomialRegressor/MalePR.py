@@ -11,6 +11,9 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, f
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.linear_model import LinearRegression
 
+# resolve ./ paths below against this script's folder, not the caller's cwd
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 os.makedirs("./figs", exist_ok=True)
 os.makedirs("./models", exist_ok=True)
 

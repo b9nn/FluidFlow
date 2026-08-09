@@ -3,6 +3,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import joblib
 import sys
+import os
+
+# resolve ./ paths below against this script's folder, not the caller's cwd
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 # load
 modelRF = joblib.load('models/RF_BCM.pkl')

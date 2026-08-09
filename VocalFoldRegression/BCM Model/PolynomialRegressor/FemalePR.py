@@ -17,6 +17,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import Ridge, LinearRegression
 from sklearn.metrics import r2_score, mean_absolute_error
 
+# resolve ./ paths below against this script's folder, not the caller's cwd
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 # create directories for saving outputs
 os.makedirs("./FemaleFigs", exist_ok=True)
 os.makedirs("./FemaleModels", exist_ok=True)

@@ -17,6 +17,9 @@ from scipy.io import loadmat
 import joblib
 import os
 
+# resolve ./ paths below against this script's folder, not the caller's cwd
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 # Load female dataset
 df = pd.read_parquet("./Female_binary.parquet")
 # only drop NaN in columns we actually use
