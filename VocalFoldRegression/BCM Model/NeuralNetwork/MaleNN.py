@@ -264,7 +264,7 @@ plt.show()
 joblib.dump(x_scaler, './models/x_scaler_BCM.pkl')
 joblib.dump(f0_scaler, './models/f0_scaler_BCM.pkl')
 joblib.dump(spl_scaler, './models/spl_scaler_BCM.pkl')
-modelNN.save('C:/Users/bglad/OneDrive/Desktop/Job/Fluid Flow/ml/BCM Model/NeuralNetwork/models')
+modelNN.save('./models')
 '''
 
 joblib.dump(x_scaler, './models/x_scaler_BCM.pkl')

@@ -33,7 +33,8 @@ def build_oheads(layers, idim):
     model.compile(optimizer=optimized_opt, loss={'f0': 'mse', 'spl': 'mse'}, metrics={'f0': 'mae', 'spl': 'mae'})
     return model
 
-df = pd.read_csv('C:/Users/bglad/OneDrive/Desktop/Job/Fluid Flow/ml/BCM Model/MaleBCM.csv')
+BCM_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # VocalFoldRegression/BCM Model
+df = pd.read_csv(os.path.join(BCM_DIR, 'MaleBCM.csv'))
 
 # downsample for faster experimentation ~ 90000 rows
 #df = df.sample(frac=0.25, random_state=42) use full dataset for now

@@ -70,7 +70,7 @@ x_scalar_female = StandardScaler()
 y_scalar_female = StandardScaler()
 
 # load dataset
-df = pd.read_parquet('C:/Users/bglad/OneDrive/Desktop/Job/Fluid Flow/VocalFoldRegression/BCM Model/NeuralNetwork/FemaleNN_binary.parquet')
+df = pd.read_parquet(os.path.join(SCRIPT_DIR, 'FemaleNN_binary.parquet'))
 # only drop NaN in columns we actually use
 df = df[['a_CT', 'a_TA', 'PS', 'F0', 'SPL', 'ACFL']].dropna()
 

@@ -1,8 +1,11 @@
+import os
 import pandas as pd
 
-female = pd.read_csv('C:/Users/bglad/OneDrive/Desktop/Job/Fluid Flow/ml/BCM Model/FemaleBCM.csv')
+BCM_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # VocalFoldRegression/BCM Model
+
+female = pd.read_csv(os.path.join(BCM_DIR, 'FemaleBCM.csv'))
 updated_female = female[female['ACFL'] > 30]
-male = pd.read_csv('C:/Users/bglad/OneDrive/Desktop/Job/Fluid Flow/ml/BCM Model/MaleBCM.csv')
+male = pd.read_csv(os.path.join(BCM_DIR, 'MaleBCM.csv'))
 
 print(f"---F0 comparison---")
 print(f"female_min {female['F0'].min()} | female_max {female['F0'].max()} | female_mean {female['F0'].mean()} | female_std {female['F0'].std()}")

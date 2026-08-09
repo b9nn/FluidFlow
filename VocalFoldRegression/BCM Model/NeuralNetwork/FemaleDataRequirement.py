@@ -51,7 +51,7 @@ base_model = load_model(MALE_MODEL_PATH, compile=False)
 x_scaler_male = joblib.load(MALE_X_SCALER_PATH)
 y_scaler_male = joblib.load(MALE_Y_SCALER_PATH)
 
-BASE_DIR = r'C:\Users\bglad\OneDrive\Desktop\Job\Fluid Flow\ml\BCM Model'
+BASE_DIR = os.path.dirname(SCRIPT_DIR)  # VocalFoldRegression/BCM Model
 DATA_PATH = os.path.join(BASE_DIR, 'FemaleBCM.csv')
 
 df_full = pd.read_csv(DATA_PATH, on_bad_lines="skip")
