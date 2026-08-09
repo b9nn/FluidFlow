@@ -6,7 +6,7 @@
 
 Map vocal-fold motor inputs (`a_CT`, `a_TA`, `PS`) to acoustic outputs (`F0` Hz, `SPL` dB) using ML regressors. Train on a cheap source model (BCM) and **transfer-learn** to expensive targets (TBCM, Beam-Membrane FEM) so we need fewer expensive simulations. Currently three target domains: female BCM, TBCM, BM.
 
-Active branch: `feature/fem`. Last synced with `origin/main` on 2026-05-03 (commit `5c19816`).
+Active branch: `feature/fem`. Last synced with `main` on 2026-08-09 (commit `e25c303`).
 
 ## Repo map
 
