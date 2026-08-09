@@ -130,17 +130,20 @@ def fit_transferrf(rf_src, scaler_src, X_train, Y_train, grid_X, shape):
 
 def fit_tabpfn(X_train, Y_train, grid_X, shape):
     """One TabPFN regressor per output, per-output scaled (Convention 1)."""
-    try:
-        from tabpfn_client import TabPFNRegressor
-        try:
-            from tabpfn_client import set_access_token
-            tok = os.environ.get('TABPFN_TOKEN')
-            if tok:
-                set_access_token(tok)
-        except Exception:
-            pass
-    except ImportError:
+    if os.environ.get('TABPFN_FORCE_LOCAL'):
         from tabpfn import TabPFNRegressor
+    else:
+        try:
+            from tabpfn_client import TabPFNRegressor
+            try:
+                from tabpfn_client import set_access_token
+                tok = os.environ.get('TABPFN_TOKEN')
+                if tok:
+                    set_access_token(tok)
+            except Exception:
+                pass
+        except ImportError:
+            from tabpfn import TabPFNRegressor
 
     if X_train.shape[0] > TABPFN_MAX_TRAIN:
         X_train = X_train[:TABPFN_MAX_TRAIN]
@@ -164,10 +167,11 @@ def _panel(ax, AC, AT, surf, cmap, vmin, vmax, levels, title):
     im = ax.pcolormesh(AT, AC, surf, cmap=cmap, vmin=vmin, vmax=vmax,
                        shading='nearest')
     cs = ax.contour(AT, AC, surf, levels=levels, colors='k', linewidths=0.6)
-    ax.clabel(cs, inline=True, fontsize=7, fmt='%d')
-    ax.set_title(title, fontsize=10, fontweight='bold')
-    ax.set_xlabel(r'$a_{TA}$')
-    ax.set_ylabel(r'$a_{CT}$')
+    ax.clabel(cs, inline=True, fontsize=11, fmt='%d')
+    ax.set_title(title, fontsize=18, fontweight='bold')
+    ax.set_xlabel(r'$a_{TA}$', fontsize=16)
+    ax.set_ylabel(r'$a_{CT}$', fontsize=16)
+    ax.tick_params(labelsize=13)
     return im
 
 
@@ -191,7 +195,7 @@ def plot_value_matrix(AC, AT, gt, method_surfs, target, ps_label):
     for r, n in enumerate(N_TARGETS):
         im = _panel(axes[r, 0], AC, AT, gt[target], cmap, vmin, vmax, levels,
                     'Ground truth (TBCM ODE)' if r == 0 else '')
-        axes[r, 0].set_ylabel(f'N = {n}\n' + r'$a_{CT}$', fontsize=11)
+        axes[r, 0].set_ylabel(f'N = {n}\n' + r'$a_{CT}$', fontsize=16)
         for c, m in enumerate(methods, start=1):
             surf = method_surfs[n][m]
             ax = axes[r, c]
@@ -207,8 +211,10 @@ def plot_value_matrix(AC, AT, gt, method_surfs, target, ps_label):
                  f'sparse-data replication of JASA Fig. 6\n'
                  f'columns: ground truth | TabPFN | TransferRF    '
                  f'rows: N training samples',
-                 fontsize=12, fontweight='bold', y=1.0)
-    fig.colorbar(im, ax=axes, shrink=0.6, label=f'{target} ({unit})')
+                 fontsize=17, fontweight='bold', y=1.0)
+    cb = fig.colorbar(im, ax=axes, shrink=0.6, label=f'{target} ({unit})')
+    cb.set_label(f'{target} ({unit})', fontsize=15)
+    cb.ax.tick_params(labelsize=12)
     out = os.path.join(FIGS_DIR, f'tbcm_motor_map_{target}.png')
     fig.savefig(out, dpi=160, bbox_inches='tight')
     plt.close(fig)
