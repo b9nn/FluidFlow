@@ -36,7 +36,6 @@ import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_squared_error
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 FIGS_DIR = os.path.join(script_dir, 'figs')

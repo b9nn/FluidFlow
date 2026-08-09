@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 import os
 import joblib
-from scipy.io import loadmat
 
 from sklearn.preprocessing import StandardScaler, PolynomialFeatures
 from sklearn.model_selection import train_test_split

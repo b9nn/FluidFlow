@@ -1,20 +1,19 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import time
 import os
 
 import tensorflow as tf
 from keras.models import Sequential
-from keras.layers import Layer,Dropout,Dense, Activation
+from keras.layers import Dropout, Dense
 from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from sklearn.model_selection import train_test_split
 import joblib
 
-from sklearn.preprocessing import MinMaxScaler, StandardScaler, PolynomialFeatures
-from sklearn.model_selection import train_test_split, cross_validate, GridSearchCV, RandomizedSearchCV, LeaveOneOut, cross_val_score
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, f1_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 # resolve ./ paths below against this script's folder, not the caller's cwd
 os.chdir(os.path.dirname(os.path.abspath(__file__)))

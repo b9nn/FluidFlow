@@ -11,11 +11,10 @@ import numpy as np
 import pandas as pd
 import os
 import joblib
-from scipy.io import loadmat
 
-from sklearn.preprocessing import StandardScaler, PolynomialFeatures
+from sklearn.preprocessing import PolynomialFeatures
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import Ridge, LinearRegression, Lasso
+from sklearn.linear_model import Lasso
 from sklearn.metrics import r2_score, mean_absolute_error
 
 # resolve ./ paths below against this script's folder, not the caller's cwd
@@ -33,8 +32,6 @@ male_f0_scaler = joblib.load('./models/f0_scaler_BCM.pkl')
 male_spl_scaler = joblib.load('./models/spl_scaler_BCM.pkl')
 
 # male model uses degree 12 polynomial (from MalePR.py)
-from sklearn.preprocessing import PolynomialFeatures
-
 male_poly = PolynomialFeatures(degree=12, include_bias=False)
 
 # load pre-trained female polynomial regression models

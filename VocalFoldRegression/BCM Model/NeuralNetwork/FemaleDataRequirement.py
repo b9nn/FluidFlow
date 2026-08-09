@@ -28,7 +28,6 @@ from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from sklearn.model_selection import train_test_split
 import joblib
 
-from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 # Set random seeds for reproducibility (same results every time)

@@ -12,9 +12,8 @@ from sklearn.model_selection import train_test_split
 import joblib
 
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.metrics import r2_score
 
-from scipy.io import loadmat
 
 np.random.seed(42)
 tf.random.set_seed(42)
@@ -182,13 +181,13 @@ for r in ret:
     print(f"layer = {r['frozen_layers']}, r2f0 = {r['r2f0']}, r2spl = {r['r2spl']}")
 
 best_f0 = max(ret, key=lambda x: x['r2f0'])
-print(f'best f0 = {best_f0['frozen_layers']} layers, achived r2 = {best_f0['r2f0']}')
+print(f"best f0 = {best_f0['frozen_layers']} layers, achived r2 = {best_f0['r2f0']}")
 
-best_spl = max(ret, key=lambda x : x['r2spl'])
-print(f'best spl = {best_f0['frozen_layers']} layers, achived r2 = {best_spl['r2spl']}')
+best_spl = max(ret, key=lambda x: x['r2spl'])
+print(f"best spl = {best_spl['frozen_layers']} layers, achived r2 = {best_spl['r2spl']}")
 
-best_overall = max(ret, key=lambda y: (y['r2f0'] + y['r2f0']) / 2)
-print(f'best overall = {best_f0['frozen_layers']} layers, achived avg r2 = {(best_overall['r2f0'] + best_overall['r2spl']) / 2}')
+best_overall = max(ret, key=lambda y: (y['r2f0'] + y['r2spl']) / 2)
+print(f"best overall = {best_overall['frozen_layers']} layers, achived avg r2 = {(best_overall['r2f0'] + best_overall['r2spl']) / 2}")
 
 '''
 # Save transfer model

@@ -4,9 +4,9 @@ import pandas as pd
 import os
 import joblib
 
-from sklearn.preprocessing import MinMaxScaler, StandardScaler, PolynomialFeatures
-from sklearn.model_selection import train_test_split, cross_validate, GridSearchCV, RandomizedSearchCV, LeaveOneOut, cross_val_score
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, f1_score
+from sklearn.preprocessing import StandardScaler, PolynomialFeatures
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_absolute_error, r2_score
 
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.linear_model import LinearRegression

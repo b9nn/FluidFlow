@@ -1,16 +1,12 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.multioutput import MultiOutputRegressor
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from scipy.io import loadmat
 import joblib
 import os
-import h5py
-import mat73
 
 # paths resolved relative to this script, so the script runs from any cwd
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))

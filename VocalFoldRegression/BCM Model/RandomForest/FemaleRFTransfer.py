@@ -8,12 +8,8 @@ branch weights using subject-specific data once the baseline architecture has be
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.multioutput import MultiOutputRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from scipy.io import loadmat
 import joblib
 import os
 

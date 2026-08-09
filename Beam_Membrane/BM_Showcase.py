@@ -19,7 +19,6 @@ import json
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.patches import FancyArrowPatch
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 figs_dir = os.path.join(script_dir, 'figs')

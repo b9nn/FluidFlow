@@ -1,5 +1,4 @@
 """Quick plot of small-data results — reuses data from TBCM_SmallData.py output."""
-import numpy as np
 import matplotlib.pyplot as plt
 import os
 
