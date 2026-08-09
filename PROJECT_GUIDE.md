@@ -205,13 +205,18 @@ FluidFlow/
 ### Environment Setup
 
 ```bash
-cd "/Users/callumcamazzola/Downloads/Fluid Flow Code/FluidFlow"
+cd /path/to/FluidFlow          # wherever you cloned the repo
 
 # Activate the virtual environment (Python 3.13)
-source transrf_env/bin/activate
+source transrf_env/bin/activate        # Windows: transrf_env\Scripts\activate
 
 # Key packages: scikit-learn 1.8, torch 2.11, numpy, scipy, pandas, matplotlib
 ```
+
+> `transrf_env` is a local venv name, not something in the repo — create your
+> own with `python -m venv transrf_env` and install the packages above. The
+> `./transrf_env/bin/python3` prefix in the commands below is the same thing;
+> plain `python` works if your environment is already active.
 
 ### Running Scripts
 
