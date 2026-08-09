@@ -27,6 +27,7 @@ _(empty)_
 
 ## In Review
 
+- **#20** — Repo cleanup before sharing with coworkers — `ben` — `P1` _(hygiene + runnability + docs + 3 bug fixes; `main` fast-forwarded locally, not pushed)_
 - **#17** — Cross-domain GP/TabPFN: TBCM + Female BCM — `ben` — `P1` _(all three panels real; cross-domain headline refined)_
 - **#18** — Muscle-activation x F0 heatmaps — `ben` — `P1` _(BM + Female + TBCM all done)_
 - **#19** — Group email draft — `ben` — `P1` _(draft done; awaits Ben filling TBCM numbers, attachments, send)_
