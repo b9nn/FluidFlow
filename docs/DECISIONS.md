@@ -263,3 +263,26 @@ The boundary now is "alignment quality vs how much it helps transfer keep up at 
 **Decision:** Delete the 0-byte `dataset_cache` file; the library re-creates an empty `OrderedDict` cache on next use. The adjacent `config` file (auth token) is untouched, so no re-login is needed. The idempotent `_existing_complete_ns` skip logic in our TabPFN scripts handles the partial run cleanly — only the missing N values are recomputed.
 **Why:** Simpler than re-installing the package or patching the upstream library. The cache is a write-only optimization (de-duplicating uploaded dataset hashes); losing it has zero accuracy impact, just slightly more bandwidth on the next handful of uploads.
 **Where it shows up:** documented inline in the `feat(TBCM): TabPFN ...` commit message (`5c45242`); not a code change.
+
+## 2026-08-09 — Repo cleanup for external sharing (hygiene / runnability)
+
+**Context:** Repo is being shared with coworkers outside the immediate Ben+Callum pair. A survey turned up four classes of problem: a dirty working tree (4 modified + 1 untracked scratch file), two large untracked directories (`paper/` 1.4 MB, Sean's `Beam+Membrane_ForSean/` 27 MB), hardcoded absolute paths in 9 tracked scripts, and `main` sitting 55 commits behind `feature/fem` so a default clone showed stale work.
+
+**Decisions:**
+
+1. **`CLAUDE.md` merged rather than replaced.** The working copy had overwritten the whole file with generic LLM behavioral guidelines, dropping the repo map, the 7 hard conventions, team workflow and contributors — exactly the context a new coworker needs. Both were kept: project context stays, guidelines fold in as a "Working style" section. Added **convention 8: no absolute paths**.
+
+2. **`os.chdir(script_dir)` for legacy `VocalFoldRegression/` scripts, not a path rewrite.** 12 older scripts use `./`-relative paths throughout (~60 literals). They only worked if you first `cd`'d into the script's folder, but the README tells people to run from the repo root. One `chdir` line per script preserves the existing `./` layout and matches what those scripts already assume, instead of a large mechanical diff. Newer scripts (`Beam_Membrane/`, `TBCM/`, `JASA/`) already use the `script_dir` + `os.path.join` convention and were left alone.
+
+3. **`paper/` sources tracked, build output and Sean's MATLAB gitignored.** `main.tex` + `refs.bib` are in; `.aux/.bbl/.blg/.log/.out/.pdf` are ignored. `\graphicspath` resolves to `Beam_Membrane/figs`, `TBCM/figs`, `JASA/figs` — all tracked — so the manuscript builds from a fresh clone. Sean's 27 MB upstream solver stays local pending consent (still TODO #7).
+
+4. **Unused imports removed (78 names), pre-existing dead code left alone.** Removal was gated on the name not appearing anywhere else in the file's text, so imports referenced only from commented-out blocks (`plt` in `FemaleNNTransfer`, `Lasso` in `FemalePRTransfer`) were deliberately kept. Notably dropped `h5py` and `mat73` from `FemaleRF.py` — unused, and not in the README install list, so they were a setup barrier for nothing.
+
+**Bugs found and fixed in passing** (not cosmetic — these changed behavior):
+  - `MultiOutputNN.py` referenced an undefined `axes`; it was split out of `MaleNN.py` and lost the `plt.subplots` call, so it computed every metric and then died with `NameError` before plotting or saving. Given its own 1x2 figure.
+  - `MaleRF.py` read a bare `'MaleBCM.csv'` but the file lives one level up in `BCM Model/`, so the README's run-from-repo-root invocation failed outright. It also wrote to `Figs/` while the directory on disk is `figs/` — harmless on Windows, broken on Linux/macOS.
+  - `FemaleNNTransfer.py` printed `best_f0['frozen_layers']` in all three "best" lines, so the best-SPL and best-overall lines reported the wrong layer count; `best_overall` also averaged `r2f0` with itself instead of with `r2spl`.
+
+**Verification:** all 53 tracked non-archive scripts byte-compile; an AST pass reports zero undefined module-level names; no absolute user paths remain in tracked non-archive files; `dataset_analysis.py` was run from the repo root as a smoke test (it could not run from there before).
+
+**Not done:** stale remote branches (`cc-dev`, `dev`, `cc/transrf-vs-tabpfn-fair`) left in place — pruning them is Callum-affecting and was declined. `team/` and `docs/superpowers/` stay tracked (coworkers are same-team).
