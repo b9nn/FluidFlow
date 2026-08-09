@@ -22,6 +22,20 @@ models/
 # --- PRIVATE / NON-PUBLIC NOTES (supervisor feedback, internal review) ---
 docs/feedback/
 
+# --- THIRD-PARTY, LOCAL ONLY (Sean's upstream MATLAB FE solver) ---
+VocalFoldRegression/Beam+Membrane_ForSean/
+
+# --- LATEX BUILD OUTPUT (paper/main.tex + refs.bib are the sources) ---
+*.aux
+*.bbl
+*.blg
+*.out
+*.pdf
+*.synctex.gz
+*.toc
+*.fdb_latexmk
+*.fls
+
 # --- SECRETS / LOCAL ENV ---
 .env
 .env.*
