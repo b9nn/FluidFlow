@@ -146,8 +146,12 @@ print(f"  MAE:  {mae_spl_multi:.4f} Pa")
 print(f"  RMSE: {rmse_spl_multi:.4f} Pa")
 print(f"  R²:   {r2_spl_multi:.4f}")
 
+os.makedirs("./figs", exist_ok=True)
+fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+fig.suptitle('Multi-Output Model', fontsize=16, fontweight='bold')
+
 # Multi-Output Model - F0
-ax = axes[1, 0]
+ax = axes[0]
 ax.plot(np.array(y_test)[:, 0], y_pred_multi[:, 0], 'o', alpha=0.5, markersize=3, color='darkorange')
 lin = [min(np.array(y_test)[:, 0]), max(np.array(y_test)[:, 0])]
 ax.plot(lin, lin, 'r-', linewidth=2, label='Perfect Prediction')
@@ -158,7 +162,7 @@ ax.legend()
 ax.grid(True, alpha=0.3)
 
 # Multi-Output Model - SPL
-ax = axes[1, 1]
+ax = axes[1]
 ax.plot(np.array(y_test)[:, 1], y_pred_multi[:, 1], 'o', alpha=0.5, markersize=3, color='darkorange')
 lin = [min(np.array(y_test)[:, 1]), max(np.array(y_test)[:, 1])]
 ax.plot(lin, lin, 'r-', linewidth=2, label='Perfect Prediction')
@@ -167,3 +171,6 @@ ax.set_ylabel('Predicted (Pa)')
 ax.set_xlabel('Real (Pa)')
 ax.legend()
 ax.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.savefig("./figs/multioutput_comparison.png", dpi=300, bbox_inches='tight')
