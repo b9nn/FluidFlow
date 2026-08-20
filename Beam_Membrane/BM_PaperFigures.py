@@ -130,13 +130,13 @@ def table1(bm, n_star=50):
 
     lines = [
         "\\begin{table}[htbp]", "\\centering", "\\small",
-        f"\\caption{{Aim 1. Accuracy ($R^2$, upper block) and range-normalised RMSE "
+        f"\\caption{{Q1. Accuracy ($R^2$, upper block) and range-normalised RMSE "
         f"(lower block) on the far BM target at $N={n_star}$ target simulations, "
         f"mean over {bm['_meta']['n_seeds']} seeds. Best per row in bold. The "
         f"\\emph{{target alone}} columns are each regressor family fit on the $N$ "
         f"target rows with no source; \\emph{{optimized transfer}} adds the BCM "
         f"source through the blended procedure of Sec.~2.2.}}",
-        "\\label{tab:aim1}",
+        "\\label{tab:q1}",
         "\\begin{tabular}{l|ccc|ccc|c}", "\\toprule",
         "& \\multicolumn{3}{c|}{Fit on target alone} & \\multicolumn{3}{c|}{Optimized transfer} & No source \\\\",
         "Output & PR & RF & NN & PR & RF & NN & TabPFN \\\\", "\\midrule",
@@ -178,7 +178,7 @@ def table2(bm, tbcm, n_star=50):
 
     lines = [
         "\\begin{table}[htbp]", "\\centering", "\\small",
-        f"\\caption{{Aim 2. Source--target fidelity. $F_0$ accuracy ($R^2$) at "
+        f"\\caption{{Q2. Source--target fidelity. $F_0$ accuracy ($R^2$) at "
         f"$N={n_star}$ as the target moves from an aligned lumped model (TBCM) to a "
         f"structurally distinct continuum model (BM). \\emph{{Baseline}} is the best "
         f"of the three regressor families fit on the target alone; "
@@ -186,7 +186,7 @@ def table2(bm, tbcm, n_star=50):
         f"Transfer is only worth its source when it beats the baseline column. A "
         f"negative source-alone value means the unadapted BCM source is less "
         f"accurate than predicting the mean output.}}",
-        "\\label{tab:aim2}",
+        "\\label{tab:q2}",
         "\\begin{tabular}{lcccc}", "\\toprule",
         "Target (fidelity) & Source alone & Baseline & Opt.\\ transfer & TabPFN \\\\",
         "\\midrule",
