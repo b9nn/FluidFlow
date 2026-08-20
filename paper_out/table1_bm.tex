@@ -1,0 +1,26 @@
+\begin{table}[t]
+\centering
+\small
+\caption{Aim 1. Accuracy ($R^2$, upper block) and range-normalised RMSE (lower block) on the far BM target at $N=50$ target simulations, mean over 5 seeds. Best per row in bold. The \emph{target alone} columns are each regressor family fit on the $N$ target rows with no source; \emph{optimized transfer} adds the BCM source through the blended procedure of Sec.~2.2.}
+\label{tab:aim1}
+\begin{tabular}{l|ccc|ccc|c}
+\toprule
+& \multicolumn{3}{c|}{Fit on target alone} & \multicolumn{3}{c|}{Optimized transfer} & No source \\
+Output & PR & RF & NN & PR & RF & NN & TabPFN \\
+\midrule
+\multicolumn{8}{l}{\textit{$R^2$ (higher is better)}} \\
+F0 & 0.85 & 0.60 & 0.79 & 0.85 & 0.77 & 0.85 & \textbf{0.89} \\
+SPL & 0.72 & 0.69 & 0.68 & 0.72 & 0.67 & 0.72 & \textbf{0.81} \\
+ACFL & 0.89 & 0.78 & 0.85 & 0.89 & 0.79 & 0.87 & \textbf{0.92} \\
+PC & 0.57 & 0.60 & 0.36 & 0.61 & 0.58 & 0.47 & \textbf{0.71} \\
+CPP & 0.36 & 0.40 & -0.04 & 0.41 & 0.38 & 0.03 & \textbf{0.47} \\
+\midrule
+\multicolumn{8}{l}{\textit{nRMSE (lower is better)}} \\
+F0 & 0.09 & 0.14 & 0.10 & 0.09 & 0.11 & 0.09 & \textbf{0.08} \\
+SPL & 0.07 & 0.07 & 0.07 & 0.07 & 0.07 & 0.06 & \textbf{0.05} \\
+ACFL & 0.07 & 0.09 & 0.08 & 0.07 & 0.09 & 0.07 & \textbf{0.06} \\
+PC & 0.15 & 0.14 & 0.18 & 0.14 & 0.15 & 0.16 & \textbf{0.12} \\
+CPP & 0.16 & 0.15 & 0.20 & 0.15 & 0.16 & 0.19 & \textbf{0.15} \\
+\bottomrule
+\end{tabular}
+\end{table}

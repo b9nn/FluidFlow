@@ -20,3 +20,8 @@ models/
 figs/
 
 test.py
+# --- LATEX BUILD ARTIFACTS ---
+*.aux
+*.log
+*.out
+*.synctex.gz

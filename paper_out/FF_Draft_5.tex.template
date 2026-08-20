@@ -1,0 +1,423 @@
+% ---------------------------------------------------------------------------
+% FluidFlow paper, Draft 5.
+%
+% This file is a TEMPLATE. Every doubled-at token is substituted with a value read from
+% paper_out/numbers.json by build_draft5.py, which is itself generated from the
+% experiment result JSONs. No statistic in this document is typed by hand.
+%
+% Draft 5 = Draft 4 with the missing statistics filled in. Prose outside the
+% Results/Methods numbers is preserved from Draft 4 as written.
+% ---------------------------------------------------------------------------
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage[hidelinks]{hyperref}
+\usepackage{authblk}
+\usepackage{xcolor}
+
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+\newcommand{\note}[1]{\textcolor{blue}{[#1]}}
+
+\title{Data-efficient surrogates for vocal-fold models:\\
+a comparison of low-$N$ regression strategies}
+\author[1]{Benjamin Gladney}
+\author[1]{Callum Camazzola}
+\author[2]{Jes\'us Parra}
+\author[2]{Emiro Ibarra}
+\author[1]{Sean D. Peterson}
+\author[2]{Mat\'ias Za\~nartu}
+\affil[1]{University of Waterloo}
+\affil[2]{Universidad T\'ecnica Federico Santa Mar\'ia}
+\date{Draft 5, @@DATE@@}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Physically based vocal-fold models predict phonatory outputs from muscle
+activations and subglottal pressure but are expensive to evaluate, so
+machine-learning surrogates are used in their place. Surrogate accuracy, however,
+collapses when only a handful of simulations are available. Low sample use cases
+are especially relevant in subject-specific clinical use, where 10 to 100 target
+samples may be all that can be obtained. Transfer learning was the natural
+remedy: train a surrogate on a cheap source model (a body-cover model, BCM) and
+adapt it to an expensive target with a few target simulations. This has been
+shown to work between closely related lumped models, for example BCM to
+Triangular Body Cover Model (TBCM). Here we ask whether it extends to a
+higher-fidelity target: a structurally distinct finite-element Beam and Membrane
+(BM) model. It does not. Used on BM without adaptation the BCM source is far less
+accurate than predicting each output's mean ($F_0$ $R^2 = @@BM_SOURCE_F0@@$), and
+the optimized transfer methods built on it improve on the same regressor fit to
+the target data alone by only @@BM_GAIN_N50@@ $R^2$ on average at $N=50$, against
+a gain of @@TBCM_GAIN_N50@@ on the aligned target. We show that a no-source
+alternative closes this gap. TabPFN, a tabular transformer pretrained once and
+then frozen, fits a task in-context with no source model and no training. On the
+far BM target it is the most accurate method from $N=@@BM_TABPFN_FROM_N@@$ upward
+($F_0$ $R^2 = @@BM_TABPFN_F0@@$ at $N=50$) and it reconstructs the full
+$(a_{CT} \times a_{TA})$ activation map with lower image-level error than transfer
+at every sample size tested. On the aligned TBCM target, where the source is a
+genuinely good prior, optimized transfer remains ahead at the smallest sample
+sizes ($F_0$ $R^2 = @@TBCM_TRANS_F0_N10@@ $ versus @@TBCM_TABPFN_F0_N10@@ at
+$N=10$) and TabPFN overtakes it from $N=@@TBCM_TABPFN_FROM_N@@$. The practical
+consequence is that the no-source model is the only one of the seven that is
+strong on both targets without needing a source to be available or well matched,
+whereas transfer is competitive only when the source is already close. We limit
+our conclusions to the methods, targets, and forward setting studied.
+\end{abstract}
+
+\section{Introduction}
+
+Physically based models of the vocal folds, such as lumped body-cover models and
+higher-fidelity continuum (finite-element) models, predict phonatory outputs from
+muscle activations and subglottal pressure, but are costly to evaluate at scale.
+Prior work showed that machine-learning surrogates can replace these simulations
+for the forward problem, yet their accuracy degrades sharply when few training
+simulations are available. That degradation motivated transfer learning: train a
+surrogate on a cheap source model (the body-cover model, BCM) and adapt it to an
+expensive target with a small number of target simulations. In practice,
+obtaining data from complicated models is costly, so being able to circumvent
+that with a machine learning surrogate is ideal. This transfer has been shown to
+succeed between closely related lumped models (BCM to TBCM).
+\todo{insert citation}
+
+That prior result raises the question this paper investigates: does the
+transfer-learning approach extend from closely related lumped models to a
+higher-fidelity target? A cheap source helps only while it remains a good prior
+for the target, and a finite-element model is both more detailed than the lumped
+source and structurally unlike it, so whether the established approach carries
+over is not obvious. Our central question, and its fallback, is therefore:
+
+\begin{quote}
+Does data-efficient, subject-specific surrogate modeling, shown to transfer
+between lumped vocal-fold models (BCM to TBCM), extend to a higher-fidelity
+target (BCM to BM)? And where transfer does not carry over, can a no-source
+pretrained model serve in its place?
+\end{quote}
+
+We approach this in two steps. \textbf{Aim 1} (data efficiency,
+Sec.~\ref{sec:aim1}) measures three regressor families, polynomial, random
+forest, and neural network, each fit two ways: on the target data alone, to
+establish a baseline, and with optimized transfer learning from the source.
+\textbf{Aim 2} (fidelity extension, Sec.~\ref{sec:aim2}) tests whether the
+transfer benefit that holds on the aligned lumped target survives the move to the
+structurally distinct, higher-fidelity BM target. Throughout we also evaluate
+TabPFN~\cite{hollmann2023tabpfn}, a transformer pretrained once on millions of
+synthetic tabular problems and then frozen, which fits a new task in-context in a
+single forward pass with no per-task training and no source model. We let the
+results, not the premise, identify the strongest method, and we bound our
+conclusions to the methods and targets evaluated.
+
+\section{Methods}
+
+\subsection{Physical vocal-fold models and data}
+
+All models share the inputs (cricothyroid, thyroarytenoid, and lateral
+cricoarytenoid activations $a_{CT}$, $a_{TA}$, $a_{LCA}$, and subglottal pressure
+$P_s$) and the base outputs $F_0$ and SPL; the richer physiological outputs
+(Sec.~\ref{sec:aim3}) are added for the targets. All surrogates are fit on the
+fixed input schema $[a_{CT}, a_{TA}, P_s]$. The three models span a deliberate
+range of source--target fidelity:
+
+\begin{itemize}
+  \item \textbf{Body-Cover Model (BCM), source.} A lumped-element model and the
+  cheap source (@@SOURCE_ROWS@@ samples) for all transfer methods.
+  \item \textbf{Triangular Body-Cover Model (TBCM), aligned target.}
+  Lumped-element, the same modeling family as BCM, so the source--target gap is
+  small. @@TBCM_ROWS@@ samples, drawn on a $40 \times 40$
+  ($a_{CT} \times a_{TA}$) grid across 31 lung-pressure levels, providing dense
+  ODE ground-truth activation maps (Sec.~\ref{sec:aim2}). This is the near target
+  for Aim 2.
+  \item \textbf{Beam and Membrane (BM), far target.} A finite-element continuum
+  model; the expensive, structurally distinct target. Relative to the lumped BCM
+  source it is the far target, where the low-$N$ question is sharpest and the
+  fidelity gap is largest. @@BM_ROWS@@ phonating samples (filtered
+  $\mathrm{ACFL} > 30$ from 5000 simulations).
+\end{itemize}
+
+The BCM to BM gap is not merely one of accuracy but of representation: BM
+resolves distributed tissue displacement fields where BCM lumps them into a few
+masses, so quantities such as AC flow can differ in definition and scale between
+the two (Sec.~\ref{sec:aim3}). \todo{add model equations and refs; cite Parra
+TBCM and the BM solver; state the BCM to BM structural differences precisely.}
+
+\subsection{Low-$N$ regression strategies}
+\label{sec:methods}
+
+We evaluate three standard regressor families, each fit two ways, plus a
+pretrained no-source model, giving seven configurations under one protocol.
+
+\paragraph{Regressors fit on the target alone (baseline).}
+To measure what transfer learning actually contributes, we first fit each
+regressor family on the target data by itself, with no source model. This is not
+a proposed method but a reference point: if a transfer method cannot beat the
+same regressor trained on the target data alone, the source has added nothing.
+Every transfer and no-source result below is read against this reference.
+
+\begin{itemize}
+  \item \textbf{Polynomial (PR).} Degree-@@POLY_DEGREE@@ polynomial features on
+  standardised inputs, followed by ridge regression whose penalty is selected per
+  target by leave-one-out generalised cross-validation over
+  $\alpha \in [10^{-3}, 10^{4}]$ (15 log-spaced values). The ridge penalty is
+  what makes the degree-@@POLY_DEGREE@@ basis usable at $N=10$, where the
+  feature count exceeds the sample count.
+  \item \textbf{Random forest (RF).} @@RF_TREES@@ trees throughout, with depth and
+  leaf size scaled to the sample count so that capacity tracks the data
+  available: @@RF_SCHEDULE@@. Tree count does not drive overfitting in a bagged
+  ensemble, so it is held fixed and capacity is controlled by depth.
+  \item \textbf{Neural network (NN).} A feed-forward network with two hidden
+  layers of @@NN_HIDDEN@@ ReLU units and one linear output per target, trained
+  full-batch with Adam (learning rate @@NN_LR@@, weight decay @@NN_WD@@) for
+  @@NN_EPOCHS@@ epochs on standardised inputs and outputs. The source-pretrained
+  copy used by the transfer variant is trained on a @@NN_SRC_SUB@@-row subsample
+  of the source for @@NN_SRC_EPOCHS@@ mini-batch epochs at learning rate
+  @@NN_SRC_LR@@.
+\end{itemize}
+
+Per-domain standardisation is used throughout: each domain fits its own input
+scaler and its own per-output scalers, and no scaler is ever shared across
+domains.
+
+\paragraph{Optimized transfer learning (per family).}
+Each family also appears as an optimized transfer method, and the procedure is
+identical for all three. A source model of that family is pretrained on BCM and
+combined with three sub-models fit on the $N$ target rows:
+
+\begin{enumerate}
+  \item \textbf{target-only}: the family fit on $(X, Y)$ (this is exactly the
+  baseline above);
+  \item \textbf{residual correction}: the family fit on
+  $(X,\ Y - \hat{Y}_{\text{src}})$, predicting $\hat{Y}_{\text{src}} + f(X)$;
+  \item \textbf{feature augmentation}: the family fit on
+  $([X, \hat{Y}_{\text{src}}],\ Y)$, taking the source prediction as an extra
+  input.
+\end{enumerate}
+
+The three are blended per output by non-negative weights that sum to one. The
+weights are fit on \emph{out-of-fold} sub-model predictions
+($K = \min(5, N)$-fold), not on the training rows themselves. This matters: if
+the weights are fit in-sample, the target-only sub-model can win weight purely by
+memorising the $N$ training rows, which would bias the transfer method toward the
+baseline and make ``transfer $\approx$ baseline'' an artifact of the blending
+rather than a finding. Out-of-fold stacking gives the source-dependent sub-models
+their fair chance to earn weight.
+
+\paragraph{TabPFN (no source).}
+A pretrained tabular transformer applied with per-output standardisation, one
+single-output head per output. No training beyond the in-context fit, and no
+source model.
+
+\paragraph{Evaluation.}
+For each training size $N \in \{@@N_GRID@@\}$, every method trains on the same
+$N$ target rows and is evaluated on the same disjoint held-out pool of up to
+@@TEST_POOL@@ rows, reporting mean $\pm$ standard deviation over @@N_SEEDS@@
+seeds. We report accuracy ($R^2$) and a range-normalized RMSE,
+\begin{equation}
+\mathrm{nRMSE} = \frac{\sqrt{\frac{1}{n}\sum_i (y_i - \hat{y}_i)^2}}
+                      {\max_i y_i - \min_i y_i},
+\end{equation}
+rather than MAPE, because SPL, collision pressure, and CPP cross zero, which
+makes a percentage error ill-defined. Reporting a normalized RMSE alongside $R^2$
+also allows direct comparison against prior surrogate work that reports error
+rather than variance explained. All methods share the same splits and seeds, so
+differences reflect the method rather than the data draw.
+
+\section{Results}
+
+\subsection{Aim 1, data efficiency: accuracy versus training size}
+\label{sec:aim1}
+
+On the far (BM) target, TabPFN attains the highest $R^2$ and the lowest
+normalized RMSE in @@BM_TABPFN_COVERAGE@@, and is the best method at every
+training size from $N=@@BM_TABPFN_FROM_N@@$ upward (Fig.~\ref{fig:aim1},
+Table~\ref{tab:aim1}). At the two smallest sizes it is matched, on $F_0$, by the
+neural network fit on the target alone (@@BM_NN_BASE_F0_N10@@ versus
+@@BM_TABPFN_F0_N10@@ at $N=10$); with @@N_SEEDS@@ seeds these two are within each
+other's spread, so we read them as tied rather than ordered. The cheap BCM source is a poor prior for the
+finite-element BM model. Used on BM without adaptation it reaches an $F_0$ $R^2$
+of @@BM_SOURCE_F0@@, far less accurate than simply predicting each output's
+average value, so the transfer methods have nothing useful to build on and gain
+little over fitting the same regressor on the target data alone: averaged over
+the three families and five outputs, optimized transfer improves on the baseline
+by @@BM_GAIN_N50@@ $R^2$ at $N=50$ and @@BM_GAIN_N500@@ at $N=500$
+(Table~\ref{tab:aim1}). TabPFN, which needs no source at all, is ahead of both by
+@@BM_TABPFN_MARGIN_N50@@ $R^2$ on average at $N=50$. The richer physiological
+outputs (Sec.~\ref{sec:aim3}) follow the same ordering. As $N$ grows all methods
+converge toward high accuracy, and TabPFN stays in front from
+$N=@@BM_TABPFN_FROM_N@@$ onward.
+
+\input{table1_bm.tex}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{../Beam_Membrane/figs/bm_ext_metrics_vs_n.png}
+\caption{\textbf{Aim 1, data efficiency.} Accuracy and error versus training size
+on the far BM target (all five outputs): $R^2$ (top) and normalized RMSE (bottom)
+versus $N$ for the regressors fit on the target alone (dashed, our baseline), the
+optimized transfer methods (solid), and TabPFN (thick blue), mean $\pm$ s.d. over
+@@N_SEEDS@@ seeds. Colour encodes the regressor family and line style the
+variant, so each baseline/transfer pair can be read directly: the two curves of a
+colour nearly coincide on this target, which is the visual form of the result
+that the BCM source adds little. The source-alone $R^2$, annotated per panel,
+falls far below the axis and illustrates the poor BCM prior on this target.}
+\label{fig:aim1}
+\end{figure}
+
+\subsection{Aim 2, model complexity: when does transfer help?}
+\label{sec:aim2}
+
+Whether the source helps at all is judged against the baseline, each regressor fit
+on the target data alone. On the aligned lumped target (TBCM, the same family as
+the BCM source), the source is already a strong prior, by itself reaching an $F_0$
+$R^2$ of @@TBCM_SOURCE_F0@@ with no target data, and optimized transfer clears the
+baseline, raising the $F_0$ $R^2$ from @@TBCM_BASE_F0@@ to @@TBCM_TRANS_F0@@ at
+$N=50$. On the far continuum target (BM), the same source reaches an $F_0$ $R^2$
+of @@BM_SOURCE_F0@@, less accurate than guessing each output's average value, and
+transfer does not clear the baseline at all: the best target-alone family reaches
+an $F_0$ $R^2$ of @@BM_BASE_F0_3@@ and the best transfer variant
+@@BM_TRANS_F0_3@@, a difference of @@BM_F0_DELTA@@. The source is not merely
+unhelpful here, it is dead weight. Transfer's
+payoff therefore tracks how close the source is to the target, exactly the
+principle it rests on.
+
+TabPFN, which uses no source, is the strongest method on BM from
+$N=@@BM_TABPFN_FROM_N@@$ upward and on TBCM from $N=@@TBCM_TABPFN_FROM_N@@$
+upward, with an $F_0$ $R^2$ of @@TBCM_TABPFN_F0@@ on TBCM and @@BM_TABPFN_F0@@ on
+BM at $N=50$. It is not uniformly best: on the aligned target at the smallest
+sample sizes, optimized transfer is clearly ahead of it
+(@@TBCM_TRANS_F0_N10@@ versus @@TBCM_TABPFN_F0_N10@@ at $N=10$). That exception is
+not a counterexample to the principle but an instance of it. Transfer wins
+exactly where a well-aligned source is available and target data is scarcest,
+which is the regime transfer was designed for; the moment the source stops being a
+good prior, as on BM, that advantage disappears entirely. What the no-source model
+buys is not universal superiority but insensitivity to the fidelity gap. Its
+worst shortfall against the best method in any target-and-sample-size combination
+we tested is @@TABPFN_WORST_DEFICIT@@ $R^2$, and it occurs on the aligned target
+where a good source exists; the transfer family's worst shortfall is
+@@TRANSFER_WORST_DEFICIT@@ $R^2$, and it occurs on the far target where no good
+source is available and none can be substituted.
+
+\input{table2_fidelity.tex}
+
+Beyond point accuracy, a useful surrogate must reconstruct the physiological
+structure of the $(a_{CT} \times a_{TA})$ control space. On TBCM, which carries a
+dense ODE ground-truth map on the complete $40 \times 40$ grid, TabPFN
+reconstructs the full motor-control surface to an image-level $R^2$ above 0.9
+from $N=@@TBCM_MAP_N@@$ samples and converges to the ground truth by $N=1000$. It
+has lower image-level error than optimized transfer at @@TBCM_MAP_WINS@@
+(Fig.~\ref{fig:aim2}); below that, transfer reconstructs the surface better,
+mirroring the point-accuracy ordering on this aligned target. On BM the
+separation is unambiguous: against a dense full-data reference TabPFN has the
+lower image-level error at @@BM_MAP_WINS@@, reaching an image-level $R^2$ above
+0.9 by $N \approx @@BM_MAP_N@@$, while the transfer surface stays blocky and
+dragged toward the misaligned source and never separates from the target-alone
+baseline.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.92\textwidth]{../TBCM/figs/tbcm_motor_map_F0.png}
+\caption{\textbf{Activation-map reconstruction (TBCM, real ODE ground truth).}
+$F_0$ motor-control map over $(a_{CT}, a_{TA})$ on the complete $40 \times 40$
+grid at $P_L = 1250$~Pa. Columns: ODE ground truth, TabPFN, optimized transfer;
+rows: increasing $N$ (10/100/1000). Image-level nRMSE over all 1600 cells is
+given per panel. TabPFN recovers the correct structure from small samples; the
+transfer surface is distorted at low $N$ and sharpens only as $N$ grows.}
+\label{fig:aim2}
+\end{figure}
+
+\subsection{Aim 3, richer physiological outputs}
+\label{sec:aim3}
+
+$F_0$ and SPL are the conventional surrogate targets, but clinical use turns on
+quantities that describe tissue loading and voice quality. We therefore extend
+the BM target with three further outputs: AC glottal flow (ACFL), peak collision
+pressure (PC), and cepstral peak prominence (CPP). The BM dataset was regenerated
+row-aligned to the original 5000 operating points so that these outputs
+correspond to exactly the same simulations as the existing $F_0$ and SPL values.
+
+The ordering of methods is unchanged on the richer outputs: at $N=50$ TabPFN
+leads on @@AIM3_TABPFN_WINS@@ of the five outputs, and the mean transfer gain over
+the target-alone baseline across ACFL, PC and CPP is @@AIM3_GAIN@@ $R^2$
+(Table~\ref{tab:aim1}). What does change is the difficulty ranking. ACFL is the
+easiest output for every method (TabPFN $R^2 = @@BM_TABPFN_ACFL@@$ at $N=50$),
+while CPP is by a clear margin the hardest (TabPFN $R^2 = @@BM_TABPFN_CPP@@$),
+with PC intermediate ($R^2 = @@BM_TABPFN_PC@@$). CPP is a cepstral voice-quality
+measure computed from the radiated pressure waveform rather than a direct
+mechanical quantity, and it is the output least determined by the three input
+activations alone, which is the most likely reason no method reaches high
+accuracy on it at any $N$ we tested. This is a limit of the input
+parameterisation rather than of any one regressor.
+
+\section{Discussion}
+
+The two aims resolve into one picture. On data efficiency, a pretrained tabular
+transformer is the strongest low-$N$ surrogate among the methods tested on the far
+target, and is either the best or within @@TABPFN_WORST_DEFICIT@@ $R^2$ of the
+best on the aligned one. On model complexity, the benefit of transfer
+learning is governed by how close the source is to the target: it is large when
+the target is close to the cheap source (TBCM) and negligible when the target is a
+structurally distinct, higher-fidelity model (BM). Because TabPFN needs no source
+model or source data, it is insensitive to that fidelity gap, needing neither a
+well-aligned source nor the per-domain pretraining a source demands.
+
+We state these conclusions narrowly. They hold for the seven configurations
+evaluated, the two targets studied (TBCM and BM), and the forward problem; they
+do not establish that TabPFN is optimal in general, nor do they speak to methods
+we did not test (for example, physics-informed networks) or to targets and output
+sets we did not examine.
+
+In particular, our result should not be read as a claim that transfer learning
+requires structural similarity in general. It says that \emph{this} source, under
+\emph{these} transfer procedures, does not carry to \emph{this} continuum target.
+Transfer has been applied successfully between models that are architecturally
+quite dissimilar, including from a triangular body-cover model to clinical
+measurements, where the source and target differ far more than BCM and BM do.
+\note{Emiro: please add the citation for the TBCM-to-clinical transfer work here,
+and correct this characterisation if it misstates the setup.} What our result
+isolates is narrower and, we think, more useful: a source that is a poor
+\emph{predictive} prior for the target, as measured by its unadapted accuracy on
+the target, cannot be rescued by these blending procedures at low $N$. Unadapted
+source accuracy, rather than architectural kinship, is the quantity worth
+checking before investing in a transfer pipeline.
+
+\paragraph{Transfer learning for a no-source model (future work).}
+Because TabPFN wins at low $N$ but has no weights to fine-tune, giving it a form
+of transfer is an open direction: rather than weight transfer, a linear
+combination of source-fit and target-fit in-context models may import source
+structure while preserving the no-training property. \todo{report feasibility
+once explored.}
+
+\paragraph{A property under missing data (future work).}
+A pretrained in-context model can also be queried when parts of the input space
+are unobserved. In preliminary experiments, TabPFN reconstructs held-out regions
+of the control space and degrades gracefully as the missing fraction grows.
+Because this is not straightforwardly comparable across all methods, we note it
+here as a direction rather than a result.
+
+\section{Conclusion}
+
+Across a controlled comparison of three regressor families (each fit on the target
+alone and with transfer) and a pretrained tabular transformer, on targets spanning
+a range of source fidelity, two findings hold. First, a pretrained in-context
+model is the most accurate low-$N$ surrogate on the structurally distinct target,
+with no source and no training, and is competitive on the aligned one, where
+optimized transfer leads at the smallest sample sizes.
+Second, the payoff of transfer learning is set by how close the source is to the
+target: substantial for a closely related lumped target, where it is the best
+method of all at the smallest sample sizes, and negligible for a far continuum
+target, where it does not improve on fitting the target data alone. A no-source
+in-context model sidesteps that dependence, which is what makes it the safer
+default when the source--target relationship is unknown. We present this as a
+finding about the methods and targets evaluated, not as a universal claim.
+
+\begin{thebibliography}{9}
+\bibitem{hollmann2023tabpfn}
+N.~Hollmann, S.~M\"uller, K.~Eggensperger, and F.~Hutter,
+``TabPFN: A transformer that solves small tabular classification problems in a
+second,'' in \emph{International Conference on Learning Representations (ICLR)},
+2023.
+\end{thebibliography}
+
+\end{document}

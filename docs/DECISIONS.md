@@ -136,3 +136,40 @@ df.rename(columns={'Ps': 'PS'}, inplace=True)
 **Decision:** Keep both. `PROJECT_GUIDE.md` is preserved as Callum's hands-on guide for `Beam_Membrane/` and `TBCM/`. `README.md` and `docs/` are the canonical entry points.
 **Why:** The two docs serve subtly different purposes (Callum's is method-focused with empirical tables; ours is repo-wide with conventions). Folding them risks losing his framing. Better to cross-link.
 **Where it shows up:** `README.md` nav table, `CLAUDE.md` repo map.
+
+## 2026-06-16 — JASA TBCM TabPFN experiments: scope & design choices
+
+**Context:** Jesus shared the enriched multidimensional TBCM dataset (`JASA_data.csv`, 80,751 rows) per the 2026-06-04 advisor meeting. Three experiments requested: multi-dimensional features, missing-data extrapolation, compute-time vs data size.
+**Decision:**
+- Inputs kept to the fixed schema `[a_CT, a_TA, PS]`; richer columns (`a_LCA`, `PL`, `PCA`, `PGO`) dropped. Dimensionality expansion applied to **outputs** only.
+- Output set = 6 clinical features: `F0, SPL, ACFL (AC flow), PC (collision pressure), MFDR, CPP`. All NaN-free; matches the meeting's named metrics.
+- Missing-data holdout = high-activation corner `a_CT > 0.7 AND a_TA > 0.7` (6,364 rows, ~7.9%). A same-size random holdout is reported alongside as an in-distribution reference, to isolate the extrapolation penalty.
+- Train size capped at 1000 (small-data regime + TabPFN cloud cap `TABPFN_MAX_TRAIN=1000`); the 80k rows are only a sampling pool, never a training set. N grid `[10,50,100,200,500,1000]`, 2 seeds, 300-row test set — trimmed to keep the cloud-API run ~10 min.
+**Why:** `ACFL`→AC flow and `PC`→collision pressure are the meeting's explicit clinical targets; the corner holdout mimics clinical data that never samples extreme muscle activations. Runtime is dominated by per-call network latency to the tabpfn-client cloud API, not by dataset size, so the lever is call count (seeds × N × features), not row count.
+**Where it shows up:** `TBCM/JASA_TabPFN_Experiments.py`, `TBCM/dataset_JASA.csv`, `TBCM/results/jasa_tabpfn_results.json`, `TBCM/figs/jasa_*.png`.
+
+## 2026-08-20 — Draft 5 statistics run: protocol, blend weights, RF schedule
+
+**Context:** Draft 4 shipped with placeholder numbers in Table 1 (all three baseline columns carried the same value per row), no target-alone baseline anywhere in the codebase, and no figure for `bm_ext_metrics_vs_n.png` or `tbcm_motor_map_F0.png`. Callum owned "finalize all results and figures by Aug 20" from the 2026-08-06 advisor meeting.
+**Decision:**
+- **One protocol for all seven configurations.** N ∈ {10,20,50,100,200,500}, 5 seeds, disjoint held-out pool of up to 1000 rows, R² and range-normalised RMSE — matching what Draft 4's Methods section already claimed. Superseded `BM_FiveMethod.py` (3 seeds, 500-row pool, no phonation filter).
+- **BM target filtered to `ACFL > 30`** → 4,647 of 5,000 rows, matching the count Draft 4 states. Non-phonating rows have spurious F0.
+- **The optimized transfer procedure is identical across PR, RF and NN**: source model + target-only + residual-correction + feature-augmentation sub-models, blended by non-negative weights. Previously only RF used the blend; PR was residual-only and NN was a fine-tune, so the draft's claim that "the same procedure" was applied to all three was not true of the code.
+- **Blend weights are fit on out-of-fold (K = min(5,N)) sub-model predictions**, not in-sample.
+- **Recalibrated `get_model_params`**: 300 trees throughout, capacity controlled by depth (3/6/10/unlimited at N < 50 / 250 / 1000 / above). The previous schedule set `min_samples_leaf = max(10, n//10)`, which forces every tree to a stump at N ≤ 100 and made the RF baseline a mean-predictor in the low-N regime the paper is about.
+**Why:** The paper's central claim is "transfer barely beats the target-alone baseline on BM". In-sample blend weights let the target-only sub-model win weight by memorising the N training rows, which would have produced that result as an artifact of the blending rather than as a finding. Out-of-fold stacking gives the source-dependent sub-models a fair chance to earn weight — and they still don't help on BM (measured mean weight on the target-only sub-model at N=50 is 0.45, i.e. not degenerate). The result survives the stronger test.
+**Where it shows up:** `paper_methods.py`, `Beam_Membrane/BM_PaperStats.py`, `TBCM/TBCM_PaperStats.py`, `TBCM/TBCM_MotorMaps.py`, `Beam_Membrane/BM_PaperFigures.py`, `paper_out/`.
+
+## 2026-08-20 — Draft 4's "TabPFN wins on both targets" does not survive the rerun
+
+**Context:** Draft 4 asserts TabPFN "is the strongest method at low N on both the aligned (TBCM) and the higher-fidelity (BM) target".
+**Decision:** Report the measured result instead: TabPFN is best on BM from N=50 upward and on TBCM from N=100 upward. On TBCM at N=10–50 the optimized transfer methods beat it (F0 R² 0.93 vs 0.78 at N=10). Draft 5 states this and reframes the takeaway as *insensitivity to the fidelity gap* rather than uniform superiority.
+**Why:** The exception is not a problem for the paper — it is the alignment principle operating. Transfer wins exactly where a well-aligned source exists and target data is scarcest, and loses that advantage entirely on BM. Claiming uniform superiority would have been contradicted by our own TBCM numbers, which Jesús and Emiro can now reproduce from the repo.
+**Where it shows up:** `paper_out/FF_Draft_5.tex` abstract, Sec. 3.1, Sec. 3.2, Conclusion; `paper_out/sanity_check.py` check [5] reports every cell where TabPFN is not best.
+
+## 2026-08-20 — `BM_TabPFN_SingleVsJoint.py` is degenerate; the "~0.05 gap" claim has no experiment
+
+**Context:** The Draft-2 figure map lists a Sec 3.3 claim that a joint multi-output TabPFN head trails single-output heads by ~0.05 R².
+**Decision:** Treat the claim as unsupported and leave it out of Draft 5 (Draft 4 had already dropped it).
+**Why:** `_joint_head` standardises Y with a single `StandardScaler` over the whole output block, but `StandardScaler` standardises each column independently, so the "joint" head is mathematically identical to the "single" head. `results/bm_tabpfn_single_vs_joint.json` confirms it: the two are bit-for-bit equal and the recorded `mean_gap_single_minus_joint` is exactly 0.0. A real joint-head test needs a genuinely multi-output estimator, which `TabPFNRegressor` is not.
+**Where it shows up:** `Beam_Membrane/BM_TabPFN_SingleVsJoint.py`, `Beam_Membrane/results/bm_tabpfn_single_vs_joint.json`.
