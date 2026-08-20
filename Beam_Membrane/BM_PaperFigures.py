@@ -135,7 +135,10 @@ def table1(bm, n_star=50):
         f"mean over {bm['_meta']['n_seeds']} seeds. Best per row in bold. The "
         f"\\emph{{target alone}} columns are each regressor family fit on the $N$ "
         f"target rows with no source; \\emph{{optimized transfer}} adds the BCM "
-        f"source through the blended procedure of Sec.~2.2.}}",
+        f"source through the blended procedure of Sec.~2.2. At $N=200$, $F_0$ reaches "
+        f"{bm['r2']['RF_base']['200']['F0']['mean']:.2f} (RF alone), "
+        f"{bm['r2']['RF_trans']['200']['F0']['mean']:.2f} (RF transfer), and "
+        f"{bm['r2']['TabPFN']['200']['F0']['mean']:.2f} (TabPFN).}}",
         "\\label{tab:q1}",
         "\\begin{tabular}{l|ccc|ccc|c}", "\\toprule",
         "& \\multicolumn{3}{c|}{Fit on target alone} & \\multicolumn{3}{c|}{Optimized transfer} & No source \\\\",
@@ -185,7 +188,9 @@ def table2(bm, tbcm, n_star=50):
         f"\\emph{{opt.\\ transfer}} is the best of the three transfer variants. "
         f"Transfer is only worth its source when it beats the baseline column. A "
         f"negative source-alone value means the unadapted BCM source is less "
-        f"accurate than predicting the mean output.}}",
+        f"accurate than predicting the mean output. Transfer clears the baseline "
+        f"when aligned and not at all when far; TabPFN needs no source and wins "
+        f"on the far target.}}",
         "\\label{tab:q2}",
         "\\begin{tabular}{lcccc}", "\\toprule",
         "Target (fidelity) & Source alone & Baseline & Opt.\\ transfer & TabPFN \\\\",

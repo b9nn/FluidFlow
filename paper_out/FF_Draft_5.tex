@@ -162,18 +162,14 @@ Every transfer and no-source result below is read against this reference.
   0.0001) for 800 epochs on standardised inputs and outputs.
 \end{itemize}
 
-Each domain fits its own input scaler and its own per-output scalers; no scaler
-is shared across domains.
-
 \paragraph{Optimized transfer learning (per family).}
 Each family also appears as an optimized transfer method: the source model
 (per-domain pretraining on BCM) is combined with a sub-model fit on the target
 alone, a residual-correction sub-model, and a feature-augmentation sub-model,
 blended by non-negative weights fit on the target sample. The same procedure is
 applied to all three families. The blend weights are fit on out-of-fold sub-model
-predictions ($K = \min(5, N)$-fold) rather than on the training rows themselves,
-so that the target-only sub-model cannot take weight by fitting the same $N$ rows
-the weights are estimated on. The neural-network source model is pretrained on a
+predictions ($K = \min(5, N)$-fold) rather than on the training rows themselves.
+The neural-network source model is pretrained on a
 20,000-row subsample of the source for 300 mini-batch
 epochs at learning rate 0.001.
 
@@ -202,9 +198,7 @@ seeds, so differences reflect the method rather than the data draw.
 
 On the far (BM) target, TabPFN attains the highest $R^2$ and the lowest
 normalized RMSE from $N=50$ upward, with the largest margins in
-the low-$N$ regime (Fig.~\ref{fig:q1}, Table~\ref{tab:q1}); at the two smallest
-sizes it and the neural network fit on the target alone are within each other's
-spread. The cheap BCM source is a poor prior for the finite-element BM model.
+the low-$N$ regime (Fig.~\ref{fig:q1}, Table~\ref{tab:q1}). The cheap BCM source is a poor prior for the finite-element BM model.
 Used on BM without adaptation it is less accurate than simply predicting each
 output's average value, so the transfer methods have nothing useful to build on
 and gain little over fitting the same regressor on the target data alone: their
