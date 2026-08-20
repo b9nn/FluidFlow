@@ -17,6 +17,9 @@
 \usepackage[hidelinks]{hyperref}
 \usepackage{authblk}
 \usepackage{xcolor}
+% keep each float inside the subsection that discusses it, so a table
+% cannot drift into the middle of the sentence that introduces it
+\usepackage{placeins}
 
 \newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
 \newcommand{\note}[1]{\textcolor{blue}{[#1]}}
@@ -265,6 +268,7 @@ falls far below the axis and illustrates the poor BCM prior on this target.}
 \label{fig:aim1}
 \end{figure}
 
+\FloatBarrier
 \subsection{Aim 2, model complexity: when does transfer help?}
 \label{sec:aim2}
 
@@ -327,6 +331,7 @@ transfer surface is distorted at low $N$ and sharpens only as $N$ grows.}
 \label{fig:aim2}
 \end{figure}
 
+\FloatBarrier
 \subsection{Aim 3, richer physiological outputs}
 \label{sec:aim3}
 
@@ -350,6 +355,7 @@ activations alone, which is the most likely reason no method reaches high
 accuracy on it at any $N$ we tested. This is a limit of the input
 parameterisation rather than of any one regressor.
 
+\FloatBarrier
 \section{Discussion}
 
 The two aims resolve into one picture. On data efficiency, a pretrained tabular

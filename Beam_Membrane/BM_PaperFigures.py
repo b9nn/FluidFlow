@@ -129,7 +129,7 @@ def table1(bm, n_star=50):
     key = str(n_star)
 
     lines = [
-        "\\begin{table}[t]", "\\centering", "\\small",
+        "\\begin{table}[htbp]", "\\centering", "\\small",
         f"\\caption{{Aim 1. Accuracy ($R^2$, upper block) and range-normalised RMSE "
         f"(lower block) on the far BM target at $N={n_star}$ target simulations, "
         f"mean over {bm['_meta']['n_seeds']} seeds. Best per row in bold. The "
@@ -177,7 +177,7 @@ def table2(bm, tbcm, n_star=50):
         return f"{label} & " + " & ".join(cells) + " \\\\"
 
     lines = [
-        "\\begin{table}[t]", "\\centering", "\\small",
+        "\\begin{table}[htbp]", "\\centering", "\\small",
         f"\\caption{{Aim 2. Source--target fidelity. $F_0$ accuracy ($R^2$) at "
         f"$N={n_star}$ as the target moves from an aligned lumped model (TBCM) to a "
         f"structurally distinct continuum model (BM). \\emph{{Baseline}} is the best "
