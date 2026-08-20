@@ -179,6 +179,30 @@ def main():
         1 for o in bo
         if r2(bm, "TabPFN", N_STAR, o) >= max(r2(bm, c, N_STAR, o) for c in NON_TABPFN))
 
+    # How does optimized transfer place against the full method set on each
+    # target? This is the decision-relevant form of the alignment claim: not
+    # "how much does the source add" but "is transfer the method to reach for".
+    ALL_CFG = NON_TABPFN + ["TabPFN"]
+
+    def _trans_standing(d, ns):
+        outs = d["_meta"]["outputs"]
+        ranks, wins, cells = [], 0, 0
+        for n in ns:
+            for o in outs:
+                bt = max(r2(d, f"{f}_trans", n, o) for f in FAMILIES)
+                ordered = sorted((r2(d, c, n, o) for c in ALL_CFG), reverse=True)
+                ranks.append(1 + ordered.index(bt))
+                cells += 1
+                if bt > r2(d, "TabPFN", n, o):
+                    wins += 1
+        return float(np.mean(ranks)), wins, cells
+
+    LOW_N = [n for n in bm["_meta"]["n_grid"] if n <= 50]
+    tb_rank_lo, tb_win_lo, tb_cells_lo = _trans_standing(tb, LOW_N)
+    bm_rank_lo, bm_win_lo, bm_cells_lo = _trans_standing(bm, LOW_N)
+    _, bm_win_all, bm_cells_all = _trans_standing(bm, bm["_meta"]["n_grid"])
+    bm_rank_best = min(_trans_standing(bm, [n])[0] for n in bm["_meta"]["n_grid"])
+
     # Does any source-quality statistic predict realised transfer gain? Reported
     # in the Discussion with its p-value precisely because it does not reach
     # significance at this sample size.
@@ -196,6 +220,12 @@ def main():
     tok = {
         "DATE": dt.date.today().strftime("%B %-d, %Y"),
         "N_PAIRS": str(len(pairs)),
+        "TBCM_TRANS_RANK_LO": f"{tb_rank_lo:.1f}",
+        "BM_TRANS_RANK_LO": f"{bm_rank_lo:.1f}",
+        "BM_TRANS_RANK_BEST": f"{bm_rank_best:.1f}",
+        "TBCM_TRANS_WINS_LO": f"{tb_win_lo} of {tb_cells_lo}",
+        "BM_TRANS_WINS_LO": f"{bm_win_lo} of {bm_cells_lo}",
+        "BM_TRANS_WINS_ALL": f"{bm_win_all} of {bm_cells_all}",
         "RHO_UNADAPTED": f"{rho_u:+.2f}",
         "P_UNADAPTED": f"{p_u:.2f}",
         "RHO_RANK": f"{rho_r:+.2f}",
@@ -248,6 +278,7 @@ def main():
         "BM_MIN_RHO": f"{min(v['spearman'] for v in sd['BM']['outputs'].values()):.2f}",
         "TBCM_GAIN_MEAN": f"{np.mean([mean_gain(tb, n, to) for n in tb['_meta']['n_grid']]):+.2f}",
         "BM_GAIN_MEAN": f"{np.mean([mean_gain(bm, n, bo) for n in bm['_meta']['n_grid']]):+.2f}",
+        "BM_TRANS_GAIN_N50_3": f"{best_of(bm, 'trans', 50, 'F0')[0] - best_of(bm, 'base', 50, 'F0')[0]:+.3f}",
         "BM_F0_GAIN_LO": f"{np.mean([r2(bm, f'{f}_trans', n, 'F0') - r2(bm, f'{f}_base', n, 'F0') for f in FAMILIES for n in [10, 20, 50]]):+.2f}",
         "TBCM_RESID_W": f"{np.mean([np.array(tb['weights'][f][str(n)]).mean(axis=0)[1] for f in FAMILIES for n in tb['_meta']['n_grid']]):.0%}".replace('%', r'\%'),
         "BM_TGT_W_LO": f"{np.mean([np.array(bm['weights'][f]['10']).mean(axis=0)[0] for f in FAMILIES]):.2f}",

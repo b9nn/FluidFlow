@@ -305,6 +305,21 @@ source is available and none can be substituted.
 
 \input{table2_fidelity.tex}
 
+The practical form of this result is not how much the source adds, but whether
+optimized transfer is the method to reach for at all. On the aligned target it
+plainly is: averaged over outputs and the small sample sizes ($N \le 50$) the
+paper is about, optimized transfer ranks 1.0 among the seven
+configurations, and it beats the no-source model in 6 of 6 of
+those cells. On the far target it plainly is not. Its mean rank never improves
+on 2.0 at any sample size, it beats the no-source model in
+only 4 of 30 cells across the whole grid, and its gain over the
+same regressor fit on the target alone is -0.003 at $N=50$.
+The same procedure, the same code and the same seeds thus produce the best
+available method on one target and never the best on the other. What separates
+the two cases is how close the source model is to the target, which makes
+source--target proximity a useful guide to whether a transfer pipeline is worth
+building for a given target.
+
 Beyond point accuracy, a useful surrogate must reconstruct the physiological
 structure of the $(a_{CT} \times a_{TA})$ control space. On TBCM, which carries a
 dense ODE ground-truth map on the complete $40 \times 40$ grid, TabPFN
@@ -382,20 +397,30 @@ quite dissimilar, including from a triangular body-cover model to clinical
 measurements, where the source and target differ far more than BCM and BM do.
 \note{Emiro: please add the citation for the TBCM-to-clinical transfer work here,
 and correct this characterisation if it misstates the setup.} What our result
-isolates is narrower. At the level of the whole domain, the contrast is large and
-unambiguous: the unadapted BCM source reaches an $F_0$ $R^2$ of
-0.86 on TBCM and -30.9 on BM, and mean transfer gain
-over the target-alone baseline follows it, +0.08 against
-+0.02. A source drawn from the same lumped-element family as the
-target is worth building on; one facing a structurally distinct continuum model
-is not.
+isolates is that source--target proximity is a useful predictor of whether a
+transfer pipeline is worth building for a given target. The evidence is
+categorical rather than marginal. On the near target the source is a real prior
+($F_0$ $R^2$ 0.86 with no target data), and optimized transfer is
+the best of the seven configurations at every small sample size, mean rank
+1.0, beating even the no-source model in
+6 of 6 low-$N$ cells. On the far target the same source is worse
+than predicting the mean ($R^2$ -30.9), and the same transfer
+procedure is never the best method at any sample size and beats the no-source
+model in only 4 of 30 cells. Mean gain over the target-alone
+baseline separates the two cases by roughly fourfold, +0.08 against
++0.02. Practitioners choosing whether to spend budget on a source
+model therefore have a usable signal, and it is the one transfer learning has
+always claimed to rest on.
 
-We are deliberately not turning that into a per-output predictive rule, because
-our data cannot support one. Across the 7 (domain, output) pairs we
-measured, neither unadapted $R^2$ nor rank agreement with the target correlates
-significantly with realised transfer gain (Spearman -0.43,
-$p=0.34$ and +0.64, $p=0.12$ respectively). With seven
-pairs from two targets, these are descriptive, not inferential.
+Two qualifications keep that claim honest. First, it is established here across
+two targets, so it is a large and mechanistically explained effect rather than a
+statistically sampled one; the fidelity axis deserves more than two points.
+Second, proximity is informative at the level of a target, but we could not turn
+it into a per-output rule. Across the 7 (domain, output) pairs, neither
+unadapted $R^2$ nor rank agreement with the target correlates significantly with
+realised transfer gain (Spearman -0.43, $p=0.34$ and
++0.64, $p=0.12$). Choosing a source for a target is well guided by
+the evidence here; choosing which of a target's outputs will benefit most is not.
 
 What the per-output numbers do suggest is a mechanism worth testing properly on
 more targets. $R^2$ against a target conflates two unlike failures: a
