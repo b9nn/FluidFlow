@@ -179,8 +179,27 @@ def main():
         1 for o in bo
         if r2(bm, "TabPFN", N_STAR, o) >= max(r2(bm, c, N_STAR, o) for c in NON_TABPFN))
 
+    # Does any source-quality statistic predict realised transfer gain? Reported
+    # in the Discussion with its p-value precisely because it does not reach
+    # significance at this sample size.
+    from scipy.stats import spearmanr as _sp
+    pairs = []
+    for d, key, outs in [(bm, "BM", bo), (tb, "TBCM", to)]:
+        for o in outs:
+            g = float(np.mean([r2(d, f"{f}_trans", n, o) - r2(d, f"{f}_base", n, o)
+                               for f in FAMILIES for n in [10, 20, 50]]))
+            pairs.append((sd[key]["outputs"][o]["unadapted_r2"],
+                          sd[key]["outputs"][o]["spearman"], g))
+    rho_u, p_u = _sp([x[0] for x in pairs], [x[2] for x in pairs])
+    rho_r, p_r = _sp([x[1] for x in pairs], [x[2] for x in pairs])
+
     tok = {
         "DATE": dt.date.today().strftime("%B %-d, %Y"),
+        "N_PAIRS": str(len(pairs)),
+        "RHO_UNADAPTED": f"{rho_u:+.2f}",
+        "P_UNADAPTED": f"{p_u:.2f}",
+        "RHO_RANK": f"{rho_r:+.2f}",
+        "P_RANK": f"{p_r:.2f}",
         "SOURCE_ROWS": f"{meta['source_rows']:,}",
         "BM_ROWS": f"{meta['target_rows']:,}",
         "TBCM_ROWS": f"{tb['_meta']['target_rows']:,}",
@@ -225,15 +244,11 @@ def main():
         "BM_NN_BASE_F0_N10": f2(r2(bm, "NN_base", n0, "F0")),
         "BM_TABPFN_F0_N10": f2(r2(bm, "TabPFN", n0, "F0")),
         "TABPFN_WORST_DEFICIT": f"{worst_deficit(bm, tb):.2f}",
-        "BM_SPL_SRC_R2": f"{sd['BM']['outputs']['SPL']['unadapted_r2']:.2f}",
-        "TBCM_SPL_SRC_R2": f"{sd['TBCM']['outputs']['SPL']['unadapted_r2']:.2f}",
-        "BM_SPL_AFF": f"{sd['BM']['outputs']['SPL']['affine_corrected_r2']:.2f}",
-        "TBCM_SPL_AFF": f"{sd['TBCM']['outputs']['SPL']['affine_corrected_r2']:.2f}",
-        "BM_SPL_RHO": f"{sd['BM']['outputs']['SPL']['spearman']:.2f}",
-        "TBCM_SPL_RHO": f"{sd['TBCM']['outputs']['SPL']['spearman']:.2f}",
-        "BM_MAX_RHO": f"{max(v['spearman'] for v in sd['BM']['outputs'].values()):.2f}",
-        "TBCM_F0_RHO": f"{sd['TBCM']['outputs']['F0']['spearman']:.2f}",
-        "TBCM_SPL_MAXGAIN": f"{max(r2(tb, f'{f}_trans', n, 'SPL') - r2(tb, f'{f}_base', n, 'SPL') for f in FAMILIES for n in tb['_meta']['n_grid']):+.2f}",
+        "BM_F0_RHO": f"{sd['BM']['outputs']['F0']['spearman']:.2f}",
+        "BM_MIN_RHO": f"{min(v['spearman'] for v in sd['BM']['outputs'].values()):.2f}",
+        "TBCM_GAIN_MEAN": f"{np.mean([mean_gain(tb, n, to) for n in tb['_meta']['n_grid']]):+.2f}",
+        "BM_GAIN_MEAN": f"{np.mean([mean_gain(bm, n, bo) for n in bm['_meta']['n_grid']]):+.2f}",
+        "BM_F0_GAIN_LO": f"{np.mean([r2(bm, f'{f}_trans', n, 'F0') - r2(bm, f'{f}_base', n, 'F0') for f in FAMILIES for n in [10, 20, 50]]):+.2f}",
         "TBCM_RESID_W": f"{np.mean([np.array(tb['weights'][f][str(n)]).mean(axis=0)[1] for f in FAMILIES for n in tb['_meta']['n_grid']]):.0%}".replace('%', r'\%'),
         "BM_TGT_W_LO": f"{np.mean([np.array(bm['weights'][f]['10']).mean(axis=0)[0] for f in FAMILIES]):.2f}",
         "BM_TGT_W_HI": f"{np.mean([np.array(bm['weights'][f]['500']).mean(axis=0)[0] for f in FAMILIES]):.2f}",

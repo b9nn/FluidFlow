@@ -382,32 +382,40 @@ quite dissimilar, including from a triangular body-cover model to clinical
 measurements, where the source and target differ far more than BCM and BM do.
 \note{Emiro: please add the citation for the TBCM-to-clinical transfer work here,
 and correct this characterisation if it misstates the setup.} What our result
-isolates is narrower and, we think, more useful, and it is not the obvious
-diagnostic. Unadapted source $R^2$ does \emph{not} predict whether transfer will
-help: the BCM source is more accurate on BM's SPL ($R^2 = -2.23$)
-than on TBCM's ($R^2 = -7.09$), yet transfer gains up to
-+0.36 $R^2$ on TBCM's SPL and essentially nothing on BM's. $R^2$
-conflates two unlike failures. A miscalibrated source has the wrong scale or
-offset but the right ordering, and residual correction and feature augmentation
-exist precisely to undo that. A structurally disagreeing source ranks operating
-points wrongly, and no downstream sub-model can repair it.
+isolates is narrower. At the level of the whole domain, the contrast is large and
+unambiguous: the unadapted BCM source reaches an $F_0$ $R^2$ of
+0.86 on TBCM and -30.9 on BM, and mean transfer gain
+over the target-alone baseline follows it, +0.08 against
++0.02. A source drawn from the same lumped-element family as the
+target is worth building on; one facing a structurally distinct continuum model
+is not.
 
-Separating the two explains the result. Allowing the best affine rescale of the
-source predictions, the ceiling those sub-models could reach, recovers an $R^2$
-of 0.44 on TBCM's SPL but only 0.14 on BM's; rank
-agreement tells the same story (Spearman 0.62 versus 0.41).
-Across every output, BM's rank agreement with the source never exceeds
-0.73, while TBCM's $F_0$ reaches 0.95. The quantity worth
-checking before investing in a transfer pipeline is therefore how much signal
-survives calibration, measured by rank agreement or affine-corrected $R^2$, and
-not raw unadapted accuracy or architectural kinship.
+We are deliberately not turning that into a per-output predictive rule, because
+our data cannot support one. Across the 7 (domain, output) pairs we
+measured, neither unadapted $R^2$ nor rank agreement with the target correlates
+significantly with realised transfer gain (Spearman -0.43,
+$p=0.34$ and +0.64, $p=0.12$ respectively). With seven
+pairs from two targets, these are descriptive, not inferential.
 
-The blend weights confirm this from the other direction. Fitted out-of-fold, and
-never told which domain they are in, they place 58\% of the weight on
-the source-dependent residual sub-model on TBCM, whereas on BM the weight shifts
-onto the target-only sub-model, whose share rises from 0.37 at $N=10$
-to 0.49 at $N=500$. The procedure discovers on its own that the BM
-source is not worth listening to.
+What the per-output numbers do suggest is a mechanism worth testing properly on
+more targets. $R^2$ against a target conflates two unlike failures: a
+miscalibrated source has the wrong scale but the right ordering, which residual
+correction and feature augmentation exist to undo, whereas a structurally
+disagreeing source ranks operating points wrongly and no downstream sub-model
+repairs that. BM's own $F_0$ is the illustration. It has the worst unadapted
+$R^2$ of any pair we measured, -30.9, and yet the largest low-$N$
+transfer gain on that target, +0.13, because its rank agreement with
+the source is also the highest on BM (Spearman 0.73 against
+0.31 for CPP). Ranking candidate sources by rank agreement or by
+affine-corrected $R^2$, rather than by raw accuracy, is therefore a hypothesis
+this work motivates but does not establish.
+
+The blend weights are consistent with that reading. Fitted out-of-fold, and never
+told which domain they are in, they place 58\% of the weight on the
+source-dependent residual sub-model on TBCM, whereas on BM the weight sits on the
+target-only sub-model and its share rises from 0.37 at $N=10$ to
+0.49 at $N=500$. The procedure ends up relying on the BM source less
+the more target data it has.
 
 \paragraph{Transfer learning for a no-source model (future work).}
 Because TabPFN wins at low $N$ but has no weights to fine-tune, giving it a form
