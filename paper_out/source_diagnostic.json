@@ -1,0 +1,119 @@
+{
+  "BM": {
+    "n_target_rows": 4647,
+    "outputs": {
+      "F0": {
+        "unadapted_r2": -30.711941240431553,
+        "spearman": 0.733495167356197,
+        "pearson": 0.7577530920550204,
+        "affine_corrected_r2": 0.5741897485189439,
+        "source_range": [
+          101.15986671166688,
+          299.998302207
+        ],
+        "target_range": [
+          115.999585715765,
+          173.999378573648
+        ]
+      },
+      "SPL": {
+        "unadapted_r2": -2.229069739359406,
+        "spearman": 0.4118908708697755,
+        "pearson": 0.36746471766065864,
+        "affine_corrected_r2": 0.1350303187254276,
+        "source_range": [
+          89.26517845673337,
+          130.04051357966688
+        ],
+        "target_range": [
+          74.6292454063547,
+          129.388233345459
+        ]
+      },
+      "ACFL": {
+        "unadapted_r2": -4.181270734698069,
+        "spearman": 0.5206207741758264,
+        "pearson": 0.5009832553151858,
+        "affine_corrected_r2": 0.2509842221062005,
+        "source_range": [
+          30.277625441233347,
+          627.4896235973338
+        ],
+        "target_range": [
+          30.7670311246841,
+          2668.15770939802
+        ]
+      },
+      "PC": {
+        "unadapted_r2": -3.1428477284531953,
+        "spearman": 0.3857950138672102,
+        "pearson": 0.31564792350360016,
+        "affine_corrected_r2": 0.09963361161213447,
+        "source_range": [
+          86.37719557866673,
+          3988.1796898733287
+        ],
+        "target_range": [
+          0.0,
+          2432.56052254778
+        ]
+      },
+      "CPP": {
+        "unadapted_r2": -0.2291469800395738,
+        "spearman": 0.3076844970689813,
+        "pearson": 0.2911808526478131,
+        "affine_corrected_r2": 0.08478628894870754,
+        "source_range": [
+          -2.82677210804667,
+          37.33135910729997
+        ],
+        "target_range": [
+          3.83244256198834,
+          52.1424973920215
+        ]
+      }
+    }
+  },
+  "TBCM": {
+    "n_target_rows": 43102,
+    "outputs": {
+      "F0": {
+        "unadapted_r2": 0.8534382879314167,
+        "spearman": 0.9472523793014996,
+        "pearson": 0.9451097914439799,
+        "affine_corrected_r2": 0.8932325178832832,
+        "source_range": [
+          100.34964978199989,
+          299.499489133
+        ],
+        "target_range": [
+          80.0,
+          383.478260869565
+        ]
+      },
+      "SPL": {
+        "unadapted_r2": -7.090244314818294,
+        "spearman": 0.621626353061192,
+        "pearson": 0.6603472376330237,
+        "affine_corrected_r2": 0.4360584742495649,
+        "source_range": [
+          90.09064308276655,
+          136.7313631676665
+        ],
+        "target_range": [
+          55.531653132138,
+          109.253576166636
+        ]
+      }
+    }
+  },
+  "_contrast_spl": {
+    "note": "TBCM SPL has the worse unadapted R2 but the better recoverable signal",
+    "bm_spl_unadapted_r2": -2.229069739359406,
+    "tbcm_spl_unadapted_r2": -7.090244314818294,
+    "bm_spl_affine_r2": 0.1350303187254276,
+    "tbcm_spl_affine_r2": 0.4360584742495649,
+    "unadapted_r2_ranks_correctly": false,
+    "affine_r2_ranks_correctly": true
+  }
+}

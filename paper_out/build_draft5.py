@@ -143,6 +143,7 @@ def main():
     bm = load(BM_JSON, "BM results")
     tb = load(TBCM_JSON, "TBCM results")
     mm = load(MOTOR_JSON, "motor-map results")
+    sd = load(os.path.join(HERE, "source_diagnostic.json"), "source diagnostic")
 
     bo = bm["_meta"]["outputs"]
     to = tb["_meta"]["outputs"]
@@ -224,6 +225,18 @@ def main():
         "BM_NN_BASE_F0_N10": f2(r2(bm, "NN_base", n0, "F0")),
         "BM_TABPFN_F0_N10": f2(r2(bm, "TabPFN", n0, "F0")),
         "TABPFN_WORST_DEFICIT": f"{worst_deficit(bm, tb):.2f}",
+        "BM_SPL_SRC_R2": f"{sd['BM']['outputs']['SPL']['unadapted_r2']:.2f}",
+        "TBCM_SPL_SRC_R2": f"{sd['TBCM']['outputs']['SPL']['unadapted_r2']:.2f}",
+        "BM_SPL_AFF": f"{sd['BM']['outputs']['SPL']['affine_corrected_r2']:.2f}",
+        "TBCM_SPL_AFF": f"{sd['TBCM']['outputs']['SPL']['affine_corrected_r2']:.2f}",
+        "BM_SPL_RHO": f"{sd['BM']['outputs']['SPL']['spearman']:.2f}",
+        "TBCM_SPL_RHO": f"{sd['TBCM']['outputs']['SPL']['spearman']:.2f}",
+        "BM_MAX_RHO": f"{max(v['spearman'] for v in sd['BM']['outputs'].values()):.2f}",
+        "TBCM_F0_RHO": f"{sd['TBCM']['outputs']['F0']['spearman']:.2f}",
+        "TBCM_SPL_MAXGAIN": f"{max(r2(tb, f'{f}_trans', n, 'SPL') - r2(tb, f'{f}_base', n, 'SPL') for f in FAMILIES for n in tb['_meta']['n_grid']):+.2f}",
+        "TBCM_RESID_W": f"{np.mean([np.array(tb['weights'][f][str(n)]).mean(axis=0)[1] for f in FAMILIES for n in tb['_meta']['n_grid']]):.0%}".replace('%', r'\%'),
+        "BM_TGT_W_LO": f"{np.mean([np.array(bm['weights'][f]['10']).mean(axis=0)[0] for f in FAMILIES]):.2f}",
+        "BM_TGT_W_HI": f"{np.mean([np.array(bm['weights'][f]['500']).mean(axis=0)[0] for f in FAMILIES]):.2f}",
         "TRANSFER_WORST_DEFICIT": f"{worst_deficit(bm, tb, method='trans'):.2f}",
         "BM_BASE_F0_3": f"{best_of(bm, 'base', N_STAR, 'F0')[0]:.3f}",
         "BM_TRANS_F0_3": f"{best_of(bm, 'trans', N_STAR, 'F0')[0]:.3f}",
